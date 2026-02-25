@@ -20,7 +20,7 @@ const response = await fetch(
 method:"POST",
 headers:{
 "Authorization":
-`Bearer YOUR_OPENAI_KEY`,
+`Bearer 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`,
 "Content-Type":"application/json"
 },
 body:JSON.stringify({
