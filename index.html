@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>T.A.R.A. Safety Assistant</title>
+<style>
+body {
+font-family: Arial;
+background: black;
+color: white;
+text-align: center;
+padding: 40px;
+}
+input {
+width: 300px;
+padding: 10px;
+}
+button {
+padding: 10px;
+background: orange;
+border: none;
+}
+#answer {
+margin-top: 20px;
+}
+</style>
+</head>
+<body>
+
+<h1>T.A.R.A.</h1>
+<p>Towing and Recovery Assistant</p>
+
+<input id="question" placeholder="Ask a safety question">
+<button onclick="ask()">Ask</button>
+
+<div id="answer"></div>
+
+<script>
+async function ask(){
+
+const question =
+document.getElementById("question").value;
+
+const response =
+await fetch("/ask",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({question})
+});
+
+const data = await response.json();
+
+document.getElementById("answer")
+.innerText = data.answer;
+
+}
+</script>
+
+</body>
+</html>
