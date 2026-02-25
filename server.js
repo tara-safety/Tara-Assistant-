@@ -2,11 +2,21 @@
 import express from "express";
 import fetch from "node-fetch";
 import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json());
 
-// Helper: smart JSON logging
+// Serve your existing index.html at "/"
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+// Smart JSON logging
 function logQA({ question, answer, status = "success", sessionId = null }) {
   const logEntry = {
     timestamp: new Date().toISOString(),
@@ -24,7 +34,7 @@ function logQA({ question, answer, status = "success", sessionId = null }) {
   );
 }
 
-// /ask route
+// /ask API route
 app.post("/ask", async (req, res) => {
   const { question, sessionId } = req.body;
 
