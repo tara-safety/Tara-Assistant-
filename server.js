@@ -1,3 +1,7 @@
+const PORT = process.env.PORT || 10000;
+
+app.listen(PORT, () =>
+console.log("T.A.R.A. running on port " + PORT));
 import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
