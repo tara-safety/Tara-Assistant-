@@ -33,9 +33,12 @@ input:
 
 const data = await response.json();
 
+const answer =
+data.output_text ||
+"Sorry, T.A.R.A. could not generate a response.";
+
 res.json({
-answer:
-data.output[0].content[0].text
+answer: answer
 });
 
 });
