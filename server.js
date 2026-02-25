@@ -25,32 +25,39 @@ headers: {
 body: JSON.stringify({
 model: "gpt-5",
 input:
-"You are T.A.R.A., a professional towing and recovery safety assistant. Provide clear, practical safety guidance: "
+"You are T.A.R.A., a towing and recovery safety assistant. Provide clear safety guidance: "
 + question
 })
 });
 
 const data = await response.json();
 
+console.log("OPENAI RESPONSE:", data);
+
+if (!response.ok) {
+return res.json({
+answer:
+"T.A.R.A. error: " +
+(data.error?.message || "Unknown error")
+});
+}
+
 const answer =
 data.output_text ||
-"Sorry, T.A.R.A. could not generate a response.";
+"No response returned.";
 
 res.json({ answer });
 
 }
 catch (error) {
 
-console.log(error);
+console.log("SERVER ERROR:", error);
 
 res.json({
 answer:
-"T.A.R.A. encountered an error. Please try again."
+"Server connection error."
 });
 
 }
 
 });
-
-app.listen(10000, () =>
-console.log("T.A.R.A. running"));
