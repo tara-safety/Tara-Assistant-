@@ -6,16 +6,12 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-
-// ✅ THIS IS THE MISSING PART — ADD THIS
 app.post("/chat", (req, res) => {
 
     const message = req.body.message;
 
-    console.log("User said:", message);
-
     res.json({
-        reply: "Safety reminder: Always verify tow points before recovery."
+        reply: "TARA received: " + message
     });
 
 });
