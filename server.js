@@ -1,68 +1,25 @@
-// script.js
-const chat = document.getElementById("chat");
-const questionInput = document.getElementById("question");
+import express from "express";
+import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 
-async function ask() {
-  const question = questionInput.value.trim();
-  if (!question) return;
+const app = express();
 
-  // Add user message
-  addMessage(question, "user");
-  questionInput.value = "";
+app.use(cors());
+app.use(express.json());
 
-  // Add typing animation
-  const thinkingDiv = addMessage("T.A.R.A. is typing...", "tara");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  try {
-    const response = await fetch("/ask", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question })
-    });
+// serve public folder
+app.use(express.static(path.join(__dirname, "public")));
 
-    const data = await response.json();
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
-    // Simulate typing effect for the answer
-    await typeAnswer(thinkingDiv, data.answer);
+const PORT = process.env.PORT || 3000;
 
-  } catch (err) {
-    updateMessage(thinkingDiv, "Error contacting T.A.R.A.");
-    console.error(err);
-  }
-
-  chat.scrollTop = chat.scrollHeight;
-}
-
-// Add message to chat
-function addMessage(text, sender) {
-  const div = document.createElement("div");
-  div.className = `chat-message ${sender}`;
-  div.innerText = text;
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-  return div;
-}
-
-// Update message text immediately
-function updateMessage(div, text) {
-  div.innerText = text;
-}
-
-// Type out the answer one character at a time
-async function typeAnswer(div, text) {
-  div.innerText = "";
-  for (let i = 0; i < text.length; i++) {
-    div.innerText += text[i];
-    await sleep(20); // 20ms per character
-  }
-}
-
-// Simple sleep helper
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// Optional: Press Enter to send
-questionInput.addEventListener("keyup", (e) => {
-  if (e.key === "Enter") ask();
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
 });
