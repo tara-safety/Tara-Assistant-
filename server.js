@@ -14,18 +14,18 @@ app.use(express.static(path.join(__dirname, "public")));
 
 
 /* TEST CHAT ENDPOINT */
-app.post("/chat", (req, res) => {
+app.post("/ask", async (req, res) => {
 
-    const message = req.body.message;
+  const question = req.body.question || "";
 
-    console.log("User said:", message);
+  const mockAnswer =
+    "Ensure vehicle is secured, use manufacturer tow points, and always wear high visibility PPE.";
 
-    res.json({
-        reply:
-        "T.A.R.A safety guidance: Ensure vehicle is secure, use approved tow points, and follow manufacturer procedures."
-    });
+  res.json({ answer: mockAnswer });
 
 });
+
+         
 
 
 /* optional homepage safety */
