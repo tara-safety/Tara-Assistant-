@@ -29,55 +29,27 @@ function addMessage(text, sender){
 }
 
 
-async function ask(){
+function speak(text) {
 
-    const question = input.value.trim();
+  const utterance = new SpeechSynthesisUtterance(text);
 
-    if(!question) return;
+  const logo = document.getElementById("logo");
 
-    addMessage(question,"user");
+  utterance.onstart = () => {
 
-    input.value="";
+    logo.classList.add("talking");
 
-    avatar.classList.add("talking");
+  };
 
-    try{
+  utterance.onend = () => {
 
-        const res = await fetch("/chat",{
+    logo.classList.remove("talking");
 
-            method:"POST",
+  };
 
-            headers:{
-                "Content-Type":"application/json"
-            },
-
-            body:JSON.stringify({
-                message:question
-            })
-
-        });
-
-        const data = await res.json();
-
-        avatar.classList.remove("talking");
-
-        addMessage(data.reply,"tara");
-
-        speak(data.reply);
-
-    }
-    catch(err){
-
-        avatar.classList.remove("talking");
-
-        addMessage("Server connection error","tara");
-
-        console.log(err);
-
-    }
+  speechSynthesis.speak(utterance);
 
 }
-
 
 /* SEND BUTTON */
 askBtn.addEventListener("click", ask);
