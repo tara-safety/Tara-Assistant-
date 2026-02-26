@@ -1,80 +1,68 @@
-// server.js
-import express from "express";
-import fetch from "node-fetch";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+// script.js
+const chat = document.getElementById("chat");
+const questionInput = document.getElementById("question");
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+async function ask() {
+  const question = questionInput.value.trim();
+  if (!question) return;
 
-const app = express();
-app.use(express.json());
+  // Add user message
+  addMessage(question, "user");
+  questionInput.value = "";
 
-// Serve your existing index.html at "/"
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-
-// Smart JSON logging
-function logQA({ question, answer, status = "success", sessionId = null }) {
-  const logEntry = {
-    timestamp: new Date().toISOString(),
-    sessionId,
-    question,
-    answer,
-    status
-  };
-  fs.appendFile(
-    "tara_logs.json",
-    JSON.stringify(logEntry) + "\n",
-    (err) => {
-      if (err) console.error("Logging error:", err);
-    }
-  );
-}
-
-// /ask API route
-app.post("/ask", async (req, res) => {
-  const { question, sessionId } = req.body;
+  // Add typing animation
+  const thinkingDiv = addMessage("T.A.R.A. is typing...", "tara");
 
   try {
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const response = await fetch("/ask", {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-5",
-        input:
-          "You are T.A.R.A., the Towing and Recovery Assistant powered by Safety Intelligence. Provide clear, professional towing safety guidance: " +
-          question,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question })
     });
 
     const data = await response.json();
-    console.log("OPENAI RESPONSE:", data);
 
-    if (!response.ok) {
-      const errMsg = data.error?.message || "Unknown error";
-      res.json({ answer: "T.A.R.A. error: " + errMsg });
-      logQA({ question, answer: errMsg, status: "API error", sessionId });
-      return;
-    }
+    // Simulate typing effect for the answer
+    await typeAnswer(thinkingDiv, data.answer);
 
-    const answer = data.output_text || "No response returned.";
-    res.json({ answer });
-    logQA({ question, answer, status: "success", sessionId });
-
-  } catch (error) {
-    console.error("SERVER ERROR:", error);
-    const errMsg = "Server connection error.";
-    res.json({ answer: errMsg });
-    logQA({ question, answer: errMsg, status: "server error", sessionId });
+  } catch (err) {
+    updateMessage(thinkingDiv, "Error contacting T.A.R.A.");
+    console.error(err);
   }
-});
 
-// Start server
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`T.A.R.A. running on port ${PORT}`));
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// Add message to chat
+function addMessage(text, sender) {
+  const div = document.createElement("div");
+  div.className = `chat-message ${sender}`;
+  div.innerText = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+// Update message text immediately
+function updateMessage(div, text) {
+  div.innerText = text;
+}
+
+// Type out the answer one character at a time
+async function typeAnswer(div, text) {
+  div.innerText = "";
+  for (let i = 0; i < text.length; i++) {
+    div.innerText += text[i];
+    await sleep(20); // 20ms per character
+  }
+}
+
+// Simple sleep helper
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Optional: Press Enter to send
+questionInput.addEventListener("keyup", (e) => {
+  if (e.key === "Enter") ask();
+});
