@@ -1,28 +1,47 @@
 const chatBox = document.getElementById("answer");
 const input = document.getElementById("question");
 const button = document.getElementById("askBtn");
+const avatar = document.getElementById("avatar");
 
-let memory = [];
-
-function addMessage(sender, text){
+function addMessage(text, type){
 
 const msg = document.createElement("div");
 
-msg.style.margin = "10px";
-msg.style.padding = "10px";
-msg.style.borderRadius = "8px";
+msg.className = type === "user" ? "msgUser" : "msgBot";
 
-if(sender === "user"){
-msg.style.background = "#333";
-msg.style.color = "white";
-msg.innerText = "You: " + text;
-}else{
-msg.style.background = "orange";
-msg.style.color = "black";
-msg.innerText = "T.A.R.A.: " + text;
-}
+msg.innerText = text;
 
 chatBox.appendChild(msg);
+
+chatBox.scrollTop = chatBox.scrollHeight;
+
+}
+
+function showTyping(){
+
+const typing = document.createElement("div");
+
+typing.className = "typing";
+
+typing.id = "typing";
+
+typing.innerText = "T.A.R.A. is analyzing safety data...";
+
+chatBox.appendChild(typing);
+
+avatar.classList.add("glow");
+
+chatBox.scrollTop = chatBox.scrollHeight;
+
+}
+
+function removeTyping(){
+
+const typing = document.getElementById("typing");
+
+if(typing) typing.remove();
+
+avatar.classList.remove("glow");
 
 }
 
@@ -32,9 +51,11 @@ const question = input.value.trim();
 
 if(!question) return;
 
-addMessage("user", question);
+addMessage("You: " + question, "user");
 
 input.value = "";
+
+showTyping();
 
 try{
 
@@ -48,15 +69,21 @@ body:JSON.stringify({ question })
 
 const data = await response.json();
 
-addMessage("tara", data.answer);
+setTimeout(()=>{
+removeTyping();
+addMessage("T.A.R.A: " + data.answer, "bot");
+},800);
 
 }
 catch{
 
+setTimeout(()=>{
+removeTyping();
 addMessage(
-"tara",
-"Safety reminder: Always verify tow points and secure the vehicle properly."
+"T.A.R.A: Always verify tow points and secure the vehicle.",
+"bot"
 );
+},800);
 
 }
 
@@ -65,9 +92,5 @@ addMessage(
 button.addEventListener("click", ask);
 
 input.addEventListener("keypress", function(e){
-
-if(e.key === "Enter"){
-ask();
-}
-
+if(e.key === "Enter") ask();
 });
