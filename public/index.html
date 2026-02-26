@@ -17,7 +17,7 @@ width:120px;
 margin:20px;
 }
 
-#chat{
+#answer{
 height:300px;
 overflow-y:auto;
 border:1px solid #333;
@@ -26,15 +26,16 @@ padding:10px;
 background:#111;
 }
 
-input{
+#question{
 width:70%;
 padding:10px;
 }
 
-button{
+#askBtn{
 padding:10px;
 background:#00ffc3;
 border:none;
+cursor:pointer;
 }
 </style>
 </head>
@@ -45,10 +46,11 @@ border:none;
 
 <img id="avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png">
 
-<div id="chat"></div>
+<div id="answer"></div>
 
-<input id="input" placeholder="Ask T.A.R.A">
-<button onclick="send()">Send</button>
+<input id="question" placeholder="Ask T.A.R.A">
+
+<button id="askBtn">Send</button>
 
 <script src="script.js"></script>
 
