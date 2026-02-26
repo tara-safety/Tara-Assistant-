@@ -5,50 +5,106 @@
 <title>T.A.R.A Assistant</title>
 
 <style>
+
 body{
 font-family:Arial;
-background:#0a0f1c;
+background:#070b14;
 color:white;
 text-align:center;
 }
 
+/* AVATAR */
 #avatar{
-width:120px;
+width:160px;
 margin:20px;
+transition:0.3s;
+border-radius:50%;
 }
 
+.glow{
+box-shadow:0 0 25px #00ffc3;
+transform:scale(1.05);
+}
+
+/* CHAT BOX */
 #answer{
-height:300px;
+height:420px;
+width:60%;
+margin:20px auto;
 overflow-y:auto;
-border:1px solid #333;
-margin:10px;
-padding:10px;
-background:#111;
+border:1px solid #222;
+padding:15px;
+background:#0f1624;
+border-radius:10px;
+text-align:left;
 }
 
+/* INPUT AREA */
 #question{
-width:70%;
-padding:10px;
+width:50%;
+padding:14px;
+font-size:16px;
+border-radius:6px;
+border:none;
+background:#0f1624;
+color:white;
 }
 
+/* BUTTON */
 #askBtn{
-padding:10px;
-background:#00ffc3;
+padding:14px 28px;
+font-size:18px;
+margin-left:10px;
+background:#008f73;
+color:white;
 border:none;
+border-radius:6px;
 cursor:pointer;
 }
+
+#askBtn:hover{
+background:#00ffc3;
+color:black;
+}
+
+/* MESSAGE BUBBLES */
+.msgUser{
+background:#1f2a44;
+padding:10px;
+margin:8px;
+border-radius:8px;
+}
+
+.msgBot{
+background:#00ffc3;
+color:black;
+padding:10px;
+margin:8px;
+border-radius:8px;
+}
+
+.typing{
+color:#888;
+font-style:italic;
+margin:8px;
+}
+
 </style>
 </head>
 
 <body>
 
-<h1>T.A.R.A Assistant</h1>
+<h1 style="color:#00ffc3;">T.A.R.A</h1>
+<p style="color:#666;">Towing and Recovery Assistant</p>
 
-<img id="avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png">
+<img
+id="avatar"
+src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png"
+>
 
 <div id="answer"></div>
 
-<input id="question" placeholder="Ask T.A.R.A">
+<input id="question" placeholder="Ask T.A.R.A about towing safety...">
 
 <button id="askBtn">Send</button>
 
