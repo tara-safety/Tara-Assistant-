@@ -1,26 +1,77 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
 <title>T.A.R.A. Safety Assistant</title>
 <style>
 body {
-font-family: Arial;
-background: black;
-color: white;
-text-align: center;
-padding: 40px;
+  font-family: Arial, sans-serif;
+  background: black;
+  color: white;
+  text-align: center;
+  padding: 40px;
 }
+
+#chat {
+  width: 450px;
+  margin: 0 auto;
+  max-height: 500px;
+  overflow-y: auto;
+  border: 2px solid orange;
+  padding: 10px;
+  background: #111;
+  border-radius: 10px;
+}
+
+.chat-message {
+  display: flex;
+  align-items: flex-start;
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 8px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.user {
+  background: orange;
+  color: black;
+  margin-left: auto;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.tara {
+  background: #222;
+  color: white;
+  margin-right: auto;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.tara img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
 input {
-width: 300px;
-padding: 10px;
+  width: 300px;
+  padding: 10px;
+  font-size: 16px;
 }
+
 button {
-padding: 10px;
-background: orange;
-border: none;
+  padding: 10px 15px;
+  background: orange;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
 }
-#answer {
-margin-top: 20px;
+
+button:hover {
+  opacity: 0.9;
 }
 </style>
 </head>
@@ -29,32 +80,114 @@ margin-top: 20px;
 <h1>T.A.R.A.</h1>
 <p>Towing and Recovery Assistant</p>
 
+<div id="chat"></div>
+
 <input id="question" placeholder="Ask a safety question">
 <button onclick="ask()">Ask</button>
 
-<div id="answer"></div>
-
 <script>
-async function ask(){
+const USE_MOCK = true; // Toggle mock responses
+const chat = document.getElementById("chat");
+const questionInput = document.getElementById("question");
 
-const question =
-document.getElementById("question").value;
+// Add message to chat
+function addMessage(text, sender) {
+  const div = document.createElement("div");
+  div.className = `chat-message ${sender}`;
 
-const response =
-await fetch("/ask",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({question})
-});
+  if(sender === "tara") {
+    const avatar = document.createElement("img");
+    avatar.src = "https://i.imgur.com/2QO5sPj.png"; // Replace with your T.A.R.A avatar if you want
+    avatar.alt = "T.A.R.A";
+    div.appendChild(avatar);
 
-const data = await response.json();
+    const msg = document.createElement("div");
+    msg.innerText = text;
+    div.appendChild(msg);
+  } else {
+    div.innerText = text;
+  }
 
-document.getElementById("answer")
-.innerText = data.answer;
-
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
 }
+
+// Update message
+function updateMessage(div, text) {
+  if(div.querySelector("div")) {
+    div.querySelector("div").innerText = text;
+  } else {
+    div.innerText = text;
+  }
+}
+
+// Simulate typing effect
+async function typeAnswer(div, text) {
+  const msgDiv = div.querySelector("div") || div;
+  msgDiv.innerText = "";
+  for(let i=0;i<text.length;i++){
+    msgDiv.innerText += text[i];
+    await sleep(15);
+  }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Ask function
+async function ask() {
+  const question = questionInput.value.trim();
+  if(!question) return;
+
+  // Add user message
+  addMessage(question, "user");
+  questionInput.value = "";
+
+  // Add typing animation for T.A.R.A.
+  const thinkingDiv = addMessage("T.A.R.A. is typing...", "tara");
+
+  try {
+    let answer = "";
+
+    if(USE_MOCK) {
+      const q = question.toLowerCase();
+      if(q.includes("ev") || q.includes("electric vehicle")) {
+        answer = "For towing an EV, always disconnect the battery, use a flatbed truck if possible, and follow the manufacturer’s guidelines.";
+      } else if(q.includes("flat tire")) {
+        answer = "To handle a flat tire safely, pull off the road, engage hazard lights, and use wheel chocks before changing or towing the tire.";
+      } else if(q.includes("recovery") || q.includes("stuck")) {
+        answer = "When recovering a stuck vehicle, use proper tow straps, anchor points, and avoid standing directly behind or in line with the vehicle.";
+      } else if(q.includes("chains") || q.includes("tie down")) {
+        answer = "Always secure vehicles with rated chains or straps and check tension before transport.";
+      } else {
+        answer = "Remember: safety first! Always assess the scene, use proper equipment, and follow standard towing procedures.";
+      }
+    } else {
+      const res = await fetch("/ask",{
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({question})
+      });
+      const data = await res.json();
+      answer = data.answer;
+    }
+
+    await typeAnswer(thinkingDiv, answer);
+
+  } catch(err) {
+    updateMessage(thinkingDiv, "Error contacting T.A.R.A.");
+    console.error(err);
+  }
+
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// Press Enter to send
+questionInput.addEventListener("keyup", (e) => {
+  if(e.key === "Enter") ask();
+});
 </script>
 
 </body>
