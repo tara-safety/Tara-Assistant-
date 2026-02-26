@@ -1,120 +1,313 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>T.A.R.A Assistant</title>
+<title>T.A.R.A Safety AI</title>
 
 <style>
 
 body{
-font-family:Arial;
-background:#070b14;
-color:white;
-text-align:center;
+    background:#0b0f14;
+    font-family:Arial, Helvetica, sans-serif;
+    color:white;
+    text-align:center;
 }
 
 /* AVATAR */
+
 #avatar{
-width:180px;
-margin:20px;
-border-radius:50%;
-transition:0.2s;
+    width:180px;
+    margin-top:20px;
+    border-radius:12px;
+    box-shadow:0 0 20px #00eaff;
+    transition:all 0.2s ease;
 }
 
-.talking{
-animation:pulse 0.6s infinite;
+#avatar.talking{
+    animation:pulse 0.35s infinite;
+    box-shadow:0 0 40px #00eaff;
 }
 
 @keyframes pulse{
-0%{transform:scale(1);}
-50%{transform:scale(1.08);}
-100%{transform:scale(1);}
+    0%{transform:scale(1);}
+    50%{transform:scale(1.08);}
+    100%{transform:scale(1);}
 }
 
-/* CHAT */
-#answer{
-height:420px;
-width:60%;
-margin:20px auto;
-overflow-y:auto;
-border:1px solid #222;
-padding:15px;
-background:#0f1624;
-border-radius:10px;
-text-align:left;
+/* TITLE */
+
+h1{
+    color:#00eaff;
+    margin-bottom:5px;
+}
+
+#subtitle{
+    color:#7a8a99;
+    margin-bottom:20px;
+}
+
+/* CHAT BOX */
+
+#chat{
+    width:420px;
+    height:420px;
+    margin:auto;
+    background:#111820;
+    border-radius:12px;
+    padding:15px;
+    overflow-y:auto;
+    text-align:left;
+    box-shadow:0 0 10px #000;
+}
+
+.message{
+    margin-bottom:10px;
+}
+
+.user{
+    color:#4fd1ff;
+}
+
+.tara{
+    color:#00ffa6;
 }
 
 /* INPUT */
-#question{
-width:45%;
-padding:14px;
-font-size:16px;
-background:#0f1624;
-color:white;
-border:none;
-border-radius:6px;
+
+#controls{
+    margin-top:15px;
 }
 
-/* BUTTONS */
+#question{
+    width:300px;
+    height:40px;
+    font-size:16px;
+    border-radius:8px;
+    border:none;
+    padding-left:10px;
+}
+
 button{
-padding:14px 24px;
-font-size:18px;
-margin:5px;
-border:none;
-border-radius:6px;
-cursor:pointer;
+    height:44px;
+    font-size:16px;
+    border:none;
+    border-radius:8px;
+    margin-left:5px;
+    padding:0 15px;
+    cursor:pointer;
 }
 
 #askBtn{
-background:#004c3f;
-color:white;
+    background:#005a70;
+    color:white;
 }
 
 #voiceBtn{
-background:#222;
-color:#00ffc3;
+    background:#00eaff;
 }
 
-.msgUser{
-background:#1f2a44;
-padding:10px;
-margin:8px;
-border-radius:8px;
-}
-
-.msgBot{
-background:#00ffc3;
-color:black;
-padding:10px;
-margin:8px;
-border-radius:8px;
-}
-
-.typing{
-color:#888;
-font-style:italic;
+button:hover{
+    opacity:0.8;
 }
 
 </style>
 </head>
-
 <body>
 
-<img id="avatar" src="taralogo.jpg">
+<img id="avatar" src="tara-loop.jpg">
 
-<h2 style="color:#00ffc3;">Powered by Safety Intelligence</h2>
+<h1>T.A.R.A</h1>
+<div id="subtitle">Towing Awareness & Risk Assistant</div>
 
-<div id="answer"></div>
+<div id="chat"></div>
+
+<div id="controls">
 
 <input id="question" placeholder="Ask T.A.R.A about towing safety...">
-
-<br>
 
 <button id="askBtn">Send</button>
 
 <button id="voiceBtn">🎤 Speak</button>
 
-<script src="script.js"></script>
+</div>
+
+<script>
+
+const chat = document.getElementById("chat");
+const input = document.getElementById("question");
+const avatar = document.getElementById("avatar");
+
+let listening = false;
+let recognition;
+
+/* ADD MESSAGE */
+
+function addMessage(text, className){
+
+    const div=document.createElement("div");
+    div.className="message "+className;
+    div.innerText=text;
+
+    chat.appendChild(div);
+    chat.scrollTop=chat.scrollHeight;
+
+}
+
+/* TYPING EFFECT */
+
+function typeMessage(text){
+
+    const div=document.createElement("div");
+    div.className="message tara";
+    chat.appendChild(div);
+
+    let i=0;
+
+    function typing(){
+
+        if(i<text.length){
+
+            div.innerText+=text.charAt(i);
+            i++;
+
+            chat.scrollTop=chat.scrollHeight;
+
+            setTimeout(typing,20);
+
+        }
+        else{
+            speak(text);
+        }
+
+    }
+
+    typing();
+
+}
+
+/* SPEAK */
+
+function speak(text){
+
+    const utter=new SpeechSynthesisUtterance(text);
+
+    avatar.classList.add("talking");
+
+    utter.onend=()=>{
+        avatar.classList.remove("talking");
+    };
+
+    speechSynthesis.speak(utter);
+
+}
+
+/* SEND QUESTION */
+
+async function sendQuestion(){
+
+    const question=input.value;
+
+    if(!question) return;
+
+    addMessage("You: "+question,"user");
+
+    input.value="";
+
+    try{
+
+        const res=await fetch("/ask",{
+
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({question})
+
+        });
+
+        const data=await res.json();
+
+        typeMessage("TARA: "+data.answer);
+
+    }
+    catch(err){
+
+        typeMessage("TARA: Connection error.");
+
+    }
+
+}
+
+/* BUTTON */
+
+document.getElementById("askBtn").onclick=sendQuestion;
+
+/* ENTER KEY */
+
+input.addEventListener("keypress",function(e){
+
+    if(e.key==="Enter"){
+        sendQuestion();
+    }
+
+});
+
+/* VOICE INPUT */
+
+if('webkitSpeechRecognition' in window){
+
+    recognition=new webkitSpeechRecognition();
+
+    recognition.continuous=false;
+    recognition.interimResults=false;
+    recognition.lang="en-US";
+
+    recognition.onresult=function(event){
+
+        const text=event.results[0][0].transcript;
+
+        input.value=text;
+
+        sendQuestion();
+
+    };
+
+    recognition.onend=function(){
+
+        listening=false;
+
+        document.getElementById("voiceBtn").innerText="🎤 Speak";
+
+    };
+
+}
+
+document.getElementById("voiceBtn").onclick=function(){
+
+    if(!recognition) return;
+
+    if(listening){
+
+        recognition.stop();
+
+        listening=false;
+
+        this.innerText="🎤 Speak";
+
+    }
+    else{
+
+        recognition.start();
+
+        listening=true;
+
+        this.innerText="🛑 Stop";
+
+    }
+
+};
+
+</script>
 
 </body>
 </html>
