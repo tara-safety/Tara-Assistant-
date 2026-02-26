@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>T.A.R.A Assistant</title>
+
+<style>
+body{
+font-family:Arial;
+background:#0a0f1c;
+color:white;
+text-align:center;
+}
+
+#avatar{
+width:120px;
+margin:20px;
+}
+
+#chat{
+height:300px;
+overflow-y:auto;
+border:1px solid #333;
+margin:10px;
+padding:10px;
+background:#111;
+}
+
+input{
+width:70%;
+padding:10px;
+}
+
+button{
+padding:10px;
+background:#00ffc3;
+border:none;
+}
+</style>
+</head>
+
+<body>
+
+<h1>T.A.R.A Assistant</h1>
+
+<img id="avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png">
+
+<div id="chat"></div>
+
+<input id="input" placeholder="Ask T.A.R.A">
+<button onclick="send()">Send</button>
+
+<script src="script.js"></script>
+
+</body>
+</html>
