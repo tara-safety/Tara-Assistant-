@@ -15,18 +15,23 @@ text-align:center;
 
 /* AVATAR */
 #avatar{
-width:160px;
+width:180px;
 margin:20px;
-transition:0.3s;
 border-radius:50%;
+transition:0.2s;
 }
 
-.glow{
-box-shadow:0 0 25px #00ffc3;
-transform:scale(1.05);
+.talking{
+animation:pulse 0.6s infinite;
 }
 
-/* CHAT BOX */
+@keyframes pulse{
+0%{transform:scale(1);}
+50%{transform:scale(1.08);}
+100%{transform:scale(1);}
+}
+
+/* CHAT */
 #answer{
 height:420px;
 width:60%;
@@ -39,35 +44,37 @@ border-radius:10px;
 text-align:left;
 }
 
-/* INPUT AREA */
+/* INPUT */
 #question{
-width:50%;
+width:45%;
 padding:14px;
 font-size:16px;
-border-radius:6px;
-border:none;
 background:#0f1624;
 color:white;
+border:none;
+border-radius:6px;
 }
 
-/* BUTTON */
-#askBtn{
-padding:14px 28px;
+/* BUTTONS */
+button{
+padding:14px 24px;
 font-size:18px;
-margin-left:10px;
-background:#008f73;
-color:white;
+margin:5px;
 border:none;
 border-radius:6px;
 cursor:pointer;
 }
 
-#askBtn:hover{
-background:#00ffc3;
-color:black;
+#askBtn{
+background:#004c3f;
+color:white;
 }
 
-/* MESSAGE BUBBLES */
+#voiceBtn{
+background:#222;
+color:#00ffc3;
+}
+
 .msgUser{
 background:#1f2a44;
 padding:10px;
@@ -86,7 +93,6 @@ border-radius:8px;
 .typing{
 color:#888;
 font-style:italic;
-margin:8px;
 }
 
 </style>
@@ -94,19 +100,19 @@ margin:8px;
 
 <body>
 
-<h1 style="color:#00ffc3;">T.A.R.A</h1>
-<p style="color:#666;">Towing and Recovery Assistant</p>
+<img id="avatar" src="tara-logo.jpg">
 
-<img
-id="avatar"
-src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png"
->
+<h2 style="color:#00ffc3;">Powered by Safety Intelligence</h2>
 
 <div id="answer"></div>
 
 <input id="question" placeholder="Ask T.A.R.A about towing safety...">
 
+<br>
+
 <button id="askBtn">Send</button>
+
+<button id="voiceBtn">🎤 Speak</button>
 
 <script src="script.js"></script>
 
