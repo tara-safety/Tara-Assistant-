@@ -94,48 +94,50 @@ input.addEventListener("keydown", function(e){
 
 
 /* VOICE INPUT */
+const micBtn = document.getElementById("micBtn");
+
+let listening = false;
+
 const SpeechRecognition =
-window.SpeechRecognition ||
-window.webkitSpeechRecognition;
+  window.SpeechRecognition || window.webkitSpeechRecognition;
 
-if(SpeechRecognition){
+const recognition = new SpeechRecognition();
 
-    const recognition = new SpeechRecognition();
+recognition.continuous = false;
+recognition.interimResults = false;
+recognition.lang = "en-US";
 
-    recognition.lang="en-US";
+micBtn.onclick = () => {
 
-    voiceBtn.addEventListener("click", ()=>{
+  if (!listening) {
 
-        recognition.start();
+    recognition.start();
+    listening = true;
+    micBtn.innerText = "🛑";
 
-        voiceBtn.innerText="Listening...";
+  } else {
 
-    });
+    recognition.stop();
+    listening = false;
+    micBtn.innerText = "🎤";
 
-    recognition.onresult=(event)=>{
+  }
 
-        const text = event.results[0][0].transcript;
+};
 
-        input.value=text;
+recognition.onresult = async (event) => {
 
-        voiceBtn.innerText="🎤 Speak";
+  const text = event.results[0][0].transcript;
 
-        ask();
+  document.getElementById("question").value = text;
 
-    };
+  sendQuestion();
 
-}
+};
 
+recognition.onend = () => {
 
-/* VOICE OUTPUT */
-function speak(text){
+  listening = false;
+  micBtn.innerText = "🎤";
 
-    const speech = new SpeechSynthesisUtterance(text);
-
-    speech.rate=1;
-
-    speech.pitch=1;
-
-    speechSynthesis.speak(speech);
-
-}
+};
