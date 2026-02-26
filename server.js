@@ -1,24 +1,28 @@
-import express from "express";
+const express = require("express");
+const path = require("path");
 
 const app = express();
 
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
-app.post("/ask", async (req, res) => {
 
-const question = req.body.question || "";
+// ✅ THIS IS THE MISSING PART — ADD THIS
+app.post("/chat", (req, res) => {
 
-const mockAnswer =
-"T.A.R.A. Safety Guidance:\n\n" +
-"Ensure the vehicle is in transport mode, use manufacturer-approved tow points, and never drag EV wheels unless approved.";
+    const message = req.body.message;
 
-res.json({ answer: mockAnswer });
+    console.log("User said:", message);
+
+    res.json({
+        reply: "Safety reminder: Always verify tow points before recovery."
+    });
 
 });
 
-const PORT = process.env.PORT || 10000;
 
-app.listen(PORT, () =>
-console.log("T.A.R.A. running on port " + PORT)
-);
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log("Server running on port " + PORT);
+});
