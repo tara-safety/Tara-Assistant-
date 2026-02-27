@@ -2,196 +2,293 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>T.A.R.A. Safety Assistant</title>
+<title>T.A.R.A Safety Assistant</title>
+
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: black;
-  color: white;
-  text-align: center;
-  padding: 40px;
+
+body{
+background:#070b14;
+color:white;
+font-family:Arial, sans-serif;
+text-align:center;
+margin:0;
+padding:0;
 }
 
-#chat {
-  width: 450px;
-  margin: 0 auto;
-  max-height: 500px;
-  overflow-y: auto;
-  border: 2px solid orange;
-  padding: 10px;
-  background: #111;
-  border-radius: 10px;
+/* HEADER */
+h1{
+margin-top:20px;
+color:#00ffc3;
 }
 
-.chat-message {
-  display: flex;
-  align-items: flex-start;
-  margin: 10px 0;
-  padding: 10px;
-  border-radius: 8px;
-  max-width: 80%;
-  word-wrap: break-word;
+/* AVATAR */
+#avatar{
+width:180px;
+margin:15px auto;
+display:block;
+border-radius:20px;
+transition:0.15s;
 }
 
-.user {
-  background: orange;
-  color: black;
-  margin-left: auto;
-  justify-content: flex-end;
-  text-align: right;
+/* glowing ring when speaking */
+#avatar.speaking{
+box-shadow:0 0 50px #00ffc3;
+transform:scale(1.05);
 }
 
-<
-  
-
-  .tara {
-  background: #222;
-  color: white;
-  margin-right: auto;
-  justify-content: flex-start;
-  text-align: left;
+/* mouth pulse effect */
+#avatar.talking{
+animation:mouthPulse 0.25s infinite alternate;
 }
 
-.tara img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-right: 10px;
+@keyframes mouthPulse{
+from{
+transform:scale(1.05);
+filter:brightness(1);
+}
+to{
+transform:scale(1.1);
+filter:brightness(1.4);
+}
 }
 
-input {
-  width: 300px;
-  padding: 10px;
-  font-size: 16px;
+/* CHAT BOX */
+#chat{
+height:420px;
+max-width:500px;
+margin:15px auto;
+padding:15px;
+background:#0f172a;
+border-radius:12px;
+overflow-y:auto;
+text-align:left;
 }
 
-button {
-  padding: 10px 15px;
-  background: orange;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
+/* INPUT */
+#question{
+width:60%;
+padding:14px;
+font-size:16px;
+border-radius:8px;
+border:none;
+margin-top:10px;
 }
 
-button:hover {
-  opacity: 0.9;
+/* BUTTONS */
+button{
+padding:14px 20px;
+font-size:16px;
+margin:5px;
+border:none;
+border-radius:8px;
+cursor:pointer;
 }
+
+#askBtn{
+background:#00ffc3;
+color:black;
+}
+
+#voiceBtn{
+background:#1f2a44;
+color:white;
+}
+
+button:hover{
+opacity:0.85;
+}
+
 </style>
 </head>
+
 <body>
 
-<img id="avatar" src="taralogo.jpg">
-<h1>T.A.R.A.</h1>
+<h1>T.A.R.A</h1>
 <p>Towing and Recovery Assistant</p>
 
+<!-- YOUR LOGO FILE -->
+<img id="avatar" src="taralogo.jpg">
+
+<!-- CHAT -->
 <div id="chat"></div>
 
-<input id="question" placeholder="Ask a safety question">
-<button onclick="ask()">Ask</button>
+<!-- INPUT -->
+<input id="question" placeholder="Ask T.A.R.A about towing safety...">
+
+<br>
+
+<button id="askBtn">Send</button>
+<button id="voiceBtn">🎤 Speak</button>
+
 
 <script>
-const USE_MOCK = true; // Toggle mock responses
-const chat = document.getElementById("chat");
-const questionInput = document.getElementById("question");
 
-// Add message to chat
-function addMessage(text, sender) {
-  const div = document.createElement("div");
-  div.className = `chat-message ${sender}`;
+/* ELEMENTS */
+const chatBox = document.getElementById("chat");
+const input = document.getElementById("question");
+const askBtn = document.getElementById("askBtn");
+const voiceBtn = document.getElementById("voiceBtn");
+const avatar = document.getElementById("avatar");
 
-  if(sender === "tara") {
-    const avatar = document.createElement("img");
-    avatar.src = "https://i.imgur.com/2QO5sPj.png"; // Replace with your T.A.R.A avatar if you want
-    avatar.alt = "T.A.R.A";
-    div.appendChild(avatar);
+let recognition;
+let listening=false;
 
-    const msg = document.createElement("div");
-    msg.innerText = text;
-    div.appendChild(msg);
-  } else {
-    div.innerText = text;
-  }
 
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-  return div;
+/* ADD MESSAGE */
+function addMessage(sender,text){
+
+const msg=document.createElement("div");
+
+msg.style.padding="10px";
+msg.style.margin="8px";
+msg.style.borderRadius="10px";
+msg.style.maxWidth="80%";
+
+if(sender==="user"){
+msg.style.background="#1f2a44";
+msg.style.marginLeft="auto";
+msg.innerText="You: "+text;
+}
+else{
+msg.style.background="#00ffc3";
+msg.style.color="black";
+msg.innerText="T.A.R.A: "+text;
 }
 
-// Update message
-function updateMessage(div, text) {
-  if(div.querySelector("div")) {
-    div.querySelector("div").innerText = text;
-  } else {
-    div.innerText = text;
-  }
+chatBox.appendChild(msg);
+chatBox.scrollTop=chatBox.scrollHeight;
+
 }
 
-// Simulate typing effect
-async function typeAnswer(div, text) {
-  const msgDiv = div.querySelector("div") || div;
-  msgDiv.innerText = "";
-  for(let i=0;i<text.length;i++){
-    msgDiv.innerText += text[i];
-    await sleep(15);
-  }
+
+/* SPEAK */
+function speak(text){
+
+speechSynthesis.cancel();
+
+const utter=new SpeechSynthesisUtterance(text);
+
+utter.rate=1;
+utter.pitch=1;
+
+utter.onstart=()=>{
+avatar.classList.add("speaking");
+avatar.classList.add("talking");
+};
+
+utter.onend=()=>{
+avatar.classList.remove("speaking");
+avatar.classList.remove("talking");
+};
+
+speechSynthesis.speak(utter);
+
 }
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
-// Ask function
-async function ask() {
-  const question = questionInput.value.trim();
-  if(!question) return;
+/* ASK SERVER */
+async function ask(){
 
-  // Add user message
-  addMessage(question, "user");
-  questionInput.value = "";
+const question=input.value.trim();
 
-  // Add typing animation for T.A.R.A.
-  const thinkingDiv = addMessage("T.A.R.A. is typing...", "tara");
+if(!question) return;
 
-  try {
-    let answer = "";
+addMessage("user",question);
 
-    if(USE_MOCK) {
-      const q = question.toLowerCase();
-      if(q.includes("ev") || q.includes("electric vehicle")) {
-        answer = "For towing an EV, always disconnect the battery, use a flatbed truck if possible, and follow the manufacturer’s guidelines.";
-      } else if(q.includes("flat tire")) {
-        answer = "To handle a flat tire safely, pull off the road, engage hazard lights, and use wheel chocks before changing or towing the tire.";
-      } else if(q.includes("recovery") || q.includes("stuck")) {
-        answer = "When recovering a stuck vehicle, use proper tow straps, anchor points, and avoid standing directly behind or in line with the vehicle.";
-      } else if(q.includes("chains") || q.includes("tie down")) {
-        answer = "Always secure vehicles with rated chains or straps and check tension before transport.";
-      } else {
-        answer = "Remember: safety first! Always assess the scene, use proper equipment, and follow standard towing procedures.";
-      }
-    } else {
-      const res = await fetch("/ask",{
-        method:"POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({question})
-      });
-      const data = await res.json();
-      answer = data.answer;
-    }
+input.value="";
 
-    await typeAnswer(thinkingDiv, answer);
+try{
 
-  } catch(err) {
-    updateMessage(thinkingDiv, "Error contacting T.A.R.A.");
-    console.error(err);
-  }
-
-  chat.scrollTop = chat.scrollHeight;
-}
-
-// Press Enter to send
-questionInput.addEventListener("keyup", (e) => {
-  if(e.key === "Enter") ask();
+const res=await fetch("/ask",{
+method:"POST",
+headers:{ "Content-Type":"application/json"},
+body:JSON.stringify({question})
 });
+
+const data=await res.json();
+
+addMessage("tara",data.answer);
+
+speak(data.answer);
+
+}
+catch{
+
+const fallback="Ensure EV tow mode is active and use manufacturer approved tow points.";
+
+addMessage("tara",fallback);
+
+speak(fallback);
+
+}
+
+}
+
+
+/* BUTTON */
+askBtn.onclick=ask;
+
+
+/* ENTER KEY */
+input.addEventListener("keydown",function(e){
+
+if(e.key==="Enter") ask();
+
+});
+
+
+/* VOICE */
+
+if("webkitSpeechRecognition" in window){
+
+recognition=new webkitSpeechRecognition();
+
+recognition.continuous=false;
+recognition.interimResults=false;
+recognition.lang="en-US";
+
+recognition.onresult=(event)=>{
+
+const text=event.results[0][0].transcript;
+
+input.value=text;
+
+ask();
+
+};
+
+recognition.onend=()=>{
+
+listening=false;
+voiceBtn.innerText="🎤 Speak";
+
+};
+
+voiceBtn.onclick=()=>{
+
+if(listening){
+
+recognition.stop();
+
+listening=false;
+
+voiceBtn.innerText="🎤 Speak";
+
+}
+else{
+
+recognition.start();
+
+listening=true;
+
+voiceBtn.innerText="🛑 Stop";
+
+}
+
+};
+
+}
+
 </script>
 
 </body>
