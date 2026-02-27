@@ -1,3 +1,18 @@
+let audioUnlocked = false;
+
+document.addEventListener("click", () => {
+
+if(!audioUnlocked){
+
+speechSynthesis.speak(
+new SpeechSynthesisUtterance(" ")
+);
+
+audioUnlocked = true;
+
+}
+
+});
 const chatBox = document.getElementById("chat");
 const input = document.getElementById("question");
 const askBtn = document.getElementById("askBtn");
