@@ -29,25 +29,22 @@ function addMessage(text, sender){
 }
 
 
-function speak(text) {
+function speak(text){
 
-  const utterance = new SpeechSynthesisUtterance(text);
+    speechSynthesis.cancel();
 
-  const logo = document.getElementById("logo");
+    const utter = new SpeechSynthesisUtterance(text);
 
-  utterance.onstart = () => {
+    utter.rate = 1;
+    utter.pitch = 1;
 
-    logo.classList.add("talking");
+    avatar.classList.add("talking");
 
-  };
+    utter.onend = function(){
+        avatar.classList.remove("talking");
+    };
 
-  utterance.onend = () => {
-
-    logo.classList.remove("talking");
-
-  };
-
-  speechSynthesis.speak(utterance);
+    speechSynthesis.speak(utter);
 
 }
 
