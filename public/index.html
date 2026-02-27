@@ -8,196 +8,164 @@
 <style>
 
 body{
-background:#04060d;
-color:white;
-font-family:Arial;
-text-align:center;
-margin:0;
+    background:#04060d;
+    color:white;
+    font-family:Arial;
+    text-align:center;
+    margin:0;
 }
+
 
 /* AVATAR */
 
 #avatarContainer{
-
-margin-top:25px;
-
-position:relative;
-
+    margin-top:25px;
+    position:relative;
 }
 
 #avatar{
-
-width:200px;
-
-border-radius:50%;
-
+    width:220px;
+    border-radius:50%;
+    z-index:2;
+    position:relative;
 }
+
+/* glowing ring */
 
 #ring{
-
-position:absolute;
-
-top:50%;
-
-left:50%;
-
-transform:translate(-50%,-50%);
-
-width:240px;
-
-height:240px;
-
-border-radius:50%;
-
-border:3px solid #00ffc3;
-
-opacity:.4;
-
-animation:pulse 4s infinite;
-
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:260px;
+    height:260px;
+    border-radius:50%;
+    border:3px solid #00ffc3;
+    opacity:.35;
+    animation:pulse 4s infinite;
 }
+
+/* talking state */
 
 .talking{
-
-animation:talk .6s infinite alternate;
-
+    animation:talk 0.35s infinite alternate;
+    opacity:.9;
 }
+
+/* subtle idle */
 
 @keyframes pulse{
-
-0%{transform:translate(-50%,-50%) scale(1);}
-50%{transform:translate(-50%,-50%) scale(1.05);}
-100%{transform:translate(-50%,-50%) scale(1);}
-
+    0%{transform:translate(-50%,-50%) scale(1);}
+    50%{transform:translate(-50%,-50%) scale(1.05);}
+    100%{transform:translate(-50%,-50%) scale(1);}
 }
 
+/* faster talking pulse */
+
 @keyframes talk{
-
-from{transform:translate(-50%,-50%) scale(1);}
-to{transform:translate(-50%,-50%) scale(1.15);}
-
+    from{
+        transform:translate(-50%,-50%) scale(1);
+        border-color:#00ffc3;
+    }
+    to{
+        transform:translate(-50%,-50%) scale(1.18);
+        border-color:#ffffff;
+    }
 }
 
 
 /* CHAT */
 
 #chat{
-
-height:420px;
-
-max-width:600px;
-
-margin:20px auto;
-
-background:#0c1220;
-
-padding:15px;
-
-border-radius:10px;
-
-overflow-y:auto;
-
-text-align:left;
-
+    height:420px;
+    max-width:600px;
+    margin:20px auto;
+    background:#0c1220;
+    padding:15px;
+    border-radius:10px;
+    overflow-y:auto;
+    text-align:left;
 }
-
 
 .user{
-
-background:#1b2540;
-
-padding:12px;
-
-margin:8px;
-
-border-radius:8px;
-
+    background:#1b2540;
+    padding:12px;
+    margin:8px;
+    border-radius:8px;
 }
-
 
 .tara{
-
-background:#00ffc3;
-
-color:black;
-
-padding:12px;
-
-margin:8px;
-
-border-radius:8px;
-
+    background:#00ffc3;
+    color:black;
+    padding:12px;
+    margin:8px;
+    border-radius:8px;
 }
 
 
-/* INPUT */
+/* INPUT AREA */
+
+#inputArea{
+    margin-top:10px;
+}
 
 #question{
+    width:70%;
+    padding:16px;
+    font-size:17px;
+    border-radius:8px;
+    border:none;
+}
 
-width:60%;
 
-padding:14px;
+/* BUTTONS under input */
 
-font-size:16px;
-
-border-radius:6px;
-
-border:none;
-
+#buttons{
+    margin-top:10px;
 }
 
 button{
-
-padding:14px 20px;
-
-font-size:16px;
-
-margin:5px;
-
-border:none;
-
-border-radius:6px;
-
-cursor:pointer;
-
+    padding:14px 26px;
+    font-size:16px;
+    margin:6px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
 }
 
 #askBtn{
-
-background:#00ffc3;
-
+    background:#00ffc3;
 }
 
 #voiceBtn{
-
-background:orange;
-
+    background:orange;
 }
 
 
 /* LOGO */
 
 #logo{
+    width:150px;
+    margin-top:20px;
+}
 
-width:130px;
 
-margin-top:20px;
+/* POWERED TEXT */
 
+#powered{
+    font-size:18px;
+    font-weight:bold;
+    margin-top:10px;
 }
 
 
 /* COPYRIGHT */
 
 #copyright{
-
-font-size:12px;
-
-opacity:.6;
-
-margin-top:30px;
-
-margin-bottom:10px;
-
+    font-size:11px;
+    opacity:.6;
+    margin-top:25px;
+    margin-bottom:10px;
 }
 
 </style>
@@ -223,26 +191,32 @@ margin-bottom:10px;
 
 
 
+<div id="inputArea">
+
 <input id="question" placeholder="Ask T.A.R.A about towing safety">
 
-<br>
+<div id="buttons">
 
 <button id="askBtn">Send</button>
 
 <button id="voiceBtn">🎤 Speak</button>
+
+</div>
+
+</div>
 
 
 
 <img id="logo" src="taralogo.jpg">
 
 
+<div id="powered">
+Powered by Safety Intelligence
+</div>
+
 
 <div id="copyright">
-
-Powered by Safety Intelligence<br>
-Test Prototype — In Development<br>
 © Safety Buzz Alerts. All rights reserved.
-
 </div>
 
 
@@ -254,11 +228,11 @@ const input=document.getElementById("question");
 const ring=document.getElementById("ring");
 
 
-function add(text,cls){
+function add(text,type){
 
 const div=document.createElement("div");
 
-div.className=cls;
+div.className=type;
 
 div.innerText=text;
 
@@ -271,13 +245,24 @@ chat.scrollTop=chat.scrollHeight;
 
 function speak(text){
 
-const s=new SpeechSynthesisUtterance(text);
+const speech=new SpeechSynthesisUtterance(text);
 
-s.onstart=()=>ring.classList.add("talking");
+speech.rate=.95;
 
-s.onend=()=>ring.classList.remove("talking");
+/* start mouth */
 
-speechSynthesis.speak(s);
+speech.onstart=()=>{
+ring.classList.add("talking");
+};
+
+/* stop mouth */
+
+speech.onend=()=>{
+ring.classList.remove("talking");
+};
+
+speechSynthesis.cancel();
+speechSynthesis.speak(speech);
 
 }
 
@@ -292,23 +277,24 @@ add("You: "+q,"user");
 
 input.value="";
 
-
 add("T.A.R.A is analyzing...","tara");
 
+
+try{
 
 const res=await fetch("/ask",{
 
 method:"POST",
 
-headers:{"Content-Type":"application/json"},
+headers:{
+"Content-Type":"application/json"
+},
 
 body:JSON.stringify({question:q})
 
 });
 
-
 const data=await res.json();
-
 
 chat.lastChild.remove();
 
@@ -317,21 +303,36 @@ add("T.A.R.A: "+data.answer,"tara");
 speak(data.answer);
 
 }
+catch{
+
+chat.lastChild.remove();
+
+const fallback="Check tow points, secure vehicle, and follow manufacturer safety procedures.";
+
+add("T.A.R.A: "+fallback,"tara");
+
+speak(fallback);
+
+}
+
+}
 
 
 askBtn.onclick=ask;
 
 
 input.addEventListener("keypress",e=>{
-
 if(e.key==="Enter")ask();
-
 });
 
+
+/* VOICE INPUT */
 
 if("webkitSpeechRecognition"in window){
 
 const rec=new webkitSpeechRecognition();
+
+rec.continuous=false;
 
 rec.onresult=e=>{
 
@@ -342,6 +343,11 @@ ask();
 };
 
 voiceBtn.onclick=()=>rec.start();
+
+}
+else{
+
+voiceBtn.style.display="none";
 
 }
 
