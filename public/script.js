@@ -54,6 +54,26 @@ chatBox.appendChild(msg);
 
 }
 
+function typeText(element,text){
+
+let i=0;
+
+const interval=setInterval(()=>{
+
+element.innerText=text.substring(0,i);
+
+i++;
+
+if(i>text.length){
+
+clearInterval(interval);
+
+}
+
+},15);
+
+}
+
 function speak(text){
 
 if(!("speechSynthesis" in window)) return;
