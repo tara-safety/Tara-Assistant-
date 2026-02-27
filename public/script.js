@@ -1,210 +1,152 @@
-let audioUnlocked = false;
-
-document.addEventListener("click", () => {
-
-if(!audioUnlocked){
-
-speechSynthesis.speak(
-new SpeechSynthesisUtterance(" ")
-);
-
-audioUnlocked = true;
-
-}
-
-});
-const chatBox = document.getElementById("chat");
+const chat = document.getElementById("chat");
 const input = document.getElementById("question");
 const askBtn = document.getElementById("askBtn");
 const voiceBtn = document.getElementById("voiceBtn");
 const avatar = document.getElementById("avatar");
 
-let recognition = null;
-let listening = false;
-let speaking = false;
+let recognizing = false;
+let recognition;
 
-speechSynthesis.onvoiceschanged = () => {};
-
+/* add message */
 function addMessage(sender,text){
 
-const msg=document.createElement("div");
-
-msg.style.padding="10px";
-msg.style.margin="8px";
-msg.style.borderRadius="10px";
-msg.style.maxWidth="85%";
-msg.style.whiteSpace="pre-wrap";
-msg.style.wordBreak="break-word";
+const div=document.createElement("div");
 
 if(sender==="user"){
-msg.style.background="#1f2a44";
-msg.style.marginLeft="auto";
-msg.innerText="You: "+text;
+div.className="user";
+div.innerText="You: "+text;
 }
 else{
-
-msg.style.background="#00ffc3";
-msg.style.color="black";
-
-typeText(msg,"T.A.R.A: "+text);
-
+div.className="tara";
+div.innerText="TARA: "+text;
 }
 
-chatBox.appendChild(msg);
+chat.appendChild(div);
 
+chat.scrollTop=chat.scrollHeight;
 }
 
-function typeText(element,text){
-
-let i=0;
-
-const interval=setInterval(()=>{
-
-element.innerText=text.substring(0,i);
-
-i++;
-
-if(i>text.length){
-
-clearInterval(interval);
-
+/* avatar talk animation */
+function startTalking(){
+avatar.classList.add("talking");
 }
 
-},15);
-
+function stopTalking(){
+avatar.classList.remove("talking");
 }
 
+/* voice speak */
 function speak(text){
 
-if(!audioUnlocked) return;
-
-speechSynthesis.cancel();
+if(!("speechSynthesis" in window)) return;
 
 const utter=new SpeechSynthesisUtterance(text);
 
 utter.rate=1;
 utter.pitch=1;
-utter.volume=1;
 
-utter.onstart=()=>{
-avatar.classList.add("speaking");
-avatar.classList.add("talking");
-};
-
-utter.onend=()=>{
-avatar.classList.remove("speaking");
-avatar.classList.remove("talking");
-};
+utter.onstart=startTalking;
+utter.onend=stopTalking;
 
 speechSynthesis.speak(utter);
-
-function startTalking(){
-
-document.getElementById("ring").style.boxShadow =
-"0 0 60px #00ffc3";
-
 }
 
-function stopTalking(){
-
-document.getElementById("ring").style.boxShadow =
-"0 0 30px #00ffc3";
-
-}
-
+/* ask tara */
 async function ask(){
 
-const question = input.value.trim();
+const question=input.value.trim();
 
 if(!question) return;
 
-addMessage("user", question);
+addMessage("user",question);
 
-input.value = "";
+input.value="";
+
+startTalking();
 
 try{
 
-const res = await fetch("/ask",{
+const res=await fetch("/ask",{
 method:"POST",
-headers:{ "Content-Type":"application/json" },
-body:JSON.stringify({ question })
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({question})
 });
 
-const data = await res.json();
+const data=await res.json();
 
-addMessage("tara", data.answer);
+const answer=data.answer || "No response";
 
-speak(data.answer);
+addMessage("tara",answer);
 
-}catch{
+speak(answer);
 
-const fallback =
-"Always verify EV tow mode, use approved tow points, and secure the vehicle properly.";
+}
+catch{
 
-addMessage("tara", fallback);
+const fallback="Ensure vehicle is secure, use manufacturer tow points, and follow proper towing procedures.";
+
+addMessage("tara",fallback);
 
 speak(fallback);
 
 }
 
+stopTalking();
+
 }
 
-askBtn.onclick = ask;
+/* send button */
+askBtn.onclick=ask;
 
-input.addEventListener("keydown", function(e){
-if(e.key === "Enter") ask();
+/* enter key */
+input.addEventListener("keydown",(e)=>{
+if(e.key==="Enter") ask();
 });
 
 
-/* VOICE RECOGNITION */
-
+/* voice recognition */
 if("webkitSpeechRecognition" in window){
 
-recognition = new webkitSpeechRecognition();
+recognition=new webkitSpeechRecognition();
 
-recognition.continuous = false;
-recognition.interimResults = false;
-recognition.lang = "en-US";
+recognition.continuous=false;
+recognition.interimResults=false;
+recognition.lang="en-US";
 
-recognition.onresult = function(event){
+recognition.onresult=(e)=>{
 
-const text = event.results[0][0].transcript;
+const text=e.results[0][0].transcript;
 
-input.value = text;
+input.value=text;
 
 ask();
 
 };
 
-recognition.onend = function(){
-
-listening = false;
-
-voiceBtn.innerText = "🎤 Speak";
-
+recognition.onend=()=>{
+recognizing=false;
+voiceBtn.innerText="🎤 Speak";
 };
 
 }
 
-voiceBtn.onclick = function(){
+voiceBtn.onclick=()=>{
 
 if(!recognition) return;
 
-if(listening){
+if(recognizing){
 
 recognition.stop();
-
-listening = false;
-
-voiceBtn.innerText = "🎤 Speak";
+recognizing=false;
+voiceBtn.innerText="🎤 Speak";
 
 }else{
 
 recognition.start();
-
-listening = true;
-
-voiceBtn.innerText = "🛑 Stop";
+recognizing=true;
+voiceBtn.innerText="■ Stop";
 
 }
 
