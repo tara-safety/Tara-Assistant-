@@ -1,127 +1,126 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>T.A.R.A Safety AI</title>
+<title>T.A.R.A Safety Assistant</title>
 
 <style>
 
 body{
-    background:#0b0f14;
-    font-family:Arial, Helvetica, sans-serif;
-    color:white;
-    text-align:center;
+font-family:Arial;
+background:#06121c;
+color:white;
+text-align:center;
+margin:0;
+padding:0;
 }
 
-/* AVATAR */
+/* container */
+.container{
+max-width:500px;
+margin:auto;
+padding:15px;
+}
 
+/* LOGO */
 #avatar{
-    width:180px;
-    margin-top:20px;
-    border-radius:12px;
-    box-shadow:0 0 20px #00eaff;
-    transition:all 0.2s ease;
+width:200px;
+margin-top:20px;
+border-radius:20px;
+box-shadow:0 0 40px #00ffc3;
+transition:all 0.4s;
 }
 
+/* glow while speaking */
+#avatar.speaking{
+box-shadow:0 0 70px #00ffc3;
+}
+
+/* mouth pulse */
 #avatar.talking{
-    animation:pulse 0.35s infinite;
-    box-shadow:0 0 40px #00eaff;
+animation:talk 1s infinite;
 }
 
-@keyframes pulse{
-    0%{transform:scale(1);}
-    50%{transform:scale(1.08);}
-    100%{transform:scale(1);}
+@keyframes talk{
+0%{transform:scale(1);}
+50%{transform:scale(1.05);}
+100%{transform:scale(1);}
 }
-
-/* TITLE */
 
 h1{
-    color:#00eaff;
-    margin-bottom:5px;
+color:#00ffc3;
+margin-bottom:5px;
 }
 
-#subtitle{
-    color:#7a8a99;
-    margin-bottom:20px;
+.subtitle{
+color:#8aa;
+margin-bottom:15px;
 }
 
-/* CHAT BOX */
-
+/* chat box */
 #chat{
-    width:420px;
-    height:420px;
-    margin:auto;
-    background:#111820;
-    border-radius:12px;
-    padding:15px;
-    overflow-y:auto;
-    text-align:left;
-    box-shadow:0 0 10px #000;
+height:350px;
+background:#0b1a2a;
+border-radius:15px;
+padding:15px;
+overflow-y:auto;
+text-align:left;
 }
 
-.message{
-    margin-bottom:10px;
-}
-
-.user{
-    color:#4fd1ff;
-}
-
-.tara{
-    color:#00ffa6;
-}
-
-/* INPUT */
-
-#controls{
-    margin-top:15px;
-}
-
+/* input */
 #question{
-    width:300px;
-    height:40px;
-    font-size:16px;
-    border-radius:8px;
-    border:none;
-    padding-left:10px;
+width:60%;
+padding:12px;
+border-radius:10px;
+border:none;
+font-size:16px;
 }
 
+/* buttons */
 button{
-    height:44px;
-    font-size:16px;
-    border:none;
-    border-radius:8px;
-    margin-left:5px;
-    padding:0 15px;
-    cursor:pointer;
+padding:12px 18px;
+margin:5px;
+border:none;
+border-radius:10px;
+font-size:16px;
+cursor:pointer;
 }
 
 #askBtn{
-    background:#005a70;
-    color:white;
+background:#008c9e;
+color:white;
 }
 
 #voiceBtn{
-    background:#00eaff;
+background:#00ffc3;
+color:black;
 }
 
-button:hover{
-    opacity:0.8;
+/* footer */
+.footer{
+margin-top:15px;
+color:#7a8a99;
+font-size:14px;
 }
 
 </style>
 </head>
+
 <body>
+
+<div class="container">
 
 <img id="avatar" src="taralogo.jpg">
 
 <h1>T.A.R.A</h1>
-<div id="subtitle">Towing Awareness & Risk Assistant</div>
+
+<div class="subtitle">
+Towing Awareness & Risk Assistant
+</div>
 
 <div id="chat"></div>
 
-<div id="controls">
+<br>
 
 <input id="question" placeholder="Ask T.A.R.A about towing safety...">
 
@@ -129,181 +128,182 @@ button:hover{
 
 <button id="voiceBtn">🎤 Speak</button>
 
+<div class="footer">
+Powered by Safety Intelligence<br>
+This is our test prototype and my dad is still working on me
+</div>
+
 </div>
 
 <script>
 
-const chat = document.getElementById("chat");
-const input = document.getElementById("question");
-const avatar = document.getElementById("avatar");
+/* ELEMENTS */
+const chat=document.getElementById("chat");
+const input=document.getElementById("question");
+const askBtn=document.getElementById("askBtn");
+const voiceBtn=document.getElementById("voiceBtn");
+const avatar=document.getElementById("avatar");
 
-let listening = false;
-let recognition;
+let recognition=null;
+let listening=false;
 
-/* ADD MESSAGE */
-
-function addMessage(text, className){
-
-    const div=document.createElement("div");
-    div.className="message "+className;
-    div.innerText=text;
-
-    chat.appendChild(div);
-    chat.scrollTop=chat.scrollHeight;
-
+/* AUTO SCROLL */
+function scrollBottom(){
+chat.scrollTop=chat.scrollHeight;
 }
 
-/* TYPING EFFECT */
-
+/* TYPE EFFECT */
 function typeMessage(text){
 
-    const div=document.createElement("div");
-    div.className="message tara";
-    chat.appendChild(div);
+const msg=document.createElement("div");
 
-    let i=0;
+msg.style.margin="10px";
+msg.style.padding="10px";
+msg.style.background="#00ffc3";
+msg.style.color="black";
+msg.style.borderRadius="10px";
 
-    function typing(){
+chat.appendChild(msg);
 
-        if(i<text.length){
+let i=0;
 
-            div.innerText+=text.charAt(i);
-            i++;
+const interval=setInterval(()=>{
 
-            chat.scrollTop=chat.scrollHeight;
+msg.innerText="T.A.R.A: "+text.substring(0,i);
 
-            setTimeout(typing,20);
+scrollBottom();
 
-        }
-        else{
-            speak(text);
-        }
+i++;
 
-    }
+if(i>text.length){
+clearInterval(interval);
+speak(text);
+}
 
-    typing();
+},20);
 
 }
 
-/* SPEAK */
+/* USER MESSAGE */
+function addUser(text){
 
+const msg=document.createElement("div");
+
+msg.style.margin="10px";
+msg.style.padding="10px";
+msg.style.background="#1f2a44";
+msg.style.borderRadius="10px";
+
+msg.innerText="You: "+text;
+
+chat.appendChild(msg);
+
+scrollBottom();
+
+}
+
+/* VOICE SPEAK */
 function speak(text){
 
-    const utter=new SpeechSynthesisUtterance(text);
+if(!window.speechSynthesis) return;
 
-    avatar.classList.add("talking");
+speechSynthesis.cancel();
 
-    utter.onend=()=>{
-        avatar.classList.remove("talking");
-    };
+const utter=new SpeechSynthesisUtterance(text);
 
-    speechSynthesis.speak(utter);
+utter.rate=0.95;
+
+utter.onstart=()=>{
+avatar.classList.add("speaking");
+avatar.classList.add("talking");
+};
+
+utter.onend=()=>{
+avatar.classList.remove("speaking");
+avatar.classList.remove("talking");
+};
+
+speechSynthesis.speak(utter);
 
 }
 
-/* SEND QUESTION */
+/* ASK FUNCTION */
+async function ask(){
 
-async function sendQuestion(){
+const question=input.value.trim();
 
-    const question=input.value;
+if(!question) return;
 
-    if(!question) return;
+addUser(question);
 
-    addMessage("You: "+question,"user");
+input.value="";
 
-    input.value="";
+/* MOCK RESPONSE */
+let answer="Ensure vehicle is secured, use manufacturer approved tow points, and use a flatbed when required.";
 
-    try{
-
-        const res=await fetch("/ask",{
-
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({question})
-
-        });
-
-        const data=await res.json();
-
-        typeMessage("TARA: "+data.answer);
-
-    }
-    catch(err){
-
-        typeMessage("TARA: Connection error.");
-
-    }
+typeMessage(answer);
 
 }
 
 /* BUTTON */
-
-document.getElementById("askBtn").onclick=sendQuestion;
+askBtn.onclick=ask;
 
 /* ENTER KEY */
+input.addEventListener("keydown",e=>{
 
-input.addEventListener("keypress",function(e){
-
-    if(e.key==="Enter"){
-        sendQuestion();
-    }
+if(e.key==="Enter"){
+ask();
+}
 
 });
 
-/* VOICE INPUT */
+/* VOICE RECOGNITION */
 
-if('webkitSpeechRecognition' in window){
+if("webkitSpeechRecognition" in window){
 
-    recognition=new webkitSpeechRecognition();
+recognition=new webkitSpeechRecognition();
 
-    recognition.continuous=false;
-    recognition.interimResults=false;
-    recognition.lang="en-US";
+recognition.continuous=false;
 
-    recognition.onresult=function(event){
+recognition.interimResults=false;
 
-        const text=event.results[0][0].transcript;
+recognition.lang="en-US";
 
-        input.value=text;
+recognition.onresult=e=>{
 
-        sendQuestion();
+const text=e.results[0][0].transcript;
 
-    };
+input.value=text;
 
-    recognition.onend=function(){
+ask();
 
-        listening=false;
+};
 
-        document.getElementById("voiceBtn").innerText="🎤 Speak";
-
-    };
+recognition.onend=()=>{
+listening=false;
+voiceBtn.innerText="🎤 Speak";
+};
 
 }
 
-document.getElementById("voiceBtn").onclick=function(){
+/* MIC BUTTON */
+voiceBtn.onclick=()=>{
 
-    if(!recognition) return;
+if(!recognition) return;
 
-    if(listening){
+if(listening){
 
-        recognition.stop();
+recognition.stop();
+listening=false;
+voiceBtn.innerText="🎤 Speak";
 
-        listening=false;
+}else{
 
-        this.innerText="🎤 Speak";
+recognition.start();
+listening=true;
+voiceBtn.innerText="■ Stop";
 
-    }
-    else{
-
-        recognition.start();
-
-        listening=true;
-
-        this.innerText="🛑 Stop";
-
-    }
+}
 
 };
 
