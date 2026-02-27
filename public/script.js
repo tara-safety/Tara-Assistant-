@@ -1,112 +1,158 @@
+const chatBox = document.getElementById("chat");
+const input = document.getElementById("question");
 const askBtn = document.getElementById("askBtn");
 const voiceBtn = document.getElementById("voiceBtn");
-const input = document.getElementById("question");
-const chatBox = document.getElementById("answer");
 const avatar = document.getElementById("avatar");
 
+let recognition = null;
+let listening = false;
+let speaking = false;
 
-function addMessage(text, sender){
+function addMessage(sender, text){
 
-    const msg = document.createElement("div");
+const msg = document.createElement("div");
 
-    msg.style.margin="8px";
-    msg.style.padding="10px";
-    msg.style.borderRadius="8px";
+msg.style.margin = "10px";
+msg.style.padding = "12px";
+msg.style.borderRadius = "10px";
+msg.style.maxWidth = "80%";
 
-    if(sender==="user"){
-        msg.style.background="#1f2a44";
-        msg.innerText="You: "+text;
-    }else{
-        msg.style.background="#00ffc3";
-        msg.style.color="black";
-        msg.innerText="T.A.R.A: "+text;
-    }
-
-    chatBox.appendChild(msg);
-
-    chatBox.scrollTop = chatBox.scrollHeight;
-
+if(sender === "user"){
+msg.style.background = "#1f2a44";
+msg.style.marginLeft = "auto";
+msg.innerText = "You: " + text;
+}else{
+msg.style.background = "#00ffc3";
+msg.style.color = "#000";
+msg.style.marginRight = "auto";
+msg.innerText = "T.A.R.A.: " + text;
 }
 
+chatBox.appendChild(msg);
+chatBox.scrollTop = chatBox.scrollHeight;
+
+}
 
 function speak(text){
 
-    speechSynthesis.cancel();
+if(!("speechSynthesis" in window)) return;
 
-    const utter = new SpeechSynthesisUtterance(text);
+speechSynthesis.cancel();
 
-    utter.rate = 1;
-    utter.pitch = 1;
+const utter = new SpeechSynthesisUtterance(text);
 
-    avatar.classList.add("talking");
+utter.rate = 1;
+utter.pitch = 1;
+utter.volume = 1;
 
-    utter.onend = function(){
-        avatar.classList.remove("talking");
-    };
+utter.onstart = () => {
+avatar.classList.add("speaking");
+speaking = true;
+};
 
-    speechSynthesis.speak(utter);
+utter.onend = () => {
+avatar.classList.remove("speaking");
+speaking = false;
+};
+
+speechSynthesis.speak(utter);
 
 }
 
-/* SEND BUTTON */
-askBtn.addEventListener("click", ask);
+async function ask(){
 
+const question = input.value.trim();
 
-/* ENTER KEY */
+if(!question) return;
+
+addMessage("user", question);
+
+input.value = "";
+
+try{
+
+const res = await fetch("/ask",{
+method:"POST",
+headers:{ "Content-Type":"application/json" },
+body:JSON.stringify({ question })
+});
+
+const data = await res.json();
+
+addMessage("tara", data.answer);
+
+speak(data.answer);
+
+}catch{
+
+const fallback =
+"Always verify EV tow mode, use approved tow points, and secure the vehicle properly.";
+
+addMessage("tara", fallback);
+
+speak(fallback);
+
+}
+
+}
+
+askBtn.onclick = ask;
+
 input.addEventListener("keydown", function(e){
-
-    if(e.key==="Enter"){
-        ask();
-    }
-
+if(e.key === "Enter") ask();
 });
 
 
-/* VOICE INPUT */
-const micBtn = document.getElementById("micBtn");
+/* VOICE RECOGNITION */
 
-let listening = false;
+if("webkitSpeechRecognition" in window){
 
-const SpeechRecognition =
-  window.SpeechRecognition || window.webkitSpeechRecognition;
-
-const recognition = new SpeechRecognition();
+recognition = new webkitSpeechRecognition();
 
 recognition.continuous = false;
 recognition.interimResults = false;
 recognition.lang = "en-US";
 
-micBtn.onclick = () => {
+recognition.onresult = function(event){
 
-  if (!listening) {
+const text = event.results[0][0].transcript;
 
-    recognition.start();
-    listening = true;
-    micBtn.innerText = "🛑";
+input.value = text;
 
-  } else {
-
-    recognition.stop();
-    listening = false;
-    micBtn.innerText = "🎤";
-
-  }
+ask();
 
 };
 
-recognition.onresult = async (event) => {
+recognition.onend = function(){
 
-  const text = event.results[0][0].transcript;
+listening = false;
 
-  document.getElementById("question").value = text;
-
-  sendQuestion();
+voiceBtn.innerText = "🎤 Speak";
 
 };
 
-recognition.onend = () => {
+}
 
-  listening = false;
-  micBtn.innerText = "🎤";
+voiceBtn.onclick = function(){
+
+if(!recognition) return;
+
+if(listening){
+
+recognition.stop();
+
+listening = false;
+
+voiceBtn.innerText = "🎤 Speak";
+
+}else{
+
+recognition.start();
+
+listening = true;
+
+voiceBtn.innerText = "🛑 Stop";
+
+}
 
 };
