@@ -98,6 +98,18 @@ avatar.classList.remove("talking");
 
 speechSynthesis.speak(utter);
 
+function startTalking(){
+
+document.getElementById("ring").style.boxShadow =
+"0 0 60px #00ffc3";
+
+}
+
+function stopTalking(){
+
+document.getElementById("ring").style.boxShadow =
+"0 0 30px #00ffc3";
+
 }
 
 async function ask(){
