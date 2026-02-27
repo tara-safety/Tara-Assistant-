@@ -25,28 +25,32 @@ let speaking = false;
 
 speechSynthesis.onvoiceschanged = () => {};
 
-function addMessage(sender, text){
+function addMessage(sender,text){
 
-const msg = document.createElement("div");
+const msg=document.createElement("div");
 
-msg.style.margin = "10px";
-msg.style.padding = "12px";
-msg.style.borderRadius = "10px";
-msg.style.maxWidth = "80%";
+msg.style.padding="10px";
+msg.style.margin="8px";
+msg.style.borderRadius="10px";
+msg.style.maxWidth="85%";
+msg.style.whiteSpace="pre-wrap";
+msg.style.wordBreak="break-word";
 
-if(sender === "user"){
-msg.style.background = "#1f2a44";
-msg.style.marginLeft = "auto";
-msg.innerText = "You: " + text;
-}else{
-msg.style.background = "#00ffc3";
-msg.style.color = "#000";
-msg.style.marginRight = "auto";
-msg.innerText = "T.A.R.A.: " + text;
+if(sender==="user"){
+msg.style.background="#1f2a44";
+msg.style.marginLeft="auto";
+msg.innerText="You: "+text;
+}
+else{
+
+msg.style.background="#00ffc3";
+msg.style.color="black";
+
+typeText(msg,"T.A.R.A: "+text);
+
 }
 
 chatBox.appendChild(msg);
-chatBox.scrollTop = chatBox.scrollHeight;
 
 }
 
