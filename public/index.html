@@ -2,119 +2,123 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>T.A.R.A Safety Intelligence</title>
+<title>T.A.R.A Safety Assistant</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 
 body{
-font-family: Arial;
-background: linear-gradient(#06121c,#02060b);
-color:white;
-text-align:center;
-margin:0;
-padding:0;
+    font-family:Arial;
+    background:#05070d;
+    color:white;
+    text-align:center;
+    margin:0;
 }
 
-#container{
-max-width:500px;
-margin:auto;
-padding:15px;
+/* AVATAR */
+
+#avatarContainer{
+    margin-top:20px;
 }
 
-/* Talking avatar */
 #avatar{
-width:200px;
-border-radius:20px;
-margin-top:20px;
-box-shadow:0 0 30px #00ffc3;
-animation:pulse 4s infinite;
-}
-
-@keyframes pulse{
-0%{box-shadow:0 0 15px #00ffc3;}
-50%{box-shadow:0 0 35px #00ffc3;}
-100%{box-shadow:0 0 15px #00ffc3;}
+    width:180px;
+    border-radius:50%;
+    box-shadow:0 0 25px #00ffc3;
+    animation:pulse 3s infinite;
 }
 
 .talking{
-animation:talk 0.4s infinite alternate;
+    animation:talkGlow .4s infinite alternate;
 }
 
-@keyframes talk{
-from{transform:scale(1);}
-to{transform:scale(1.05);}
+@keyframes pulse{
+    0%{box-shadow:0 0 15px #00ffc3;}
+    50%{box-shadow:0 0 35px #00ffc3;}
+    100%{box-shadow:0 0 15px #00ffc3;}
 }
 
-h1{
-color:#00ffc3;
-margin:10px;
+@keyframes talkGlow{
+    from{
+        transform:scale(1);
+        box-shadow:0 0 20px #00ffc3;
+    }
+    to{
+        transform:scale(1.05);
+        box-shadow:0 0 45px #00ffc3;
+    }
 }
 
-/* chat */
+/* CHAT */
+
 #chat{
-height:350px;
-background:#0b1622;
-border-radius:15px;
-padding:15px;
-overflow-y:auto;
-margin-top:15px;
-text-align:left;
+    height:420px;
+    max-width:600px;
+    margin:20px auto;
+    background:#0c1220;
+    border-radius:10px;
+    padding:15px;
+    overflow-y:auto;
+    text-align:left;
 }
 
-.user{
-color:#4fc3ff;
-margin-bottom:10px;
+.msgUser{
+    background:#1a2238;
+    padding:10px;
+    margin:8px;
+    border-radius:8px;
 }
 
-.tara{
-color:#00ff9c;
-margin-bottom:15px;
-white-space:pre-wrap;
+.msgTara{
+    background:#00ffc3;
+    color:black;
+    padding:10px;
+    margin:8px;
+    border-radius:8px;
 }
 
-/* input area */
+/* INPUT */
+
 #controls{
-margin-top:10px;
+    margin-top:10px;
 }
 
-input{
-width:60%;
-padding:12px;
-border-radius:10px;
-border:none;
-font-size:16px;
+#question{
+    width:60%;
+    padding:12px;
+    font-size:16px;
+    border-radius:6px;
+    border:none;
 }
 
 button{
-padding:12px 18px;
-border:none;
-border-radius:10px;
-margin:5px;
-font-size:16px;
-cursor:pointer;
+    padding:12px 18px;
+    font-size:16px;
+    margin:5px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
 }
 
 #askBtn{
-background:#008c6a;
-color:white;
+    background:#00ffc3;
 }
 
 #voiceBtn{
-background:#00ffc3;
-color:black;
+    background:#ffaa00;
 }
 
-/* bottom logo */
-#logo{
-width:140px;
-margin-top:20px;
-opacity:0.9;
-}
+/* FOOTER */
 
 #footer{
-margin-top:10px;
-font-size:14px;
-color:#aaa;
+    margin-top:25px;
+    opacity:.7;
+}
+
+#logo{
+    width:140px;
+    margin-top:10px;
 }
 
 </style>
@@ -122,11 +126,11 @@ color:#aaa;
 
 <body>
 
-<div id="container">
+<h2>T.A.R.A Safety Assistant</h2>
 
+<div id="avatarContainer">
 <img id="avatar" src="tara-avatar.png">
-
-<h1>T.A.R.A</h1>
+</div>
 
 <div id="chat"></div>
 
@@ -134,22 +138,197 @@ color:#aaa;
 
 <input id="question" placeholder="Ask T.A.R.A about towing safety...">
 
+<br>
+
 <button id="askBtn">Send</button>
 
 <button id="voiceBtn">🎤 Speak</button>
 
 </div>
 
-<img id="logo" src="taralogo.jpg">
-
 <div id="footer">
+
+<p>
 Powered by Safety Intelligence<br>
 This is our test prototype and my dad is still working on me
-</div>
+</p>
+
+<img id="logo" src="taralogo.jpg">
 
 </div>
 
-<script src="script.js"></script>
+<script>
+
+const chat = document.getElementById("chat");
+const input = document.getElementById("question");
+const askBtn = document.getElementById("askBtn");
+const voiceBtn = document.getElementById("voiceBtn");
+const avatar = document.getElementById("avatar");
+
+let recognizing = false;
+let recognition;
+
+
+/* AUTO SCROLL */
+
+function scrollBottom(){
+
+chat.scrollTop = chat.scrollHeight;
+
+}
+
+
+/* CHAT MESSAGE */
+
+function addMessage(text,type){
+
+const div=document.createElement("div");
+
+div.className = type==="user" ? "msgUser" : "msgTara";
+
+div.innerText=text;
+
+chat.appendChild(div);
+
+scrollBottom();
+
+}
+
+
+/* SPEAK */
+
+function speak(text){
+
+const speech = new SpeechSynthesisUtterance(text);
+
+speech.rate = .95;
+
+speech.onstart=()=>avatar.classList.add("talking");
+
+speech.onend=()=>avatar.classList.remove("talking");
+
+speechSynthesis.speak(speech);
+
+}
+
+
+/* ASK SERVER */
+
+async function ask(){
+
+const question=input.value.trim();
+
+if(!question)return;
+
+addMessage("You: "+question,"user");
+
+input.value="";
+
+try{
+
+const res=await fetch("/ask",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({question})
+
+});
+
+const data=await res.json();
+
+addMessage("T.A.R.A: "+data.answer,"tara");
+
+speak(data.answer);
+
+}
+catch{
+
+const mock="Always verify tow points, secure vehicle, and follow manufacturer procedures.";
+
+addMessage("T.A.R.A: "+mock,"tara");
+
+speak(mock);
+
+}
+
+}
+
+
+/* BUTTON */
+
+askBtn.onclick=ask;
+
+
+/* ENTER KEY */
+
+input.addEventListener("keypress",e=>{
+
+if(e.key==="Enter")ask();
+
+});
+
+
+/* VOICE */
+
+if("webkitSpeechRecognition" in window){
+
+recognition=new webkitSpeechRecognition();
+
+recognition.continuous=false;
+
+recognition.lang="en-US";
+
+recognition.onresult=e=>{
+
+input.value=e.results[0][0].transcript;
+
+ask();
+
+};
+
+recognition.onend=()=>{
+
+recognizing=false;
+
+voiceBtn.innerText="🎤 Speak";
+
+};
+
+voiceBtn.onclick=()=>{
+
+if(recognizing){
+
+recognition.stop();
+
+recognizing=false;
+
+voiceBtn.innerText="🎤 Speak";
+
+}
+else{
+
+recognition.start();
+
+recognizing=true;
+
+voiceBtn.innerText="■ Stop";
+
+}
+
+};
+
+}
+else{
+
+voiceBtn.style.display="none";
+
+}
+
+</script>
 
 </body>
 </html>
