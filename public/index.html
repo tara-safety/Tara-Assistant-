@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <title>T.A.R.A Safety Assistant</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 
 body{
     font-family:Arial;
-    background:#05070d;
+    background:#04060d;
     color:white;
     text-align:center;
     margin:0;
@@ -20,35 +19,52 @@ body{
 
 #avatarContainer{
     margin-top:20px;
+    position:relative;
 }
 
 #avatar{
-    width:180px;
+    width:190px;
     border-radius:50%;
-    box-shadow:0 0 25px #00ffc3;
-    animation:pulse 3s infinite;
+    position:relative;
+    z-index:2;
 }
 
-.talking{
-    animation:talkGlow .4s infinite alternate;
+/* glow ring */
+
+#ring{
+    position:absolute;
+    top:50%;
+    left:50%;
+    width:220px;
+    height:220px;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    border:3px solid #00ffc3;
+    opacity:.4;
+    animation:pulse 4s infinite;
+}
+
+.talkingRing{
+    animation:talkRing .5s infinite alternate;
 }
 
 @keyframes pulse{
-    0%{box-shadow:0 0 15px #00ffc3;}
-    50%{box-shadow:0 0 35px #00ffc3;}
-    100%{box-shadow:0 0 15px #00ffc3;}
+    0%{transform:translate(-50%,-50%) scale(1);}
+    50%{transform:translate(-50%,-50%) scale(1.05);}
+    100%{transform:translate(-50%,-50%) scale(1);}
 }
 
-@keyframes talkGlow{
+@keyframes talkRing{
     from{
-        transform:scale(1);
-        box-shadow:0 0 20px #00ffc3;
+        transform:translate(-50%,-50%) scale(1);
+        opacity:.4;
     }
     to{
-        transform:scale(1.05);
-        box-shadow:0 0 45px #00ffc3;
+        transform:translate(-50%,-50%) scale(1.15);
+        opacity:1;
     }
 }
+
 
 /* CHAT */
 
@@ -64,8 +80,8 @@ body{
 }
 
 .msgUser{
-    background:#1a2238;
-    padding:10px;
+    background:#1b2540;
+    padding:12px;
     margin:8px;
     border-radius:8px;
 }
@@ -73,29 +89,31 @@ body{
 .msgTara{
     background:#00ffc3;
     color:black;
-    padding:10px;
+    padding:12px;
     margin:8px;
     border-radius:8px;
 }
 
-/* INPUT */
-
-#controls{
-    margin-top:10px;
+.thinking{
+    font-style:italic;
+    opacity:.7;
 }
+
+
+/* INPUT */
 
 #question{
     width:60%;
-    padding:12px;
+    padding:14px;
     font-size:16px;
     border-radius:6px;
     border:none;
 }
 
 button{
-    padding:12px 18px;
+    padding:14px 20px;
     font-size:16px;
-    margin:5px;
+    margin:6px;
     border:none;
     border-radius:6px;
     cursor:pointer;
@@ -108,6 +126,7 @@ button{
 #voiceBtn{
     background:#ffaa00;
 }
+
 
 /* FOOTER */
 
@@ -129,12 +148,16 @@ button{
 <h2>T.A.R.A Safety Assistant</h2>
 
 <div id="avatarContainer">
+
+<div id="ring"></div>
+
 <img id="avatar" src="tara-avatar.png">
+
 </div>
+
 
 <div id="chat"></div>
 
-<div id="controls">
 
 <input id="question" placeholder="Ask T.A.R.A about towing safety...">
 
@@ -144,7 +167,7 @@ button{
 
 <button id="voiceBtn">🎤 Speak</button>
 
-</div>
+
 
 <div id="footer">
 
@@ -153,9 +176,15 @@ Powered by Safety Intelligence<br>
 This is our test prototype and my dad is still working on me
 </p>
 
+<p>
+© Safety Buzz Alerts. All rights reserved.
+</p>
+
 <img id="logo" src="taralogo.jpg">
 
 </div>
+
+
 
 <script>
 
@@ -163,28 +192,30 @@ const chat = document.getElementById("chat");
 const input = document.getElementById("question");
 const askBtn = document.getElementById("askBtn");
 const voiceBtn = document.getElementById("voiceBtn");
-const avatar = document.getElementById("avatar");
+const ring = document.getElementById("ring");
 
-let recognizing = false;
+let recognizing=false;
 let recognition;
 
 
-/* AUTO SCROLL */
+/* scroll */
 
 function scrollBottom(){
 
-chat.scrollTop = chat.scrollHeight;
+chat.scrollTop=chat.scrollHeight;
 
 }
 
 
-/* CHAT MESSAGE */
+/* message */
 
-function addMessage(text,type){
+function addMessage(text,type,thinking=false){
 
 const div=document.createElement("div");
 
 div.className = type==="user" ? "msgUser" : "msgTara";
+
+if(thinking) div.classList.add("thinking");
 
 div.innerText=text;
 
@@ -192,27 +223,37 @@ chat.appendChild(div);
 
 scrollBottom();
 
+return div;
+
 }
 
 
-/* SPEAK */
+/* speak */
 
 function speak(text){
 
-const speech = new SpeechSynthesisUtterance(text);
+const speech=new SpeechSynthesisUtterance(text);
 
-speech.rate = .95;
+speech.rate=.95;
 
-speech.onstart=()=>avatar.classList.add("talking");
+speech.onstart=()=>{
 
-speech.onend=()=>avatar.classList.remove("talking");
+ring.classList.add("talkingRing");
+
+};
+
+speech.onend=()=>{
+
+ring.classList.remove("talkingRing");
+
+};
 
 speechSynthesis.speak(speech);
 
 }
 
 
-/* ASK SERVER */
+/* ask */
 
 async function ask(){
 
@@ -223,6 +264,10 @@ if(!question)return;
 addMessage("You: "+question,"user");
 
 input.value="";
+
+
+const thinkingMsg=addMessage("T.A.R.A is analyzing...","tara",true);
+
 
 try{
 
@@ -240,6 +285,8 @@ body:JSON.stringify({question})
 
 const data=await res.json();
 
+thinkingMsg.remove();
+
 addMessage("T.A.R.A: "+data.answer,"tara");
 
 speak(data.answer);
@@ -247,7 +294,9 @@ speak(data.answer);
 }
 catch{
 
-const mock="Always verify tow points, secure vehicle, and follow manufacturer procedures.";
+thinkingMsg.remove();
+
+const mock="Always verify tow points, secure vehicle properly, and follow EV manufacturer transport procedures.";
 
 addMessage("T.A.R.A: "+mock,"tara");
 
@@ -258,21 +307,19 @@ speak(mock);
 }
 
 
-/* BUTTON */
+/* buttons */
 
 askBtn.onclick=ask;
 
 
-/* ENTER KEY */
-
 input.addEventListener("keypress",e=>{
 
-if(e.key==="Enter")ask();
+if(e.key==="Enter") ask();
 
 });
 
 
-/* VOICE */
+/* voice */
 
 if("webkitSpeechRecognition" in window){
 
