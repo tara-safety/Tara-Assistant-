@@ -8,6 +8,8 @@ let recognition = null;
 let listening = false;
 let speaking = false;
 
+speechSynthesis.onvoiceschanged = () => {};
+
 function addMessage(sender, text){
 
 const msg = document.createElement("div");
