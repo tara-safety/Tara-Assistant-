@@ -12,34 +12,37 @@ background:#0b0f14;
 color:white;
 text-align:center;
 margin:0;
+display:flex;
+flex-direction:column;
+height:100vh;
 }
 
 #avatar{
-width:220px;
-margin-top:20px;
+width:240px;
+margin:15px auto 5px auto;
 animation:pulse 4s infinite;
 }
 
 @keyframes pulse{
 0%{transform:scale(1);}
-50%{transform:scale(1.05);}
+50%{transform:scale(1.04);}
 100%{transform:scale(1);}
 }
 
 .talking{
-animation:talk 0.4s infinite alternate;
+animation:talk 0.35s infinite alternate;
 }
 
 @keyframes talk{
 from{transform:scale(1);}
-to{transform:scale(1.08);}
+to{transform:scale(1.1);}
 }
 
 #chat{
+flex:1;
 width:90%;
 max-width:600px;
-height:420px;
-margin:20px auto;
+margin:auto;
 background:#111;
 padding:15px;
 overflow-y:auto;
@@ -49,16 +52,16 @@ text-align:left;
 
 .user{
 color:#4FC3F7;
-margin:8px 0;
+margin:10px 0;
 }
 
 .ai{
 color:#81C784;
-margin:8px 0;
+margin:10px 0;
 }
 
 #controls{
-margin-top:10px;
+margin:10px;
 }
 
 input{
@@ -74,19 +77,28 @@ margin:5px;
 cursor:pointer;
 }
 
+#logo{
+width:140px;
+opacity:0.85;
+margin-top:10px;
+}
+
 #footer{
-margin-top:20px;
 font-size:14px;
 opacity:0.7;
+margin-bottom:10px;
 }
 
 </style>
 </head>
 <body>
 
+
 <img id="avatar" src="avatar.png">
 
+
 <div id="chat"></div>
+
 
 <div id="controls">
 
@@ -98,6 +110,10 @@ opacity:0.7;
 
 </div>
 
+
+<img id="logo" src="logo.png">
+
+
 <div id="footer">
 Powered by Safety Intelligence<br>
 This is our test prototype and my dad is still working on me
@@ -108,6 +124,7 @@ This is our test prototype and my dad is still working on me
 
 let recognizing=false;
 let recognition;
+
 
 function addMessage(text,cls){
 
@@ -122,6 +139,7 @@ div.innerText=text;
 chat.appendChild(div);
 
 chat.scrollTop=chat.scrollHeight;
+
 }
 
 
@@ -138,9 +156,13 @@ addMessage("YOU: "+text,"user");
 input.value="";
 
 const res=await fetch("/ask",{
+
 method:"POST",
+
 headers:{"Content-Type":"application/json"},
+
 body:JSON.stringify({question:text})
+
 });
 
 const data=await res.json();
@@ -148,6 +170,7 @@ const data=await res.json();
 addMessage("AI: "+data.answer,"ai");
 
 speak(data.answer);
+
 }
 
 
@@ -163,13 +186,18 @@ utter.rate=0.95;
 
 utter.pitch=1;
 
-utter.onend=()=>{
+utter.volume=1;
+
+utter.onend=function(){
+
 avatar.classList.remove("talking");
+
 };
 
 speechSynthesis.cancel();
 
 speechSynthesis.speak(utter);
+
 }
 
 
@@ -177,8 +205,11 @@ speechSynthesis.speak(utter);
 function toggleMic(){
 
 if(!('webkitSpeechRecognition'in window)){
+
 alert("Chrome required");
+
 return;
+
 }
 
 if(!recognizing){
@@ -197,11 +228,15 @@ document.getElementById("question").value=
 event.results[0][0].transcript;
 
 send();
+
 };
 
 recognition.onend=function(){
+
 recognizing=false;
+
 document.getElementById("micBtn").innerText="🎤 Mic";
+
 };
 
 recognition.start();
