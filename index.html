@@ -164,19 +164,37 @@ chatBox.scrollTop=chatBox.scrollHeight;
 /* SPEAK */
 function speak(text){
 
+if(!window.speechSynthesis){
+console.log("Speech not supported");
+return;
+}
+
 speechSynthesis.cancel();
 
-const utter=new SpeechSynthesisUtterance(text);
+const utter = new SpeechSynthesisUtterance(text);
 
-utter.rate=1;
-utter.pitch=1;
+/* find best voice */
+const voices = speechSynthesis.getVoices();
 
-utter.onstart=()=>{
+for(let v of voices){
+
+if(v.lang.includes("en")){
+utter.voice = v;
+break;
+}
+
+}
+
+utter.rate = 1;
+utter.pitch = 1;
+utter.volume = 1;
+
+utter.onstart = ()=>{
 avatar.classList.add("speaking");
 avatar.classList.add("talking");
 };
 
-utter.onend=()=>{
+utter.onend = ()=>{
 avatar.classList.remove("speaking");
 avatar.classList.remove("talking");
 };
