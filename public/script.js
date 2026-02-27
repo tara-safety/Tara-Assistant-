@@ -76,24 +76,24 @@ clearInterval(interval);
 
 function speak(text){
 
-if(!("speechSynthesis" in window)) return;
+if(!audioUnlocked) return;
 
 speechSynthesis.cancel();
 
-const utter = new SpeechSynthesisUtterance(text);
+const utter=new SpeechSynthesisUtterance(text);
 
-utter.rate = 1;
-utter.pitch = 1;
-utter.volume = 1;
+utter.rate=1;
+utter.pitch=1;
+utter.volume=1;
 
-utter.onstart = () => {
+utter.onstart=()=>{
 avatar.classList.add("speaking");
-speaking = true;
+avatar.classList.add("talking");
 };
 
-utter.onend = () => {
+utter.onend=()=>{
 avatar.classList.remove("speaking");
-speaking = false;
+avatar.classList.remove("talking");
 };
 
 speechSynthesis.speak(utter);
