@@ -2,150 +2,154 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>T.A.R.A</title>
+<title>T.A.R.A Safety Intelligence</title>
 
 <style>
 
 body{
-    background:#06131c;
-    font-family:Arial;
-    text-align:center;
-    color:white;
-    margin:0;
+font-family: Arial;
+background: linear-gradient(#06121c,#02060b);
+color:white;
+text-align:center;
+margin:0;
+padding:0;
 }
 
-/* AVATAR */
-#avatarContainer{
-    margin-top:20px;
+#container{
+max-width:500px;
+margin:auto;
+padding:15px;
 }
 
+/* Talking avatar */
 #avatar{
-    width:220px;
-    border-radius:50%;
-    box-shadow:0 0 30px cyan;
-    animation:pulse 4s infinite;
+width:200px;
+border-radius:20px;
+margin-top:20px;
+box-shadow:0 0 30px #00ffc3;
+animation:pulse 4s infinite;
 }
 
 @keyframes pulse{
-    0%{ box-shadow:0 0 15px cyan; }
-    50%{ box-shadow:0 0 40px cyan; }
-    100%{ box-shadow:0 0 15px cyan; }
+0%{box-shadow:0 0 15px #00ffc3;}
+50%{box-shadow:0 0 35px #00ffc3;}
+100%{box-shadow:0 0 15px #00ffc3;}
 }
 
 .talking{
-    animation:talk 0.25s infinite alternate;
+animation:talk 0.4s infinite alternate;
 }
 
 @keyframes talk{
-    from{ transform:scale(1); }
-    to{ transform:scale(1.05); }
+from{transform:scale(1);}
+to{transform:scale(1.05);}
 }
-
-/* TITLE */
 
 h1{
-    color:#00eaff;
-    margin:10px;
+color:#00ffc3;
+margin:10px;
 }
 
-/* CHAT */
-
+/* chat */
 #chat{
-    width:90%;
-    max-width:500px;
-    height:320px;
-    margin:10px auto;
-    background:#0b1f2b;
-    border-radius:10px;
-    padding:15px;
-    overflow-y:auto;
-    text-align:left;
+height:350px;
+background:#0b1622;
+border-radius:15px;
+padding:15px;
+overflow-y:auto;
+margin-top:15px;
+text-align:left;
 }
 
-/* INPUT AREA */
+.user{
+color:#4fc3ff;
+margin-bottom:10px;
+}
 
+.tara{
+color:#00ff9c;
+margin-bottom:15px;
+white-space:pre-wrap;
+}
+
+/* input area */
 #controls{
-    margin-top:10px;
+margin-top:10px;
 }
 
 input{
-    width:55%;
-    padding:14px;
-    font-size:16px;
+width:60%;
+padding:12px;
+border-radius:10px;
+border:none;
+font-size:16px;
 }
 
 button{
-    padding:14px 20px;
-    font-size:16px;
-    margin:5px;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
+padding:12px 18px;
+border:none;
+border-radius:10px;
+margin:5px;
+font-size:16px;
+cursor:pointer;
 }
 
 #askBtn{
-    background:#00bcd4;
+background:#008c6a;
+color:white;
 }
 
 #voiceBtn{
-    background:#00ffc3;
+background:#00ffc3;
+color:black;
 }
 
-/* LOGO */
-
+/* bottom logo */
 #logo{
-    width:140px;
-    margin-top:20px;
-    opacity:.9;
+width:140px;
+margin-top:20px;
+opacity:0.9;
 }
 
-footer{
-    margin-top:10px;
-    font-size:14px;
-    color:#aaa;
+#footer{
+margin-top:10px;
+font-size:14px;
+color:#aaa;
 }
 
 </style>
-
 </head>
+
 <body>
 
+<div id="container">
 
-<div id="avatarContainer">
-    <img id="avatar" src="avatar.png">
-</div>
+<img id="avatar" src="tara-avatar.png">
 
 <h1>T.A.R.A</h1>
 
 <div id="chat"></div>
 
-
 <div id="controls">
 
 <input id="question" placeholder="Ask T.A.R.A about towing safety...">
 
-<button id="askBtn">
-Send
-</button>
+<button id="askBtn">Send</button>
 
-<button id="voiceBtn">
-🎤 Speak
-</button>
+<button id="voiceBtn">🎤 Speak</button>
 
 </div>
 
-
 <img id="logo" src="taralogo.jpg">
 
-
-<footer>
+<div id="footer">
 Powered by Safety Intelligence<br>
 This is our test prototype and my dad is still working on me
-</footer>
+</div>
 
+</div>
 
 <script src="script.js"></script>
-
 
 </body>
 </html>
