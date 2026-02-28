@@ -72,15 +72,21 @@ left:50%;
 
 transform:translateX(-50%);
 
-width:30px;
+width:60px;
+height:28px;
 
-height:12px;
+border-radius:50%;
 
-background:#00ffaa;
+background:radial-gradient(
+ellipse at center,
+rgba(0,255,170,.9) 0%,
+rgba(0,255,170,.5) 40%,
+rgba(0,255,170,0) 70%
+);
 
-border-radius:10px;
+opacity:0;
 
-opacity:.25;
+pointer-events:none;
 
 }
 
