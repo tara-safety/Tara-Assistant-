@@ -79,22 +79,22 @@ margin:auto;
 
 position:absolute;
 
-bottom:105px;
-
 left:50%;
 
 transform:translateX(-50%);
 
-width:60px;
-height:28px;
+bottom:78px;   /* THIS is correct starting point */
+
+width:42px;
+height:18px;
 
 border-radius:50%;
 
 background:radial-gradient(
 ellipse at center,
-rgba(0,255,170,.9) 0%,
-rgba(0,255,170,.5) 40%,
-rgba(0,255,170,0) 70%
+rgba(0,255,170,.95) 0%,
+rgba(0,255,170,.6) 40%,
+rgba(0,255,170,0) 75%
 );
 
 opacity:0;
