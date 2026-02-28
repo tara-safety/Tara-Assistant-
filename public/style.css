@@ -49,6 +49,13 @@ animation:idleFloat 4s ease-in-out infinite;
   font-size:16px;
 }
 
+#thinking{
+  position:absolute;
+  bottom:140px;
+  left:50%;
+  transform:translateX(-50%);
+}
+
 #avatar{
 
 width:100%;
