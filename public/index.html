@@ -8,68 +8,185 @@
 
 <style>
 
-body{
-margin:0;
-font-family:Arial;
-background:linear-gradient(#07131c,#02060a);
-color:white;
-text-align:center;
-overflow-x:hidden;
+body {
+
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: black;
+    color: white;
+    text-align: center;
 }
 
-/* AVATAR CONTAINER */
+.container {
+
+    padding: 15px;
+}
+
 
 /* Avatar container */
 #avatarContainer {
-  position: relative;
-  width: 260px;
-  margin: 0 auto;
+
+    position: relative;
+
+    width: 220px;      /* desktop size */
+
+    max-width: 60vw;   /* mobile safe */
+
+    margin: 20px auto;
 }
+
 
 /* Avatar image */
 #avatar {
-  width: 100%;
-  display: block;
+
+    width: 100%;
+
+    height: auto;
+
+    display: block;
 }
+
 
 /* Mouth overlay */
 #mouth {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 115px;   /* your calibrated value */
-  width: 60px;
-  height: 18px;
-  border-radius: 10px;
-  background: limegreen;
-  opacity: 0;
-  z-index: 10;
 
-  /* force iPhone rendering */
-  pointer-events: none;
+    position: absolute;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    bottom: 28%;   /* percentage fixes all screen sizes */
+
+    width: 22%;
+
+    height: 6%;
+
+    background: limegreen;
+
+    border-radius: 20px;
+
+    opacity: 0;
+
+    pointer-events: none;
 }
 
-/* talking animation */
+
 .talking {
-  opacity: 1;
-  animation: mouthMove 0.18s infinite alternate;
+
+    opacity: 1;
+
+    animation: mouthMove 0.15s infinite alternate;
 }
+
 
 @keyframes mouthMove {
-  from {
-    transform: translateX(-50%) scaleY(1);
-  }
-  to {
-    transform: translateX(-50%) scaleY(1.8);
-  }
+
+    from {
+        transform: translateX(-50%) scaleY(1);
+    }
+
+    to {
+        transform: translateX(-50%) scaleY(1.9);
+    }
 }
 
-/* mobile scaling */
-@media (max-width: 600px) {
-  #mouth {
-    width: 50px;
-    height: 16px;
-  }
+
+/* Thinking bubble */
+#thinking {
+
+    position: absolute;
+
+    top: -25px;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    font-size: 22px;
+
+    opacity: 0;
+}
+
+.thinkingActive {
+
+    opacity: 1;
+
+    animation: blink 1s infinite;
+}
+
+
+@keyframes blink {
+
+    0%{opacity:0;}
+    50%{opacity:1;}
+    100%{opacity:0;}
+}
+
+
+/* Input */
+textarea {
+
+    width: 90%;
+
+    max-width: 400px;
+
+    height: 80px;
+
+    font-size: 16px;
+}
+
+
+/* Buttons */
+button {
+
+    width: 130px;
+
+    height: 45px;
+
+    font-size: 16px;
+
+    margin: 8px;
+}
+
+
+/* Logo */
+#logo {
+
+    width: 110px;
+
+    margin-top: 10px;
+}
+
+
+/* Powered text */
+#powered {
+
+    font-size: 18px;
+
+    margin-top: 6px;
+}
+
+
+/* Copyright */
+#copyright {
+
+    margin-top: 30px;
+
+    font-size: 12px;
+
+    opacity: 0.5;
+}
+
+
+/* Mobile adjustments */
+@media (max-width:600px){
+
+    #avatarContainer {
+
+        width: 180px;
+    }
+
 }
 
 
