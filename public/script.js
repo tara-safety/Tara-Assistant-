@@ -1,180 +1,147 @@
-body {
+const input =
+document.getElementById("question");
 
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: black;
-    color: white;
-    text-align: center;
-}
+const askBtn =
+document.getElementById("askBtn");
 
-.container {
+const voiceBtn =
+document.getElementById("voiceBtn");
 
-    padding: 15px;
-}
+const mouth =
+document.getElementById("mouth");
 
-
-/* Avatar container */
-#avatarContainer {
-
-    position: relative;
-
-    width: 220px;      /* desktop size */
-
-    max-width: 60vw;   /* mobile safe */
-
-    margin: 20px auto;
-}
+const thinking =
+document.getElementById("thinking");
 
 
-/* Avatar image */
-#avatar {
+/* SPEAK FUNCTION */
+function speak(text){
 
-    width: 100%;
+const speech =
+new SpeechSynthesisUtterance(text);
 
-    height: auto;
+speech.rate = 1;
+speech.pitch = 1;
 
-    display: block;
-}
+speech.onstart = ()=>{
 
+mouth.classList.add("talking");
 
-/* Mouth overlay */
-#mouth {
+};
 
-    position: absolute;
+speech.onend = ()=>{
 
-    left: 50%;
+mouth.classList.remove("talking");
 
-    transform: translateX(-50%);
+};
 
-    bottom: 28%;   /* percentage fixes all screen sizes */
+speechSynthesis.cancel();
 
-    width: 22%;
+speechSynthesis.speak(speech);
 
-    height: 6%;
-
-    background: limegreen;
-
-    border-radius: 20px;
-
-    opacity: 0;
-
-    pointer-events: none;
 }
 
 
-.talking {
+/* ASK SERVER */
+async function ask(){
 
-    opacity: 1;
+const question =
+input.value.trim();
 
-    animation: mouthMove 0.15s infinite alternate;
+if(!question)return;
+
+thinking.classList.add("thinkingActive");
+
+try{
+
+const res =
+await fetch("/ask",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+question
+})
+
+});
+
+const data =
+await res.json();
+
+thinking.classList.remove("thinkingActive");
+
+speak(data.answer);
+
+}
+catch{
+
+thinking.classList.remove("thinkingActive");
+
+speak(
+"Safety reminder. Always use approved tow points."
+);
+
+}
+
 }
 
 
-@keyframes mouthMove {
+askBtn.onclick = ask;
 
-    from {
-        transform: translateX(-50%) scaleY(1);
-    }
 
-    to {
-        transform: translateX(-50%) scaleY(1.9);
-    }
+/* ENTER KEY */
+input.addEventListener(
+"keypress",
+function(e){
+
+if(e.key==="Enter"){
+
+e.preventDefault();
+
+ask();
+
+}
+
+});
+
+
+/* VOICE INPUT */
+let recognition;
+
+if(
+"webkitSpeechRecognition"
+in window
+){
+
+recognition =
+new webkitSpeechRecognition();
+
+recognition.continuous=false;
+
+recognition.onresult=
+function(e){
+
+input.value =
+e.results[0][0].transcript;
+
+ask();
+
+};
+
 }
 
 
-/* Thinking bubble */
-#thinking {
+voiceBtn.onclick =
+function(){
 
-    position: absolute;
+if(recognition){
 
-    top: -25px;
-
-    left: 50%;
-
-    transform: translateX(-50%);
-
-    font-size: 22px;
-
-    opacity: 0;
-}
-
-.thinkingActive {
-
-    opacity: 1;
-
-    animation: blink 1s infinite;
-}
-
-
-@keyframes blink {
-
-    0%{opacity:0;}
-    50%{opacity:1;}
-    100%{opacity:0;}
-}
-
-
-/* Input */
-textarea {
-
-    width: 90%;
-
-    max-width: 400px;
-
-    height: 80px;
-
-    font-size: 16px;
-}
-
-
-/* Buttons */
-button {
-
-    width: 130px;
-
-    height: 45px;
-
-    font-size: 16px;
-
-    margin: 8px;
-}
-
-
-/* Logo */
-#logo {
-
-    width: 110px;
-
-    margin-top: 10px;
-}
-
-
-/* Powered text */
-#powered {
-
-    font-size: 18px;
-
-    margin-top: 6px;
-}
-
-
-/* Copyright */
-#copyright {
-
-    margin-top: 30px;
-
-    font-size: 12px;
-
-    opacity: 0.5;
-}
-
-
-/* Mobile adjustments */
-@media (max-width:600px){
-
-    #avatarContainer {
-
-        width: 180px;
-    }
+recognition.start();
 
 }
+
+};
