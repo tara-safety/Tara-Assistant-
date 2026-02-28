@@ -37,21 +37,17 @@ chatBox.scrollHeight;
 
 function startTalking(){
 
-mouth.style.animation =
-"talk .25s infinite";
+mouth.classList.add("talking");
 
-mouth.style.opacity = 1;
+mouth.style.opacity = "1";
 
 }
 
-
-
 function stopTalking(){
 
-mouth.style.animation =
-"none";
+mouth.classList.remove("talking");
 
-mouth.style.opacity = .25;
+mouth.style.opacity = "0";
 
 }
 
