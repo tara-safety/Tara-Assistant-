@@ -6,15 +6,21 @@ const sendBtn = document.getElementById("sendBtn");
 let talking = false;
 
 // animate mouth safely
-function animate(){
+const mouth = document.getElementById("mouth");
 
-if(mouth){
+function speak(text) {
 
-if(talking)
-mouth.style.opacity = Math.random() > 0.5 ? "1" : "0.2";
-else
-mouth.style.opacity = "0";
+  const speech = new SpeechSynthesisUtterance(text);
 
+  speech.onstart = () => {
+    mouth.classList.add("talking");
+  };
+
+  speech.onend = () => {
+    mouth.classList.remove("talking");
+  };
+
+  speechSynthesis.speak(speech);
 }
 
 requestAnimationFrame(animate);
