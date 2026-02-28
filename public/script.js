@@ -55,7 +55,22 @@ document.getElementById("chat").innerText = data.answer;
 
 }
 
-if(sendBtn)
-sendBtn.onclick = sendMessage;
+sendBtn.onclick = async () => {
 
+  const question = input.value;
+
+  const res = await fetch("/ask", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ question })
+  });
+
+  const data = await res.json();
+
+  responseBox.innerText = data.answer;
+
+  speak(data.answer);
 };
+
