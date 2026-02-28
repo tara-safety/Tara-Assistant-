@@ -16,53 +16,17 @@ document.getElementById("thinking");
 const chatBox =
 document.getElementById("chatBox");
 
-const chatBox = document.getElementById("chatBox");
 
-function addMessage(text, sender){
-  const div = document.createElement("div");
-  div.innerText = text;
-  chatBox.appendChild(div);
-}
 
-let recognizing = false;
-let recognition;
+function addMessage(sender,text){
 
-function startTalking() {
-  mouth.style.opacity = "1";
-  mouth.classList.add("talking");
-}
-
-function stopTalking() {
-  mouth.style.opacity = "0";
-  mouth.classList.remove("talking");
-}
-
-/* ---------- CHAT DISPLAY ---------- */
-
-function addMessage(sender, text)
-{
-
-const msg =
+const div =
 document.createElement("div");
 
-msg.style.marginBottom = "10px";
+div.innerHTML =
+"<b>"+sender+":</b> "+text;
 
-
-if(sender === "user")
-{
-msg.innerHTML =
-"<b>You:</b> " + text;
-msg.style.color = "#4fc3f7";
-}
-else
-{
-msg.innerHTML =
-"<b>T.A.R.A:</b> " + text;
-msg.style.color = "#00ffaa";
-}
-
-
-chatBox.appendChild(msg);
+chatBox.appendChild(div);
 
 chatBox.scrollTop =
 chatBox.scrollHeight;
@@ -71,114 +35,64 @@ chatBox.scrollHeight;
 
 
 
-/* ---------- MOUTH ANIMATION ---------- */
-
-speech.onstart = startTalking;
-speech.onend = stopTalking;
-
-function mouthTalk()
-{
-
-mouth.style.opacity = "1";
+function startTalking(){
 
 mouth.style.animation =
-"talk 0.18s infinite";
+"talk .25s infinite";
 
-}
-
-function mouthStop()
-{
-
-mouth.style.animation = "none";
-
-mouth.style.opacity = "0.3";
+mouth.style.opacity = 1;
 
 }
 
 
 
-/* ---------- THINKING ---------- */
+function stopTalking(){
 
-function showThinking()
-{
+mouth.style.animation =
+"none";
 
-thinking.style.display = "block";
-
-}
-
-function hideThinking()
-{
-
-thinking.style.display = "none";
+mouth.style.opacity = .25;
 
 }
 
 
 
-/* ---------- TEXT TO SPEECH ---------- */
-
-function speak(text)
-{
-
-if(!window.speechSynthesis)
-return;
-
-
-const speech =
-new SpeechSynthesisUtterance(text);
-
-
-speech.rate = 1;
-
-speech.pitch = 1;
-
-
-speech.onstart =
-mouthTalk;
-
-speech.onend =
-mouthStop;
-
-
-speechSynthesis.speak(speech);
-
-}
-
-
-
-/* ---------- ASK SERVER ---------- */
-
-async function ask()
-{
+async function ask(){
 
 const question =
 input.value.trim();
 
-if(!question)
-return;
+if(!question) return;
 
 
-addMessage("user", question);
+addMessage(
+"You",
+question
+);
+
 
 input.value = "";
 
 
-showThinking();
+thinking.style.display =
+"block";
 
 
-try
-{
+try{
 
 const response =
-await fetch("/ask",
-{
+await fetch("/ask",{
+
 method:"POST",
-headers:
-{
+
+headers:{
 "Content-Type":"application/json"
 },
-body:
-JSON.stringify({question})
+
+body:JSON.stringify({
+question:question
+})
+
 });
 
 
@@ -186,22 +100,43 @@ const data =
 await response.json();
 
 
-hideThinking();
+thinking.style.display =
+"none";
 
-
-addMessage("tara", data.answer);
-
-
-speak(data.answer);
-
-}
-catch
-{
-
-hideThinking();
 
 addMessage(
-"tara",
+"T.A.R.A",
+data.answer
+);
+
+
+const speech =
+new SpeechSynthesisUtterance(
+data.answer
+);
+
+
+speech.onstart =
+startTalking;
+
+
+speech.onend =
+stopTalking;
+
+
+speechSynthesis.speak(
+speech
+);
+
+}
+catch{
+
+thinking.style.display =
+"none";
+
+
+addMessage(
+"T.A.R.A",
 "Connection error."
 );
 
@@ -211,98 +146,42 @@ addMessage(
 
 
 
-/* ---------- BUTTON ---------- */
-
-askBtn.onclick =
-ask;
+askBtn.onclick = ask;
 
 
-
-/* ---------- ENTER KEY ---------- */
 
 input.addEventListener(
-"keydown",
-function(e)
-{
-if(e.key === "Enter"
-&& !e.shiftKey)
-{
-e.preventDefault();
+"keypress",
+function(e){
+
+if(e.key==="Enter")
 ask();
-}
+
 }
 );
 
 
 
-/* ---------- VOICE INPUT ---------- */
+voiceBtn.onclick =
+function(){
 
-if(
-"webkitSpeechRecognition"
-in window
-)
-{
-
-recognition =
+const rec =
 new webkitSpeechRecognition();
 
-recognition.continuous = false;
-
-recognition.interimResults = false;
-
-recognition.lang = "en-US";
+rec.lang="en-US";
 
 
-voiceBtn.onclick =
-function()
-{
-
-if(recognizing)
-{
-recognition.stop();
-recognizing = false;
-voiceBtn.innerText =
-"🎤 Speak";
-return;
-}
-
-
-recognition.start();
-
-recognizing = true;
-
-voiceBtn.innerText =
-"■ Stop";
-
-};
-
-
-
-recognition.onresult =
-function(event)
-{
-
-const text =
-event.results[0][0].transcript;
+rec.onresult =
+function(e){
 
 input.value =
-text;
+e.results[0][0].transcript;
 
 ask();
 
 };
 
 
-
-recognition.onend =
-function()
-{
-
-recognizing = false;
-
-voiceBtn.innerText =
-"🎤 Speak";
+rec.start();
 
 };
-
-}
