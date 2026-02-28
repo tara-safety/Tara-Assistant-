@@ -19,7 +19,15 @@ document.getElementById("chatBox");
 let recognizing = false;
 let recognition;
 
+function startTalking() {
+  mouth.style.opacity = "1";
+  mouth.classList.add("talking");
+}
 
+function stopTalking() {
+  mouth.style.opacity = "0";
+  mouth.classList.remove("talking");
+}
 
 /* ---------- CHAT DISPLAY ---------- */
 
