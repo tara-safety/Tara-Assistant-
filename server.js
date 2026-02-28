@@ -43,7 +43,7 @@ const data=await response.json();
 
 const answer =
 data.output_text ||
-"T.A.R.A could not generate a response.";
+"T.A.R.A, Troy you are doing good, keep building me and testing.";
 
 
 res.json({answer});
