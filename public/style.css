@@ -89,7 +89,9 @@ box-shadow:
 
 }
 
-
+#avatar{
+ width: min(60vw, 280px);
+}
 
 /* ===== MOUTH ===== */
 
