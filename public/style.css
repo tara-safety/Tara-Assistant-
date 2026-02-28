@@ -42,27 +42,33 @@ width:220px;
 
 margin:auto;
 
-}
+display:flex;
 
+justify-content:center;
+
+align-items:center;
+
+}
 
 
 #avatar{
 
-width:100%;
+width:220px;
+
+height:auto;
+
+display:block;
 
 border-radius:16px;
 
-box-shadow:0 0 20px cyan;
-
-animation:idle 4s ease-in-out infinite;
-
 }
+#avatarContainer{
 
-.avatarTalking{
+position:relative;
 
-box-shadow:
-0 0 25px cyan,
-0 0 45px #00ffaa;
+width:220px;
+
+margin:auto;
 
 }
 
