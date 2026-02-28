@@ -19,68 +19,57 @@ overflow-x:hidden;
 
 /* AVATAR CONTAINER */
 
-#avatar-container{
-position:relative;
-width:260px;
-margin:25px auto;
-animation:idleFloat 6s ease-in-out infinite;
+/* Avatar container */
+#avatarContainer {
+  position: relative;
+  width: 260px;
+  margin: 0 auto;
 }
 
-/* subtle head float */
-
-@keyframes idleFloat{
-0%{transform:translateY(0px);}
-50%{transform:translateY(-6px);}
-100%{transform:translateY(0px);}
+/* Avatar image */
+#avatar {
+  width: 100%;
+  display: block;
 }
 
-#avatar{
+/* Mouth overlay */
+#mouth {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 115px;   /* your calibrated value */
+  width: 60px;
+  height: 18px;
+  border-radius: 10px;
+  background: limegreen;
+  opacity: 0;
+  z-index: 10;
 
-width:100%;
-border-radius:20px;
-
-box-shadow:0 0 30px cyan;
-
-animation:glow 4s ease-in-out infinite;
-
+  /* force iPhone rendering */
+  pointer-events: none;
 }
 
-@keyframes glow{
-
-0%{box-shadow:0 0 20px cyan;}
-
-50%{box-shadow:0 0 55px cyan;}
-
-100%{box-shadow:0 0 20px cyan;}
-
+/* talking animation */
+.talking {
+  opacity: 1;
+  animation: mouthMove 0.18s infinite alternate;
 }
 
+@keyframes mouthMove {
+  from {
+    transform: translateX(-50%) scaleY(1);
+  }
+  to {
+    transform: translateX(-50%) scaleY(1.8);
+  }
+}
 
-/* MOUTH */
-
-#mouth{
-
-position:absolute;
-
-/* adjust THIS number to match your avatar */
-bottom:115px;
-
-left:50%;
-
-transform:translateX(-50%);
-
-width:70px;
-
-height:18px;
-
-background:lime;
-
-border-radius:10px;
-
-opacity:0;
-
-filter:blur(1px);
-
+/* mobile scaling */
+@media (max-width: 600px) {
+  #mouth {
+    width: 50px;
+    height: 16px;
+  }
 }
 
 
