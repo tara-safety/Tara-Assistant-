@@ -10,7 +10,7 @@
 
 body{
 margin:0;
-font-family:Arial;
+font-family:Arial, sans-serif;
 background:linear-gradient(#050b18,#0b1f3a);
 color:white;
 display:flex;
@@ -20,7 +20,7 @@ min-height:100vh;
 }
 
 
-/* MAIN CONTAINER */
+/* MAIN */
 #container{
 width:100%;
 max-width:420px;
@@ -28,7 +28,7 @@ text-align:center;
 }
 
 
-/* AVATAR AREA */
+/* AVATAR */
 #avatarContainer{
 position:relative;
 width:220px;
@@ -38,12 +38,11 @@ margin:auto;
 #avatar{
 width:100%;
 border-radius:20px;
-box-shadow:0 0 30px cyan;
-animation:float 4s ease-in-out infinite;
+box-shadow:0 0 25px cyan;
 }
 
 
-/* MOUTH OVERLAY */
+/* MOUTH */
 #mouth{
 position:absolute;
 bottom:115px;
@@ -53,11 +52,11 @@ width:40px;
 height:14px;
 background:#00ffaa;
 border-radius:10px;
-opacity:0.3;
+opacity:0.25;
 }
 
 
-/* THINKING DOTS */
+/* THINKING */
 #thinking{
 display:none;
 margin-top:10px;
@@ -73,13 +72,8 @@ display:inline-block;
 animation:bounce 1.4s infinite;
 }
 
-.dot:nth-child(2){
-animation-delay:.2s;
-}
-
-.dot:nth-child(3){
-animation-delay:.4s;
-}
+.dot:nth-child(2){animation-delay:.2s;}
+.dot:nth-child(3){animation-delay:.4s;}
 
 
 /* CHAT BOX */
@@ -90,7 +84,6 @@ background:#081426;
 padding:10px;
 border-radius:10px;
 margin-top:15px;
-margin-bottom:10px;
 text-align:left;
 font-size:14px;
 }
@@ -103,10 +96,11 @@ padding:14px;
 border-radius:10px;
 border:none;
 font-size:16px;
+margin-top:10px;
 }
 
 
-/* BUTTON ROW */
+/* BUTTONS */
 #buttonRow{
 display:flex;
 gap:10px;
@@ -155,4 +149,208 @@ margin-top:6px;
 
 @keyframes bounce{
 0%,80%,100%{transform:scale(0);}
-40%{transform:scale
+40%{transform:scale(1);}
+}
+
+</style>
+</head>
+<body>
+
+
+<div id="container">
+
+
+<div id="avatarContainer">
+
+<img src="tara-avatar.png" id="avatar">
+
+<div id="mouth"></div>
+
+</div>
+
+
+<div id="thinking">
+<span class="dot"></span>
+<span class="dot"></span>
+<span class="dot"></span>
+</div>
+
+
+<div id="chatBox"></div>
+
+
+<input id="question" placeholder="Ask T.A.R.A anything...">
+
+
+<div id="buttonRow">
+
+<button id="askBtn">Send</button>
+
+<button id="voiceBtn">Talk</button>
+
+</div>
+
+
+<img src="logo.png" id="logo">
+
+
+<div id="footer">
+
+Powered by Safety Intelligence
+
+<div id="copyright">
+© 2026 T.A.R.A Safety Intelligence
+</div>
+
+</div>
+
+
+</div>
+
+
+
+<script>
+
+const input =
+document.getElementById("question");
+
+const askBtn =
+document.getElementById("askBtn");
+
+const voiceBtn =
+document.getElementById("voiceBtn");
+
+const mouth =
+document.getElementById("mouth");
+
+const thinking =
+document.getElementById("thinking");
+
+const chatBox =
+document.getElementById("chatBox");
+
+
+
+function addMessage(sender,text){
+
+const div=document.createElement("div");
+
+div.innerHTML="<b>"+sender+":</b> "+text;
+
+chatBox.appendChild(div);
+
+chatBox.scrollTop=chatBox.scrollHeight;
+
+}
+
+
+
+function startTalking(){
+
+mouth.style.animation="talk .25s infinite";
+
+mouth.style.opacity=1;
+
+}
+
+
+
+function stopTalking(){
+
+mouth.style.animation="none";
+
+mouth.style.opacity=.25;
+
+}
+
+
+
+async function ask(){
+
+const question=input.value.trim();
+
+if(!question)return;
+
+addMessage("You",question);
+
+input.value="";
+
+thinking.style.display="block";
+
+
+const res=await fetch("/ask",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+question:question
+
+})
+
+});
+
+
+const data=await res.json();
+
+
+thinking.style.display="none";
+
+addMessage("TARA",data.answer);
+
+
+const speech=new SpeechSynthesisUtterance(data.answer);
+
+speech.onstart=startTalking;
+
+speech.onend=stopTalking;
+
+speechSynthesis.speak(speech);
+
+}
+
+
+
+askBtn.onclick=ask;
+
+
+input.addEventListener("keypress",function(e){
+
+if(e.key==="Enter") ask();
+
+});
+
+
+
+/* VOICE INPUT */
+
+voiceBtn.onclick=function(){
+
+const rec=
+
+new webkitSpeechRecognition();
+
+rec.lang="en-US";
+
+rec.onresult=function(e){
+
+input.value=e.results[0][0].transcript;
+
+ask();
+
+};
+
+rec.start();
+
+};
+
+
+</script>
+
+
+</body>
+</html>
