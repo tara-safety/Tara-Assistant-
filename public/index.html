@@ -4,149 +4,220 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>T.A.R.A – Towing Awareness & Risk Assistant</title>
+<title>T.A.R.A</title>
 
 <style>
 
 body{
 margin:0;
 font-family:Arial;
-background:linear-gradient(#081520,#02060a);
+background:linear-gradient(#07131c,#02060a);
 color:white;
 text-align:center;
+overflow-x:hidden;
 }
 
-/* AVATAR */
+/* AVATAR CONTAINER */
 
 #avatar-container{
 position:relative;
-width:240px;
-margin:20px auto 10px auto;
+width:260px;
+margin:25px auto;
+animation:idleFloat 6s ease-in-out infinite;
+}
+
+/* subtle head float */
+
+@keyframes idleFloat{
+0%{transform:translateY(0px);}
+50%{transform:translateY(-6px);}
+100%{transform:translateY(0px);}
 }
 
 #avatar{
+
 width:100%;
 border-radius:20px;
-box-shadow:0 0 40px cyan;
-animation:pulse 4s infinite;
+
+box-shadow:0 0 30px cyan;
+
+animation:glow 4s ease-in-out infinite;
+
 }
 
-@keyframes pulse{
+@keyframes glow{
+
 0%{box-shadow:0 0 20px cyan;}
-50%{box-shadow:0 0 50px cyan;}
+
+50%{box-shadow:0 0 55px cyan;}
+
 100%{box-shadow:0 0 20px cyan;}
+
 }
 
-/* mouth overlay */
+
+/* MOUTH */
 
 #mouth{
+
 position:absolute;
-bottom:95px;
+
+/* adjust THIS number to match your avatar */
+bottom:85px;
+
 left:50%;
+
 transform:translateX(-50%);
-width:65px;
-height:20px;
+
+width:70px;
+
+height:18px;
+
 background:lime;
+
 border-radius:10px;
+
 opacity:0;
+
+filter:blur(1px);
+
 }
 
-/* TITLE */
 
-h1{
-color:#00eaff;
+/* THINKING DOTS */
+
+#thinking{
+
+height:25px;
+
 margin:5px;
-letter-spacing:4px;
+
+color:#00eaff;
+
+opacity:0;
+
+font-size:18px;
+
 }
 
-.subtitle{
-color:#aaa;
-margin-bottom:10px;
-}
 
 /* CHAT */
 
 #chat{
+
 width:90%;
-max-width:500px;
-height:320px;
+max-width:520px;
+
+height:300px;
+
 margin:15px auto;
+
 padding:15px;
+
 background:#0b1c2a;
+
 border-radius:15px;
+
 overflow-y:auto;
+
 text-align:left;
-box-shadow:0 0 20px rgba(0,255,255,.2);
+
 }
+
 
 /* INPUT */
 
 #question{
+
 width:85%;
 max-width:420px;
+
 padding:14px;
+
 border-radius:10px;
+
 border:none;
+
 font-size:16px;
+
 }
+
 
 /* BUTTONS */
 
 .controls{
+
 margin-top:10px;
+
 }
 
 button{
+
 padding:14px 22px;
+
 margin:5px;
+
 border:none;
+
 border-radius:10px;
+
 font-size:16px;
+
 cursor:pointer;
+
 }
 
 #sendBtn{
+
 background:#00bcd4;
 color:white;
+
 }
 
 #voiceBtn{
+
 background:#00eaff;
 color:black;
+
 }
+
 
 /* LOGO */
 
 #logo{
+
 width:140px;
 margin-top:20px;
-opacity:.95;
+
 }
+
 
 /* POWERED */
 
 .powered{
-margin-top:10px;
+
 font-size:20px;
 color:#00eaff;
+margin-top:10px;
+
 }
+
 
 /* FOOTER */
 
 .footer{
-margin-top:30px;
-margin-bottom:10px;
+
 font-size:11px;
 color:#777;
+margin-top:25px;
+
 }
 
 </style>
 </head>
-
 <body>
 
 
-<!-- AVATAR -->
 <div id="avatar-container">
 
 <img id="avatar" src="tara-avatar.png">
@@ -156,22 +227,20 @@ color:#777;
 </div>
 
 
-<h1>T.A.R.A</h1>
+<h1 style="color:#00eaff">T.A.R.A</h1>
 
-<div class="subtitle">
-Towing Awareness & Risk Assistant
+<div>Towing Awareness & Risk Assistant</div>
+
+
+<div id="thinking">
+T.A.R.A is thinking...
 </div>
 
 
-<!-- CHAT -->
 <div id="chat"></div>
 
 
-<!-- INPUT -->
-<input
-id="question"
-placeholder="Ask T.A.R.A about towing safety..."
->
+<input id="question" placeholder="Ask T.A.R.A about towing safety...">
 
 
 <div class="controls">
@@ -187,7 +256,6 @@ Send
 </div>
 
 
-<!-- LOGO -->
 <img id="logo" src="taralogo.jpg">
 
 
@@ -197,24 +265,29 @@ Powered by Safety Intelligence
 
 
 <div class="footer">
-© 2026 T.A.R.A Safety Intelligence — Test Prototype — All Rights Reserved
+© 2026 T.A.R.A Safety Intelligence
 </div>
+
 
 
 <script>
 
 const chat = document.getElementById("chat");
+
 const input = document.getElementById("question");
+
 const mouth = document.getElementById("mouth");
 
-let talking = false;
+const thinking = document.getElementById("thinking");
 
 
-/* CHAT DISPLAY */
+let talking=false;
+
+
 
 function addMessage(sender,text){
 
-const div = document.createElement("div");
+const div=document.createElement("div");
 
 div.style.margin="8px";
 
@@ -225,16 +298,15 @@ div.innerHTML="<b>T.A.R.A:</b> "+text;
 
 chat.appendChild(div);
 
-chat.scrollTop = chat.scrollHeight;
+chat.scrollTop=chat.scrollHeight;
 
 }
 
 
-/* SEND MESSAGE */
 
 async function send(){
 
-const text = input.value.trim();
+const text=input.value.trim();
 
 if(!text) return;
 
@@ -242,13 +314,16 @@ addMessage("user",text);
 
 input.value="";
 
-talking=true;
+
+thinking.style.opacity=1;
+
 
 try{
 
-const res = await fetch("/ask",{
+const res=await fetch("/ask",{
 
 method:"POST",
+
 headers:{
 "Content-Type":"application/json"
 },
@@ -259,34 +334,42 @@ question:text
 
 });
 
-const data = await res.json();
+
+const data=await res.json();
+
+
+thinking.style.opacity=0;
+
 
 addMessage("tara",data.answer);
 
+
 speak(data.answer);
+
 
 }
 catch{
+
+thinking.style.opacity=0;
 
 addMessage("tara","Connection error.");
 
 }
 
-talking=false;
-
 }
 
 
-/* BUTTON EVENTS */
 
-document.getElementById("sendBtn").onclick = send;
+document.getElementById("sendBtn").onclick=send;
 
-input.addEventListener("keypress",function(e){
+
+input.addEventListener("keypress",e=>{
 
 if(e.key==="Enter")
 send();
 
 });
+
 
 
 /* VOICE INPUT */
@@ -295,13 +378,11 @@ let recognition;
 
 if("webkitSpeechRecognition" in window){
 
-recognition = new webkitSpeechRecognition();
+recognition=new webkitSpeechRecognition();
 
-recognition.continuous=false;
+recognition.onresult=e=>{
 
-recognition.onresult=function(e){
-
-input.value = e.results[0][0].transcript;
+input.value=e.results[0][0].transcript;
 
 send();
 
@@ -309,7 +390,8 @@ send();
 
 }
 
-document.getElementById("voiceBtn").onclick=function(){
+
+document.getElementById("voiceBtn").onclick=()=>{
 
 if(recognition)
 recognition.start();
@@ -317,43 +399,58 @@ recognition.start();
 };
 
 
+
 /* VOICE OUTPUT */
 
 function speak(text){
 
-if(!("speechSynthesis" in window)) return;
+if(!speechSynthesis) return;
 
-const utter = new SpeechSynthesisUtterance(text);
+const utter=new SpeechSynthesisUtterance(text);
 
-utter.onstart=()=> talking=true;
-utter.onend=()=> talking=false;
+utter.rate=1;
+
+utter.pitch=1;
+
+utter.onstart=()=>talking=true;
+
+utter.onend=()=>talking=false;
 
 speechSynthesis.speak(utter);
 
 }
 
 
+
 /* MOUTH ANIMATION */
 
 function animate(){
 
-if(mouth){
+if(talking){
 
-if(talking)
-mouth.style.opacity = Math.random()>0.5 ? "1":"0.2";
-else
-mouth.style.opacity="0";
+mouth.style.opacity=Math.random()>0.5?1:0.2;
+
+mouth.style.height=(Math.random()*20+10)+"px";
 
 }
+
+else{
+
+mouth.style.opacity=0;
+
+}
+
 
 requestAnimationFrame(animate);
 
 }
 
+
 animate();
 
-</script>
 
+
+</script>
 
 </body>
 </html>
