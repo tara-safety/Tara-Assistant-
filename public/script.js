@@ -16,6 +16,14 @@ document.getElementById("thinking");
 const chatBox =
 document.getElementById("chatBox");
 
+const chatBox = document.getElementById("chatBox");
+
+function addMessage(text, sender){
+  const div = document.createElement("div");
+  div.innerText = text;
+  chatBox.appendChild(div);
+}
+
 let recognizing = false;
 let recognition;
 
