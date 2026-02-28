@@ -1,300 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
-
-<title>T.A.R.A. Safety Assistant</title>
+<title>T.A.R.A Safety Intelligence</title>
 
 <link rel="stylesheet" href="style.css">
 
-<style>
-
-/* safety fallback styling */
-
-body{
-margin:0;
-background:#05070c;
-color:white;
-font-family:Arial;
-text-align:center;
-}
-
-.container{
-padding:15px;
-max-width:500px;
-margin:auto;
-}
-
-
-/* avatar system */
-#avatarContainer{
-
-position:relative;
-
-margin:auto;
-
-width:220px;
-
-transition:.3s;
-
-}
-
-
-#avatar{
-
-width:100%;
-
-display:block;
-
-}
-
-
-/* mouth overlay */
-#mouth{
-
-position:absolute;
-
-left:50%;
-
-transform:translateX(-50%);
-
-bottom:115px;
-
-width:50px;
-
-height:14px;
-
-background:#00ff88;
-
-border-radius:10px;
-
-opacity:0;
-
-}
-
-
-/* mouth talking animation */
-.talking{
-
-animation:talk .18s infinite alternate;
-
-opacity:1;
-
-}
-
-@keyframes talk{
-
-from{
-transform:translateX(-50%) scaleY(1);
-}
-
-to{
-transform:translateX(-50%) scaleY(1.8);
-}
-
-}
-
-
-/* thinking bubble */
-#thinking{
-
-position:absolute;
-
-top:-30px;
-
-left:50%;
-
-transform:translateX(-50%);
-
-font-size:24px;
-
-opacity:0;
-
-}
-
-.thinkingActive{
-
-opacity:1;
-
-animation:blink 1s infinite;
-
-}
-
-@keyframes blink{
-
-0%{opacity:0;}
-50%{opacity:1;}
-100%{opacity:0;}
-
-}
-
-
-/* input box */
-#question{
-
-width:90%;
-
-max-width:420px;
-
-height:80px;
-
-font-size:16px;
-
-margin-top:20px;
-
-}
-
-
-/* buttons */
-button{
-
-width:140px;
-
-height:48px;
-
-margin:6px;
-
-font-size:16px;
-
-cursor:pointer;
-
-background:#00ffc3;
-
-border:none;
-
-border-radius:6px;
-
-}
-
-
-/* logo */
-#logo{
-
-width:120px;
-
-margin-top:15px;
-
-}
-
-
-/* branding */
-#powered{
-
-margin-top:10px;
-
-font-size:18px;
-
-opacity:.9;
-
-}
-
-
-/* copyright */
-#copyright{
-
-margin-top:30px;
-
-font-size:12px;
-
-opacity:.5;
-
-}
-
-
-/* mobile scaling */
-@media(max-width:600px){
-
-#avatarContainer{
-
-width:180px;
-
-}
-
-}
-
-</style>
-
 </head>
-
-
 <body>
 
+
 <div class="container">
-
-
-<h1>T.A.R.A.</h1>
-
-<div>
-
-Towing and Recovery Assistant
-
-</div>
-
 
 
 <!-- AVATAR -->
 <div id="avatarContainer">
 
-<img
-id="avatar"
-src="tara-avatar.png"
-alt="TARA Avatar">
-
+<img id="avatar" src="tara-avatar.png">
 
 <div id="mouth"></div>
 
-
-<div id="thinking">
-
-•••
-
-</div>
-
+<div id="thinking">•••</div>
 
 </div>
 
 
 
-<!-- CHAT INPUT -->
+<h2>T.A.R.A</h2>
+
+<p>Towing Awareness & Risk Assistant</p>
+
+
+
+<!-- CHAT BOX -->
+<div id="chatBox"
+style="
+height:260px;
+overflow-y:auto;
+background:#061421;
+border-radius:10px;
+padding:10px;
+margin-top:15px;
+text-align:left;
+font-size:14px;
+">
+</div>
+
+
+
+<!-- INPUT -->
 <textarea
 id="question"
-placeholder="Ask T.A.R.A about towing safety...">
-</textarea>
+placeholder="Ask T.A.R.A about towing safety..."
+></textarea>
 
 
 <br>
 
 
-
-<!-- BUTTONS -->
 <button id="askBtn">
-
 Send
-
 </button>
 
 
 <button id="voiceBtn">
-
 🎤 Speak
-
 </button>
 
 
 
-<br>
-
-
-
 <!-- LOGO -->
-<img
-id="logo"
-src="taralogo.jpg">
+<img id="logo" src="taralogo.jpg">
 
 
 
@@ -308,9 +87,10 @@ Powered by Safety Intelligence
 
 <div id="copyright">
 
-© 2026 Safety Intelligence — T.A.R.A.
+© 2026 Safety Intelligence — T.A.R.A Prototype System
 
 </div>
+
 
 
 </div>
@@ -322,5 +102,4 @@ Powered by Safety Intelligence
 
 
 </body>
-
 </html>
