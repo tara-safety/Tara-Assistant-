@@ -333,3 +333,16 @@ opacity:.5;
 100%{transform:translateY(0)}
 
 }
+
+#avatarContainer img{
+
+position:relative;
+z-index:1;
+
+}
+
+#mouth{
+
+z-index:2;
+
+}
