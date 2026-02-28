@@ -1,315 +1,16 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>T.A.R.A Safety Intelligence</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-
-body{
-    background:#04060d;
-    color:white;
-    font-family:Arial;
-    text-align:center;
-    margin:0;
-}
-
-
-/* AVATAR CONTAINER */
-
-#avatarContainer{
-    margin-top:25px;
-    position:relative;
-    display:inline-block;
-}
-
-
-/* avatar image */
-
-#avatar{
-    width:220px;
-    border-radius:50%;
-    display:block;
-}
-
-
-/* glowing ring */
-
-#ring{
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    width:260px;
-    height:260px;
-    border-radius:50%;
-    border:3px solid #00ffc3;
-    opacity:.35;
-    animation:pulse 4s infinite;
-}
-
-
-/* mouth overlay */
-
-#mouth{
-
-position:absolute;
-
-/* move mouth higher on the face */
-bottom:95px;
-
-/* keep centered horizontally */
-left:50%;
-transform:translateX(-50%);
-
-/* size */
-width:50px;
-height:14px;
-
-/* appearance */
-background:#00ffc3;
-border-radius:0 0 30px 30px;
-
-opacity:.95;
-
-}
-
-
-/* mouth talking animation */
-
-.talkingMouth{
-
-animation:mouthMove .18s infinite;
-
-}
-
-
-/* mouth animation */
-
-@keyframes mouthMove{
-
-0%{
-height:10px;
-}
-
-50%{
-height:28px;
-}
-
-100%{
-height:14px;
-}
-
-}
-
-
-/* idle pulse */
-
-@keyframes pulse{
-
-0%{transform:translate(-50%,-50%) scale(1);}
-50%{transform:translate(-50%,-50%) scale(1.05);}
-100%{transform:translate(-50%,-50%) scale(1);}
-
-}
-
-
-/* talking glow */
-
-.talkingRing{
-
-animation:talkGlow .35s infinite alternate;
-
-}
-
-@keyframes talkGlow{
-
-from{
-transform:translate(-50%,-50%) scale(1);
-opacity:.4;
-}
-
-to{
-transform:translate(-50%,-50%) scale(1.18);
-opacity:1;
-}
-
-}
-
-
-
-/* CHAT */
-
-#chat{
-
-height:420px;
-max-width:600px;
-margin:20px auto;
-background:#0c1220;
-padding:15px;
-border-radius:10px;
-overflow-y:auto;
-text-align:left;
-
-}
-
-.user{
-
-background:#1b2540;
-padding:12px;
-margin:8px;
-border-radius:8px;
-
-}
-
-.tara{
-
-background:#00ffc3;
-color:black;
-padding:12px;
-margin:8px;
-border-radius:8px;
-
-}
-
-
-
-/* INPUT */
-
-#question{
-
-width:70%;
-padding:16px;
-font-size:17px;
-border-radius:8px;
-border:none;
-
-}
-
-
-/* BUTTONS */
-
-#buttons{
-
-margin-top:10px;
-
-}
-
-button{
-
-padding:14px 26px;
-font-size:16px;
-margin:6px;
-border:none;
-border-radius:8px;
-cursor:pointer;
-
-}
-
-#askBtn{
-background:#00ffc3;
-}
-
-#voiceBtn{
-background:orange;
-}
-
-
-
-/* LOGO */
-
-#logo{
-
-width:150px;
-margin-top:20px;
-
-}
-
-
-
-/* POWERED */
-
-#powered{
-
-font-size:18px;
-font-weight:bold;
-margin-top:10px;
-
-}
-
-
-/* COPYRIGHT */
-
-#copyright{
-
-font-size:11px;
-opacity:.6;
-margin-top:25px;
-margin-bottom:10px;
-
-}
-
-</style>
-</head>
-
-<body>
-
-
-<h2>T.A.R.A Safety Intelligence</h2>
-
-
-
-<div id="avatarContainer">
-
-<div id="ring"></div>
-
-<img id="avatar" src="tara-avatar.png">
-
-<div id="mouth"></div>
-
-</div>
-
-
-
-<div id="chat"></div>
-
-
-
-<input id="question" placeholder="Ask T.A.R.A about towing safety">
-
-
-<div id="buttons">
-
-<button id="askBtn">Send</button>
-
-<button id="voiceBtn">🎤 Speak</button>
-
-</div>
-
-
-
-<img id="logo" src="taralogo.jpg">
-
-
-<div id="powered">
-Powered by Safety Intelligence
-</div>
-
-
-<div id="copyright">
-© Safety Buzz Alerts. All rights reserved.
-</div>
-
-
-
 <script>
 
 const chat=document.getElementById("chat");
 const input=document.getElementById("question");
 const ring=document.getElementById("ring");
 const mouth=document.getElementById("mouth");
+const avatar=document.getElementById("avatar");
 
+
+let speaking=false;
+
+
+/* ADD CHAT MESSAGE */
 
 function add(text,type){
 
@@ -326,18 +27,89 @@ chat.scrollTop=chat.scrollHeight;
 }
 
 
-/* SPEAK WITH MOUTH ANIMATION */
+
+/* BLINK SYSTEM */
+
+function blink(){
+
+avatar.style.opacity=".4";
+
+setTimeout(()=>{
+avatar.style.opacity="1";
+},120);
+
+}
+
+/* random blink every 3-6 sec */
+
+setInterval(()=>{
+blink();
+},3000+Math.random()*3000);
+
+
+
+
+/* BREATHING IDLE */
+
+setInterval(()=>{
+
+if(!speaking){
+
+ring.style.transform="translate(-50%,-50%) scale(1.05)";
+
+setTimeout(()=>{
+
+ring.style.transform="translate(-50%,-50%) scale(1)";
+
+},2000);
+
+}
+
+},4000);
+
+
+
+
+/* FIND BEST FEMALE VOICE */
+
+function getVoice(){
+
+const voices=speechSynthesis.getVoices();
+
+for(let v of voices){
+
+if(
+v.name.toLowerCase().includes("female") ||
+v.name.toLowerCase().includes("zira") ||
+v.name.toLowerCase().includes("samantha")
+){
+return v;
+}
+
+}
+
+return voices[0];
+
+}
+
+
+
+/* SPEAK WITH TRUE LIFELIKE ANIMATION */
 
 function speak(text){
 
 const speech=new SpeechSynthesisUtterance(text);
 
+speech.voice=getVoice();
+
 speech.rate=.95;
 
+speech.pitch=1.1;
 
-/* start talking */
 
 speech.onstart=()=>{
+
+speaking=true;
 
 ring.classList.add("talkingRing");
 
@@ -346,9 +118,9 @@ mouth.classList.add("talkingMouth");
 };
 
 
-/* stop talking */
-
 speech.onend=()=>{
+
+speaking=false;
 
 ring.classList.remove("talkingRing");
 
@@ -356,6 +128,8 @@ mouth.classList.remove("talkingMouth");
 
 };
 
+
+/* safety stop previous speech */
 
 speechSynthesis.cancel();
 
@@ -365,7 +139,7 @@ speechSynthesis.speak(speech);
 
 
 
-/* ASK AI */
+/* ASK SERVER */
 
 async function ask(){
 
@@ -428,8 +202,13 @@ speak(fallback);
 
 
 
+/* BUTTON */
+
 askBtn.onclick=ask;
 
+
+
+/* ENTER KEY */
 
 input.addEventListener("keypress",e=>{
 
@@ -447,6 +226,18 @@ const rec=new webkitSpeechRecognition();
 
 rec.continuous=false;
 
+rec.interimResults=false;
+
+rec.lang="en-US";
+
+
+voiceBtn.onclick=()=>{
+
+rec.start();
+
+};
+
+
 rec.onresult=e=>{
 
 input.value=e.results[0][0].transcript;
@@ -455,16 +246,22 @@ ask();
 
 };
 
-voiceBtn.onclick=()=>rec.start();
-
 }
+
 else{
 
 voiceBtn.style.display="none";
 
 }
 
-</script>
 
-</body>
-</html>
+
+/* preload voices */
+
+speechSynthesis.onvoiceschanged=()=>{
+
+speechSynthesis.getVoices();
+
+};
+
+</script>
