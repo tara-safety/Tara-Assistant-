@@ -33,7 +33,24 @@ chatBox.scrollHeight;
 
 }
 
+const avatar =
+document.getElementById("avatar");
 
+function startTalking(){
+
+mouth.classList.add("talking");
+
+avatar.classList.add("avatarTalking");
+
+}
+
+function stopTalking(){
+
+mouth.classList.remove("talking");
+
+avatar.classList.remove("avatarTalking");
+
+}
 
 function startTalking(){
 
