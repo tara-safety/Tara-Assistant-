@@ -113,6 +113,9 @@ transform:translateX(-50%) scaleY(.5);
 opacity:.4;
 }
 
+#mouth{
+min-height:6px;
+min-width:20px;
 }
 
 
