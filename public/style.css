@@ -90,7 +90,13 @@ pointer-events:none;
 
 }
 
+.avatarTalking{
 
+box-shadow:
+0 0 25px cyan,
+0 0 45px #00ffaa;
+
+}
 
 /* thinking dots */
 
