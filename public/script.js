@@ -13,76 +13,177 @@ document.getElementById("mouth");
 const thinking =
 document.getElementById("thinking");
 
+const chatBox =
+document.getElementById("chatBox");
 
-/* SPEAK FUNCTION */
-function speak(text){
+let recognizing = false;
+let recognition;
+
+
+
+/* ---------- CHAT DISPLAY ---------- */
+
+function addMessage(sender, text)
+{
+
+const msg =
+document.createElement("div");
+
+msg.style.marginBottom = "10px";
+
+
+if(sender === "user")
+{
+msg.innerHTML =
+"<b>You:</b> " + text;
+msg.style.color = "#4fc3f7";
+}
+else
+{
+msg.innerHTML =
+"<b>T.A.R.A:</b> " + text;
+msg.style.color = "#00ffaa";
+}
+
+
+chatBox.appendChild(msg);
+
+chatBox.scrollTop =
+chatBox.scrollHeight;
+
+}
+
+
+
+/* ---------- MOUTH ANIMATION ---------- */
+
+function mouthTalk()
+{
+
+mouth.style.opacity = "1";
+
+mouth.style.animation =
+"talk 0.18s infinite";
+
+}
+
+function mouthStop()
+{
+
+mouth.style.animation = "none";
+
+mouth.style.opacity = "0.3";
+
+}
+
+
+
+/* ---------- THINKING ---------- */
+
+function showThinking()
+{
+
+thinking.style.display = "block";
+
+}
+
+function hideThinking()
+{
+
+thinking.style.display = "none";
+
+}
+
+
+
+/* ---------- TEXT TO SPEECH ---------- */
+
+function speak(text)
+{
+
+if(!window.speechSynthesis)
+return;
+
 
 const speech =
 new SpeechSynthesisUtterance(text);
 
+
 speech.rate = 1;
+
 speech.pitch = 1;
 
-speech.onstart = ()=>{
 
-mouth.classList.add("talking");
+speech.onstart =
+mouthTalk;
 
-};
+speech.onend =
+mouthStop;
 
-speech.onend = ()=>{
-
-mouth.classList.remove("talking");
-
-};
-
-speechSynthesis.cancel();
 
 speechSynthesis.speak(speech);
 
 }
 
 
-/* ASK SERVER */
-async function ask(){
+
+/* ---------- ASK SERVER ---------- */
+
+async function ask()
+{
 
 const question =
 input.value.trim();
 
-if(!question)return;
+if(!question)
+return;
 
-thinking.classList.add("thinkingActive");
 
-try{
+addMessage("user", question);
 
-const res =
-await fetch("/ask",{
+input.value = "";
 
+
+showThinking();
+
+
+try
+{
+
+const response =
+await fetch("/ask",
+{
 method:"POST",
-
-headers:{
+headers:
+{
 "Content-Type":"application/json"
 },
-
-body:JSON.stringify({
-question
-})
-
+body:
+JSON.stringify({question})
 });
 
-const data =
-await res.json();
 
-thinking.classList.remove("thinkingActive");
+const data =
+await response.json();
+
+
+hideThinking();
+
+
+addMessage("tara", data.answer);
+
 
 speak(data.answer);
 
 }
-catch{
+catch
+{
 
-thinking.classList.remove("thinkingActive");
+hideThinking();
 
-speak(
-"Safety reminder. Always use approved tow points."
+addMessage(
+"tara",
+"Connection error."
 );
 
 }
@@ -90,58 +191,99 @@ speak(
 }
 
 
-askBtn.onclick = ask;
+
+/* ---------- BUTTON ---------- */
+
+askBtn.onclick =
+ask;
 
 
-/* ENTER KEY */
+
+/* ---------- ENTER KEY ---------- */
+
 input.addEventListener(
-"keypress",
-function(e){
-
-if(e.key==="Enter"){
-
+"keydown",
+function(e)
+{
+if(e.key === "Enter"
+&& !e.shiftKey)
+{
 e.preventDefault();
-
 ask();
-
 }
+}
+);
 
-});
 
 
-/* VOICE INPUT */
-let recognition;
+/* ---------- VOICE INPUT ---------- */
 
 if(
 "webkitSpeechRecognition"
 in window
-){
+)
+{
 
 recognition =
 new webkitSpeechRecognition();
 
-recognition.continuous=false;
+recognition.continuous = false;
 
-recognition.onresult=
-function(e){
+recognition.interimResults = false;
+
+recognition.lang = "en-US";
+
+
+voiceBtn.onclick =
+function()
+{
+
+if(recognizing)
+{
+recognition.stop();
+recognizing = false;
+voiceBtn.innerText =
+"🎤 Speak";
+return;
+}
+
+
+recognition.start();
+
+recognizing = true;
+
+voiceBtn.innerText =
+"■ Stop";
+
+};
+
+
+
+recognition.onresult =
+function(event)
+{
+
+const text =
+event.results[0][0].transcript;
 
 input.value =
-e.results[0][0].transcript;
+text;
 
 ask();
 
 };
 
-}
 
 
-voiceBtn.onclick =
-function(){
+recognition.onend =
+function()
+{
 
-if(recognition){
+recognizing = false;
 
-recognition.start();
-
-}
+voiceBtn.innerText =
+"🎤 Speak";
 
 };
+
+}
