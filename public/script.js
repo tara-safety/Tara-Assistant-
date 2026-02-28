@@ -65,6 +65,9 @@ chatBox.scrollHeight;
 
 /* ---------- MOUTH ANIMATION ---------- */
 
+speech.onstart = startTalking;
+speech.onend = stopTalking;
+
 function mouthTalk()
 {
 
