@@ -33,38 +33,20 @@ chatBox.scrollHeight;
 
 }
 
-const avatar =
-document.getElementById("avatar");
+
 
 function startTalking(){
 
+mouth.style.opacity="1";
 mouth.classList.add("talking");
 
-avatar.classList.add("avatarTalking");
-
 }
+
 
 function stopTalking(){
 
+mouth.style.opacity="0";
 mouth.classList.remove("talking");
-
-avatar.classList.remove("avatarTalking");
-
-}
-
-function startTalking(){
-
-mouth.classList.add("talking");
-
-mouth.style.opacity = "1";
-
-}
-
-function stopTalking(){
-
-mouth.classList.remove("talking");
-
-mouth.style.opacity = "0";
 
 }
 
@@ -78,122 +60,64 @@ input.value.trim();
 if(!question) return;
 
 
-addMessage(
-"You",
-question
-);
+addMessage("You",question);
+
+input.value="";
+
+thinking.style.display="block";
 
 
-input.value = "";
+setTimeout(()=>{
+
+thinking.style.display="none";
+
+const answer =
+"Safety reminder: Always use manufacturer-approved tow points.";
+
+addMessage("T.A.R.A",answer);
 
 
-thinking.style.display =
-"block";
+const speech =
+new SpeechSynthesisUtterance(answer);
+
+speech.onstart=startTalking;
+speech.onend=stopTalking;
+
+speechSynthesis.speak(speech);
+
+},1000);
+
+}
 
 
-try{
 
-const response =
-await fetch("/ask",{
+askBtn.onclick=ask;
 
-method:"POST",
 
-headers:{
-"Content-Type":"application/json"
-},
 
-body:JSON.stringify({
-question:question
-})
+input.addEventListener("keypress",
+
+function(e){
+
+if(e.key==="Enter") ask();
 
 });
 
 
-const data =
-await response.json();
 
+voiceBtn.onclick=function(){
 
-thinking.style.display =
-"none";
-
-
-addMessage(
-"T.A.R.A",
-data.answer
-);
-
-
-const speech =
-new SpeechSynthesisUtterance(
-data.answer
-);
-
-
-speech.onstart =
-startTalking;
-
-
-speech.onend =
-stopTalking;
-
-
-speechSynthesis.speak(
-speech
-);
-
-}
-catch{
-
-thinking.style.display =
-"none";
-
-
-addMessage(
-"T.A.R.A",
-"Connection error."
-);
-
-}
-
-}
-
-
-
-askBtn.onclick = ask;
-
-
-
-input.addEventListener(
-"keypress",
-function(e){
-
-if(e.key==="Enter")
-ask();
-
-}
-);
-
-
-
-voiceBtn.onclick =
-function(){
-
-const rec =
+const rec=
 new webkitSpeechRecognition();
 
-rec.lang="en-US";
+rec.onresult=function(e){
 
-
-rec.onresult =
-function(e){
-
-input.value =
+input.value=
 e.results[0][0].transcript;
 
 ask();
 
 };
-
 
 rec.start();
 
