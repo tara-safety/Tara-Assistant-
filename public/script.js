@@ -131,9 +131,9 @@ function triggerEmergency()
             })
         });
 
-        /* CALL 911 */
+        /* CALL troy cell not 911 test mode */
 
-        window.location.href="tel:911";
+        window.location.href="tel:15066887812";
 
     },
 
