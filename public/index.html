@@ -15,7 +15,7 @@
 <body>
 
 
-<!-- HEADER -->
+<!-- FIXED HEADER -->
 <div class="header">
 
 <button id="menuBtn" class="menuBtn">☰</button>
@@ -34,7 +34,7 @@ T.A.R.A SAFETY INTELLIGENCE
 
 
 
-<!-- MENU OVERLAY -->
+<!-- MENU -->
 <div id="menuOverlay" class="menuOverlay hidden">
 
 <div class="menuPanel">
@@ -43,36 +43,24 @@ T.A.R.A SAFETY INTELLIGENCE
 
 MENU
 
-<button id="closeMenu" class="closeMenu">
-✕
-</button>
+<button id="closeMenu" class="closeMenu">✕</button>
 
 </div>
 
-
 <label class="menuItem">
 Voice Responses
-<input type="checkbox" id="toggleVoice" checked>
+<input type="checkbox" checked>
 </label>
-
 
 <label class="menuItem">
 GPS Auto Send
-<input type="checkbox" id="toggleGPS">
+<input type="checkbox">
 </label>
-
 
 <label class="menuItem">
 Incident Logging
-<input type="checkbox" id="toggleIncident">
+<input type="checkbox">
 </label>
-
-
-<label class="menuItem">
-Night Mode
-<input type="checkbox" id="toggleNight" checked>
-</label>
-
 
 </div>
 
@@ -84,23 +72,28 @@ Night Mode
 <div class="main">
 
 
+<!-- CHAT RESPONSE -->
 <div id="response" class="response"></div>
 
 
+<!-- THINKING DOTS -->
 <div id="thinking" class="thinking hidden">
+
 <span></span>
 <span></span>
 <span></span>
+
 </div>
 
 
+
+<!-- INPUT -->
 <div class="inputArea">
 
 <input
 id="question"
 type="text"
 placeholder="Ask towing or safety question..."
-autocomplete="off"
 >
 
 
@@ -116,8 +109,8 @@ TALK
 
 </div>
 
-
 </div>
+
 
 
 <div class="footer">
@@ -129,7 +122,6 @@ Powered by Safety Intelligence
 
 
 </div>
-
 
 
 <script src="script.js"></script>
