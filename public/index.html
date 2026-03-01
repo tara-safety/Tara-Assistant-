@@ -1,65 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>T.A.R.A Safety Intelligence</title>
 
 <link rel="stylesheet" href="style.css">
+
 </head>
 <body>
 
 <div class="app">
 
-    <!-- LOGO -->
-    <img src="taralogo.jpg" class="logo">
-
-    <div class="status" id="status">
-        Safety system ready
-    </div>
+<img src="taralogo.jpg" class="logo">
 
 
-    <!-- EMERGENCY BUTTON -->
-    <div class="emergencyWrap">
-
-        <button id="emergencyBtn" class="emergencyBtn">
-            🚨 HOLD FOR EMERGENCY
-        </button>
-
-        <div id="gps" class="gps"></div>
-
-    </div>
+<div class="status">
+Safety system ready
+</div>
 
 
-    <!-- RESPONSE BOX -->
-    <div id="response" class="response"></div>
+
+<button id="emergencyBtn" class="emergencyBtn">
+🚨 HOLD FOR EMERGENCY
+</button>
+
+<div id="gps" class="gps"></div>
 
 
-    <!-- INPUT -->
-    <div class="inputArea">
 
-        <input
-            id="question"
-            placeholder="Ask towing or safety question..."
-        >
-
-        <div class="buttons">
-
-            <button id="askBtn">SEND</button>
-
-            <button id="voiceBtn">TALK</button>
-
-        </div>
-
-    </div>
+<div id="response" class="response"></div>
 
 
-    <!-- FOOTER -->
-    <div class="footer">
-        Powered by Safety Intelligence<br>
-        © 2026 Safety Buzz Alerts
-    </div>
+
+<div id="thinking" class="thinking hidden">
+<span></span>
+<span></span>
+<span></span>
+</div>
+
+
+
+<div class="inputArea">
+
+<input
+id="question"
+type="text"
+placeholder="Ask towing or safety question..."
+autocomplete="off"
+>
+
+<div class="buttons">
+
+<button id="askBtn">
+SEND
+</button>
+
+<button id="voiceBtn">
+TALK
+</button>
+
+</div>
+
+</div>
+
+
+
+<div class="footer">
+
+Powered by Safety Intelligence<br>
+© 2026 Safety Buzz Alerts
+
+</div>
 
 
 </div>
