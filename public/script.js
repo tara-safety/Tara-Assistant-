@@ -137,13 +137,31 @@ voiceBtn.onclick =
 
 /* MENU */
 
-menuBtn.onclick =
-()=> menuOverlay.classList.remove("hidden");
+menuBtn.addEventListener("click", ()=>{
 
-closeMenu.onclick =
-()=> menuOverlay.classList.add("hidden");
+menuOverlay.classList.remove("hidden");
+
+});
 
 
+closeMenu.addEventListener("click", ()=>{
+
+menuOverlay.classList.add("hidden");
+
+});
+
+
+/* also close if background tapped */
+
+menuOverlay.addEventListener("click",(e)=>{
+
+if(e.target === menuOverlay){
+
+menuOverlay.classList.add("hidden");
+
+}
+
+});
 
 /* HOLD EMERGENCY */
 
