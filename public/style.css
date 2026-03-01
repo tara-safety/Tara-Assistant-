@@ -158,6 +158,8 @@ z-index:1000;
 
 .emergencyBtn{
 
+.emergencyBtn{
+
 width:120px;
 height:120px;
 
@@ -165,13 +167,20 @@ background:red;
 color:white;
 
 border:none;
-
 border-radius:12px;
 
 font-size:18px;
 font-weight:bold;
 
+cursor:pointer;
+
+/* PREVENT TEXT SELECT */
 user-select:none;
+-webkit-user-select:none;
+-webkit-touch-callout:none;
+
+/* PREVENT LONG PRESS MENU */
+touch-action:manipulation;
 
 }
 
