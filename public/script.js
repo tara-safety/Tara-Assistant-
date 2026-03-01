@@ -128,38 +128,21 @@ wakeRec.start();
 
 
 /* EMERGENCY */
+emergencyBtn.addEventListener("touchstart", startHold, { passive:false });
+emergencyBtn.addEventListener("mousedown", startHold);
 
-const emergencyBtn =
-document.getElementById("emergencyBtn");
+emergencyBtn.addEventListener("touchend", cancelHold);
+emergencyBtn.addEventListener("mouseup", cancelHold);
 
-const progress =
-document.getElementById("progressCircle");
-
-let holdTimer;
-
-
-emergencyBtn.onmousedown = startHold;
-emergencyBtn.ontouchstart = startHold;
-
-emergencyBtn.onmouseup = cancelHold;
-emergencyBtn.ontouchend = cancelHold;
-
-
-function startHold(){
-
+function startHold(e){
+e.preventDefault();
 progress.style.width="100%";
-
-holdTimer = setTimeout(sendEmergency,3000);
-
+holdTimer = setTimeout(callEmergency,3000);
 }
 
-
 function cancelHold(){
-
 progress.style.width="0%";
-
 clearTimeout(holdTimer);
-
 }
 
 
