@@ -14,44 +14,9 @@
 
 <body>
 
-<!-- MENU BUTTON -->
-<button id="menuBtn" class="menuBtn">☰</button>
 
-
-<!-- MENU OVERLAY -->
-<div id="menuOverlay" class="menuOverlay hidden">
-
-<div class="menuBox">
-
-<button id="closeMenu" class="closeMenu">✕</button>
-
-<h2>TARA MENU</h2>
-
-<label>
-<input type="checkbox" checked>
- Voice Reply
-</label>
-
-<br><br>
-
-<label>
-<input type="checkbox">
- GPS Enabled
-</label>
-
-<br><br>
-
-<label>
-<input type="checkbox">
- Emergency Alerts
-</label>
-
-</div>
-
-</div>
-
-<!-- HEADER -->
-<div class="header">
+<!-- TOP BAR -->
+<div class="topBar">
 
 <button id="menuBtn" class="menuBtn">☰</button>
 
@@ -63,65 +28,90 @@ TARA SAFETY INTELLIGENCE
 
 
 
-<!-- EMERGENCY BUTTON -->
-<button id="emergencyBtn" class="emergencyBtn">
+<!-- EMERGENCY FIXED CENTER -->
+<div class="emergencyWrap">
 
-<div class="emergencyInner">
+<button id="emergencyBtn" class="emergencyBtn">
 
 🚨
 
-<div class="emergencyText">
-HOLD<br>EMERGENCY
+<div class="holdLabel">
+HOLD EMERGENCY
 </div>
 
-<div id="holdProgress" class="holdProgress"></div>
-
-</div>
+<div id="holdBar" class="holdBar"></div>
 
 </button>
+
+</div>
 
 
 
 <!-- CHAT AREA -->
-<div class="main">
+<div class="container">
 
 <div id="response" class="response"></div>
 
 <div id="thinking" class="thinking hidden">
-<span></span>
-<span></span>
-<span></span>
+<span></span><span></span><span></span>
 </div>
 
-
-<div class="inputArea">
 
 <input
 id="question"
-type="text"
-placeholder="Ask towing or vehicle safety question..."
+class="question"
+placeholder="Ask towing safety question..."
 >
 
-<div class="buttons">
 
-<button id="askBtn">SEND</button>
+<div class="buttonRow">
 
-<button id="voiceBtn">🎤 TALK</button>
+<button id="askBtn" class="sendBtn">
+SEND
+</button>
 
-</div>
+<button id="voiceBtn" class="voiceBtn">
+🎤 TALK
+</button>
 
 </div>
 
 
 <div class="footer">
-
-Powered by Safety Intelligence  
+Powered by Safety Intelligence<br>
 © Safety Buzz Alerts
-
 </div>
 
 </div>
 
+
+
+<!-- MENU -->
+<div id="menuOverlay" class="menuOverlay hidden">
+
+<div class="menuBox">
+
+<button id="closeMenu" class="closeMenu">
+✕
+</button>
+
+<h2>MENU</h2>
+
+<label>
+<input type="checkbox" checked>
+Voice Enabled
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox">
+GPS Enabled
+</label>
+
+</div>
+
+</div>
 
 
 <script src="script.js"></script>
