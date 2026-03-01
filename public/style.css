@@ -309,3 +309,15 @@ font-size:20px;
 cursor:pointer;
 
 }
+
+.footerText{
+
+text-align:center;
+
+font-weight:bold;
+
+color:#00ffd0;
+
+margin-top:10px;
+
+}
