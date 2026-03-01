@@ -30,25 +30,53 @@ document.getElementById("closeMenu");
 function addUser(text){
 
 response.innerHTML +=
-"<div style='color:#4fc3f7'>YOU: "+text+"</div>";
+`
+<div style="
+margin-top:15px;
+color:#4fc3f7;
+font-weight:bold;
+">
+YOU:
+</div>
+
+<div style="
+margin-bottom:10px;
+">
+${text}
+</div>
+`;
 
 response.scrollTop =
 response.scrollHeight;
 
 }
+
 
 
 function addBot(text){
 
 response.innerHTML +=
-"<div>TARA: "+text+"</div>";
+`
+<div style="
+margin-top:15px;
+color:#00ff9c;
+font-weight:bold;
+">
+TARA:
+</div>
+
+<div style="
+margin-bottom:15px;
+line-height:1.4;
+">
+${text}
+</div>
+`;
 
 response.scrollTop =
 response.scrollHeight;
 
 }
-
-
 
 /* SEND */
 
@@ -156,21 +184,17 @@ recognition.start();
 
 /* EMERGENCY BUTTON */
 
-emergencyBtn.onclick =
-function(){
+const emergencyBtn =
+document.getElementById("emergencyBtn");
 
-if(
-confirm(
-"Trigger emergency call?"
-)
-){
+emergencyBtn.addEventListener("click", function(e){
+
+e.preventDefault();
 
 window.location.href =
-"tel:15066887812";
+"tel:15061234567"; // your number
 
-}
-
-};
+});
 
 menuBtn.onclick =
 function(){
