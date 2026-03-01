@@ -2,97 +2,122 @@ body{
 
 margin:0;
 font-family:Arial;
-background:#0b1d2a;
+background:linear-gradient(#031520,#062b3a);
+
 color:white;
 
 }
 
 
-/* TOP BAR */
+/* HEADER */
 
-.topBar{
+.header{
 
 position:fixed;
-
 top:0;
-left:0;
-right:0;
 
+width:100%;
 height:60px;
 
-background:#081722;
+background:#021018;
 
 display:flex;
 align-items:center;
-justify-content:center;
+
+padding-left:60px;
 
 z-index:1000;
 
 }
 
+.headerTitle{
 
-.title{
-
-font-size:18px;
 font-weight:bold;
+font-size:18px;
 
 }
 
 
+/* MENU BUTTON */
+
 .menuBtn{
 
-position:fixed;
-
-top:15px;
+position:absolute;
 left:15px;
 
 font-size:28px;
 
 background:none;
 border:none;
-
 color:white;
 
-z-index:10000;
+cursor:pointer;
 
 }
 
 
-/* EMERGENCY CENTER */
+/* SLIDE MENU */
 
-.emergencyWrap{
+.menu{
 
 position:fixed;
 
-top:70px;
+top:0;
+left:-260px;
 
-left:0;
-right:0;
+width:260px;
+height:100%;
 
-display:flex;
-justify-content:center;
+background:#021018;
 
-z-index:1000;
+padding:20px;
+
+transition:.3s;
+
+z-index:2000;
 
 }
+
+.menu.open{
+
+left:0;
+
+}
+
+.closeMenu{
+
+font-size:22px;
+background:none;
+border:none;
+color:white;
+
+}
+
+.menuItem{
+
+display:flex;
+justify-content:space-between;
+
+margin-top:20px;
+
+}
+
+
+/* MAIN */
+
+.main{
+
+margin-top:70px;
+padding:15px;
+
+}
+
+
+/* EMERGENCY */
 
 .emergencyWrap{
 
 text-align:center;
-
-margin-top:80px;
-
-}
-
-.holdText{
-
-color:#ffaaaa;
-
-font-weight:bold;
-
-margin-top:8px;
-
-font-size:14px;
 
 }
 
@@ -103,90 +128,104 @@ height:140px;
 
 background:red;
 
-border:none;
-border-radius:16px;
+border-radius:20px;
 
-color:white;
+margin:auto;
 
-font-size:28px;
-font-weight:bold;
+display:flex;
+justify-content:center;
+align-items:center;
 
 position:relative;
 
-cursor:pointer;
+overflow:hidden;
 
-user-select:none;
--webkit-user-select:none;
+}
+
+.emgText{
+
+font-weight:bold;
+
+z-index:2;
 
 }
 
 
-.holdLabel{
-
-font-size:14px;
-
-}
-
-
-.holdBar{
+.progressCircle{
 
 position:absolute;
 
-bottom:0;
-left:0;
-
-height:6px;
 width:0%;
+height:100%;
 
-background:#00ff9c;
+background:rgba(255,255,255,.3);
+
+left:0;
+top:0;
+
+}
+
+
+.holdText{
+
+margin-top:8px;
+color:#ffbbbb;
 
 }
 
 
 /* CHAT */
 
-.container{
+.chatBox{
 
-max-width:420px;
-width:92%;
+background:#082331;
 
-margin:auto;
+height:260px;
 
-margin-top:240px;
-
-}
-
-
-.response{
-
-height:280px;
-
-background:#132b3a;
-
-border-radius:12px;
+border-radius:15px;
 
 padding:10px;
 
 overflow:auto;
 
+margin-top:20px;
+
 }
 
 
-.question{
+.user{
+
+color:#00ffd0;
+margin-top:10px;
+
+}
+
+.bot{
+
+color:white;
+margin-top:10px;
+
+}
+
+
+/* INPUT */
+
+.input{
 
 width:100%;
+padding:14px;
 
-padding:12px;
+border-radius:12px;
+border:none;
 
 margin-top:10px;
 
-border:none;
-border-radius:12px;
-
 }
 
 
-.buttonRow{
+/* BUTTONS */
+
+.btnRow{
 
 display:flex;
 gap:10px;
@@ -195,173 +234,37 @@ margin-top:10px;
 
 }
 
-
-.sendBtn,
-.voiceBtn{
-
-flex:1;
-
-padding:12px;
-
-border:none;
-border-radius:12px;
-
-font-weight:bold;
-
-cursor:pointer;
-
-}
-
-
 .sendBtn{
 
-background:#00bcd4;
+flex:1;
+padding:15px;
 
-}
+background:#00c8ff;
 
-
-.voiceBtn{
-
-background:#4caf50;
-color:white;
-
-}
-
-
-/* THINKING */
-
-.thinking{
-
-text-align:center;
-margin:10px;
-
-}
-
-.thinking span{
-
-height:8px;
-width:8px;
-
-background:white;
-
-display:inline-block;
-
-border-radius:50%;
-
-margin:3px;
-
-animation:blink 1.4s infinite;
-
-}
-
-@keyframes blink{
-
-0%{opacity:.2}
-50%{opacity:1}
-100%{opacity:.2}
-
-}
-
-
-.hidden{
-
-display:none;
-
-}
-
-
-/* MENU */
-
-.menuOverlay{
-
-position:fixed;
-top:0;
-left:0;
-
-width:100%;
-height:100%;
-
-background:rgba(0,0,0,.85);
-
-display:flex;
-justify-content:center;
-align-items:center;
-
-z-index:9999;
-
-}
-
-.menuPanel{
-
-background:#0b2230;
-
-padding:30px;
-
-border-radius:16px;
-
-width:260px;
-
-text-align:center;
-
-position:relative;
-
-}
-
-.closeMenu{
-
-position:absolute;
-
-top:10px;
-right:10px;
-
-font-size:20px;
-
-background:none;
 border:none;
-
-color:white;
-
-cursor:pointer;
-
-}
-
-
-.menuBox{
-
-background:#0b1d2a;
-
-padding:20px;
-
 border-radius:12px;
 
-width:250px;
-
 }
 
+.talkBtn{
 
-.closeMenu{
+flex:1;
+padding:15px;
 
-float:right;
+background:#28a745;
 
-background:none;
 border:none;
-
-color:white;
-
-font-size:20px;
-
-cursor:pointer;
+border-radius:12px;
 
 }
 
-.footerText{
+
+.footer{
 
 text-align:center;
 
-font-weight:bold;
+margin-top:15px;
 
 color:#00ffd0;
-
-margin-top:10px;
 
 }
