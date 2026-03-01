@@ -1,32 +1,18 @@
-const input =
-document.getElementById("question");
+const chatBox = document.getElementById("chatBox");
+const input = document.getElementById("question");
+const askBtn = document.getElementById("askBtn");
+const voiceBtn = document.getElementById("voiceBtn");
 
-const askBtn =
-document.getElementById("askBtn");
 
-const voiceBtn =
-document.getElementById("voiceBtn");
+/* MENU */
 
-const response =
-document.getElementById("response");
+const menu = document.getElementById("menu");
 
-const thinking =
-document.getElementById("thinking");
+menuBtn.onclick = () =>
+menu.classList.add("open");
 
-const menuBtn =
-document.getElementById("menuBtn");
-
-const menuOverlay =
-document.getElementById("menuOverlay");
-
-const closeMenu =
-document.getElementById("closeMenu");
-
-const emergencyBtn =
-document.getElementById("emergencyBtn");
-
-const holdBar =
-document.getElementById("holdBar");
+closeMenu.onclick = () =>
+menu.classList.remove("open");
 
 
 
@@ -34,45 +20,39 @@ document.getElementById("holdBar");
 
 function addUser(text){
 
-response.innerHTML +=
-"<div style='margin-top:15px;color:#4fc3f7'>YOU:</div>"+text;
+chatBox.innerHTML +=
+`<div class="user">YOU: ${text}</div>`;
 
-response.scrollTop =
-response.scrollHeight;
+chatBox.scrollTop = chatBox.scrollHeight;
 
 }
 
 
 function addBot(text){
 
-response.innerHTML +=
-"<div style='margin-top:15px;color:#00ff9c'>TARA:</div>"+text;
+chatBox.innerHTML +=
+`<div class="bot">TARA: ${text}</div>`;
 
-response.scrollTop =
-response.scrollHeight;
+chatBox.scrollTop = chatBox.scrollHeight;
 
 }
 
 
+askBtn.onclick = send;
 
-/* SEND */
 
-askBtn.onclick =
-async function(){
+async function send(){
 
-const q =
-input.value.trim();
+const text = input.value;
 
-if(!q) return;
+if(!text) return;
 
-addUser(q);
+addUser(text);
 
 input.value="";
 
-thinking.classList.remove("hidden");
 
-const res =
-await fetch("/ask",{
+const res = await fetch("/ask",{
 
 method:"POST",
 
@@ -81,126 +61,126 @@ headers:{
 },
 
 body:JSON.stringify({
-question:q
+question:text
 })
 
 });
 
-const data =
-await res.json();
 
-thinking.classList.add("hidden");
+const data = await res.json();
 
 addBot(data.answer);
 
-};
-
-
-
-input.addEventListener(
-"keypress",
-e=>{
-if(e.key==="Enter")
-askBtn.click();
 }
-);
 
 
 
 /* VOICE */
 
-let recognition;
+voiceBtn.onclick = () => {
 
-if(
-"webkitSpeechRecognition" in window
-){
-
-recognition =
+const rec =
 new webkitSpeechRecognition();
 
-recognition.onresult =
+rec.lang="en-US";
+
+rec.onresult =
 e=>{
 
 input.value =
 e.results[0][0].transcript;
 
-askBtn.click();
+send();
 
 };
 
-}
+rec.start();
 
-voiceBtn.onclick =
-()=> recognition?.start();
-
+};
 
 
-/* MENU */
 
-menuBtn.addEventListener("click", ()=>{
+/* WAKE WORD */
 
-menuOverlay.classList.remove("hidden");
+const wakeRec =
+new webkitSpeechRecognition();
 
-});
+wakeRec.continuous=true;
 
+wakeRec.onresult =
+e=>{
 
-closeMenu.addEventListener("click", ()=>{
+const t =
+e.results[e.results.length-1][0]
+.transcript
+.toLowerCase();
 
-menuOverlay.classList.add("hidden");
+if(t.includes("hey tara")){
 
-});
-
-
-/* also close if background tapped */
-
-menuOverlay.addEventListener("click",(e)=>{
-
-if(e.target === menuOverlay){
-
-menuOverlay.classList.add("hidden");
+alert("TARA listening");
 
 }
 
-});
+};
 
-/* HOLD EMERGENCY */
+wakeRec.start();
+
+
+
+/* EMERGENCY */
+
+const emergencyBtn =
+document.getElementById("emergencyBtn");
+
+const progress =
+document.getElementById("progressCircle");
 
 let holdTimer;
 
-emergencyBtn.onmousedown =
-emergencyBtn.ontouchstart =
-()=>{
 
-let width=0;
+emergencyBtn.onmousedown = startHold;
+emergencyBtn.ontouchstart = startHold;
 
-holdTimer =
-setInterval(()=>{
+emergencyBtn.onmouseup = cancelHold;
+emergencyBtn.ontouchend = cancelHold;
 
-width+=3;
 
-holdBar.style.width=
-width+"%";
+function startHold(){
 
-if(width>=100){
+progress.style.width="100%";
 
-clearInterval(holdTimer);
-
-window.location.href=
-"tel:15066887812";
+holdTimer = setTimeout(sendEmergency,3000);
 
 }
 
-},100);
 
-};
+function cancelHold(){
+
+progress.style.width="0%";
+
+clearTimeout(holdTimer);
+
+}
 
 
-emergencyBtn.onmouseup =
-emergencyBtn.ontouchend =
-()=>{
+function sendEmergency(){
 
-clearInterval(holdTimer);
+navigator.geolocation.getCurrentPosition(pos=>{
 
-holdBar.style.width="0%";
+const lat=pos.coords.latitude;
+const lon=pos.coords.longitude;
 
-};
+const msg=
+`Driver sent emergency alert. Location:
+https://maps.google.com/?q=${lat},${lon}`;
+
+
+/* TEST NUMBER */
+
+window.location.href=
+`sms:+15066887812?body=${encodeURIComponent(msg)}`;
+
+
+});
+
+}
