@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>T.A.R.A Safety Intelligence</title>
+<title>TARA Safety Intelligence</title>
 
 <link rel="stylesheet" href="style.css">
 
@@ -15,113 +15,72 @@
 <body>
 
 
-<!-- FIXED HEADER -->
+<!-- HEADER -->
 <div class="header">
 
 <button id="menuBtn" class="menuBtn">☰</button>
 
 <div class="title">
-T.A.R.A SAFETY INTELLIGENCE
+TARA SAFETY INTELLIGENCE
 </div>
+
+</div>
+
+
+
+<!-- EMERGENCY BUTTON -->
+<div class="emergencyContainer">
 
 <button id="emergencyBtn" class="emergencyBtn">
-🚨 HOLD FOR EMERGENCY
+🚨
+<br>
+EMERGENCY
 </button>
 
-<div id="gps" class="gps"></div>
-
 </div>
 
 
 
-<!-- MENU -->
-<div id="menuOverlay" class="menuOverlay hidden">
-
-<div class="menuPanel">
-
-<div class="menuHeader">
-
-MENU
-
-<button id="closeMenu" class="closeMenu">✕</button>
-
-</div>
-
-<label class="menuItem">
-Voice Responses
-<input type="checkbox" checked>
-</label>
-
-<label class="menuItem">
-GPS Auto Send
-<input type="checkbox">
-</label>
-
-<label class="menuItem">
-Incident Logging
-<input type="checkbox">
-</label>
-
-</div>
-
-</div>
-
-
-
-<!-- MAIN -->
+<!-- CHAT AREA -->
 <div class="main">
 
-
-<!-- CHAT RESPONSE -->
 <div id="response" class="response"></div>
 
-
-<!-- THINKING DOTS -->
 <div id="thinking" class="thinking hidden">
-
 <span></span>
 <span></span>
 <span></span>
-
 </div>
 
 
-
-<!-- INPUT -->
 <div class="inputArea">
 
 <input
 id="question"
 type="text"
-placeholder="Ask towing or safety question..."
+placeholder="Ask towing or vehicle safety question..."
 >
-
 
 <div class="buttons">
 
-<button id="askBtn">
-SEND
-</button>
+<button id="askBtn">SEND</button>
 
-<button id="voiceBtn">
-TALK
-</button>
+<button id="voiceBtn">🎤 TALK</button>
 
 </div>
 
 </div>
-
 
 
 <div class="footer">
 
 Powered by Safety Intelligence  
-© 2026 Safety Buzz Alerts
+© Safety Buzz Alerts
 
 </div>
 
-
 </div>
+
 
 
 <script src="script.js"></script>
