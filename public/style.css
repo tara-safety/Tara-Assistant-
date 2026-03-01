@@ -25,6 +25,19 @@ text-align:center;
 margin-top:20px;
 
 }
+body {
+  margin: 0;
+  background: black;
+  color: white;
+  text-align: center;
+  font-family: Arial;
+}
+
+#avatarContainer {
+  width: 60vw;
+  max-width: 220px;
+  margin-top: 40px;
+}
 
 
 /* AVATAR */
@@ -35,7 +48,7 @@ position:relative;
 width:220px;
 margin:auto;
 
-}
+}l
 
 @keyframes speak {
   0% { opacity: .2; transform: translateX(-50%) scale(1); }
