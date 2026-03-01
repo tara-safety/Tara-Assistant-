@@ -13,9 +13,6 @@ document.getElementById("response");
 const thinking =
 document.getElementById("thinking");
 
-const emergencyBtn =
-document.getElementById("emergencyBtn");
-
 const menuBtn =
 document.getElementById("menuBtn");
 
@@ -25,58 +22,38 @@ document.getElementById("menuOverlay");
 const closeMenu =
 document.getElementById("closeMenu");
 
-/* CHAT DISPLAY */
+const emergencyBtn =
+document.getElementById("emergencyBtn");
+
+const holdBar =
+document.getElementById("holdBar");
+
+
+
+/* CHAT */
 
 function addUser(text){
 
 response.innerHTML +=
-`
-<div style="
-margin-top:15px;
-color:#4fc3f7;
-font-weight:bold;
-">
-YOU:
-</div>
-
-<div style="
-margin-bottom:10px;
-">
-${text}
-</div>
-`;
+"<div style='margin-top:15px;color:#4fc3f7'>YOU:</div>"+text;
 
 response.scrollTop =
 response.scrollHeight;
 
 }
-
 
 
 function addBot(text){
 
 response.innerHTML +=
-`
-<div style="
-margin-top:15px;
-color:#00ff9c;
-font-weight:bold;
-">
-TARA:
-</div>
-
-<div style="
-margin-bottom:15px;
-line-height:1.4;
-">
-${text}
-</div>
-`;
+"<div style='margin-top:15px;color:#00ff9c'>TARA:</div>"+text;
 
 response.scrollTop =
 response.scrollHeight;
 
 }
+
+
 
 /* SEND */
 
@@ -93,8 +70,6 @@ addUser(q);
 input.value="";
 
 thinking.classList.remove("hidden");
-
-try{
 
 const res =
 await fetch("/ask",{
@@ -114,22 +89,13 @@ question:q
 const data =
 await res.json();
 
-addBot(data.answer);
-
-}
-catch{
-
-addBot("Connection error");
-
-}
-
 thinking.classList.add("hidden");
+
+addBot(data.answer);
 
 };
 
 
-
-/* ENTER KEY */
 
 input.addEventListener(
 "keypress",
@@ -141,26 +107,19 @@ askBtn.click();
 
 
 
-/* VOICE INPUT */
+/* VOICE */
 
 let recognition;
 
 if(
-"webkitSpeechRecognition" in window ||
-"SpeechRecognition" in window
+"webkitSpeechRecognition" in window
 ){
 
-const SpeechRecognition =
-window.SpeechRecognition ||
-window.webkitSpeechRecognition;
-
 recognition =
-new SpeechRecognition();
-
-recognition.continuous=false;
+new webkitSpeechRecognition();
 
 recognition.onresult =
-function(e){
+e=>{
 
 input.value =
 e.results[0][0].transcript;
@@ -171,118 +130,59 @@ askBtn.click();
 
 }
 
-
 voiceBtn.onclick =
-function(){
-
-if(recognition)
-recognition.start();
-
-};
+()=> recognition?.start();
 
 
 
-/* EMERGENCY BUTTON */
+/* MENU */
 
-const emergencyBtn =
-document.getElementById("emergencyBtn");
+menuBtn.onclick =
+()=> menuOverlay.classList.remove("hidden");
 
-const holdProgress =
-document.getElementById("holdProgress");
+closeMenu.onclick =
+()=> menuOverlay.classList.add("hidden");
+
+
+
+/* HOLD EMERGENCY */
 
 let holdTimer;
-let holdTime = 0;
-let holding = false;
 
-const HOLD_REQUIRED = 3000; // 3 seconds
+emergencyBtn.onmousedown =
+emergencyBtn.ontouchstart =
+()=>{
 
-
-function startHold(){
-
-holding = true;
-holdTime = 0;
+let width=0;
 
 holdTimer =
 setInterval(()=>{
 
-holdTime += 100;
+width+=3;
 
-holdProgress.style.width =
-(holdTime / HOLD_REQUIRED * 100) + "%";
+holdBar.style.width=
+width+"%";
 
-if(holdTime >= HOLD_REQUIRED){
+if(width>=100){
 
 clearInterval(holdTimer);
 
-activateEmergency();
+window.location.href=
+"tel:15066887812";
 
 }
 
 },100);
 
-}
-
-
-function stopHold(){
-
-holding = false;
-
-clearInterval(holdTimer);
-
-holdProgress.style.width = "0%";
-
-}
-
-
-function activateEmergency(){
-
-navigator.vibrate?.(500);
-
-window.location.href =
-"tel:15061234567"; // your test number
-
-}
-
-
-// TOUCH
-emergencyBtn.addEventListener(
-"touchstart",
-startHold
-);
-
-emergencyBtn.addEventListener(
-"touchend",
-stopHold
-);
-
-
-// MOUSE
-emergencyBtn.addEventListener(
-"mousedown",
-startHold
-);
-
-emergencyBtn.addEventListener(
-"mouseup",
-stopHold
-);
-
-emergencyBtn.addEventListener(
-"mouseleave",
-stopHold
-);
-
-menuBtn.onclick =
-function(){
-
-menuOverlay.classList.remove("hidden");
-
 };
 
 
-closeMenu.onclick =
-function(){
+emergencyBtn.onmouseup =
+emergencyBtn.ontouchend =
+()=>{
 
-menuOverlay.classList.add("hidden");
+clearInterval(holdTimer);
+
+holdBar.style.width="0%";
 
 };
