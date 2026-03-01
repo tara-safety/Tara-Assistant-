@@ -67,7 +67,15 @@ display:block;
 
 }
 
+@media (max-width:600px){
 
+#logo{
+
+width:90px;
+
+}
+
+}
 
 #mouth{
 
