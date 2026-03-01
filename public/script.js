@@ -187,14 +187,90 @@ recognition.start();
 const emergencyBtn =
 document.getElementById("emergencyBtn");
 
-emergencyBtn.addEventListener("click", function(e){
+const holdProgress =
+document.getElementById("holdProgress");
 
-e.preventDefault();
+let holdTimer;
+let holdTime = 0;
+let holding = false;
+
+const HOLD_REQUIRED = 3000; // 3 seconds
+
+
+function startHold(){
+
+holding = true;
+holdTime = 0;
+
+holdTimer =
+setInterval(()=>{
+
+holdTime += 100;
+
+holdProgress.style.width =
+(holdTime / HOLD_REQUIRED * 100) + "%";
+
+if(holdTime >= HOLD_REQUIRED){
+
+clearInterval(holdTimer);
+
+activateEmergency();
+
+}
+
+},100);
+
+}
+
+
+function stopHold(){
+
+holding = false;
+
+clearInterval(holdTimer);
+
+holdProgress.style.width = "0%";
+
+}
+
+
+function activateEmergency(){
+
+navigator.vibrate?.(500);
 
 window.location.href =
-"tel:15061234567"; // your number
+"tel:15061234567"; // your test number
 
-});
+}
+
+
+// TOUCH
+emergencyBtn.addEventListener(
+"touchstart",
+startHold
+);
+
+emergencyBtn.addEventListener(
+"touchend",
+stopHold
+);
+
+
+// MOUSE
+emergencyBtn.addEventListener(
+"mousedown",
+startHold
+);
+
+emergencyBtn.addEventListener(
+"mouseup",
+stopHold
+);
+
+emergencyBtn.addEventListener(
+"mouseleave",
+stopHold
+);
 
 menuBtn.onclick =
 function(){
