@@ -1,144 +1,160 @@
-const TEST_MODE = true; // true = safe testing, false = real emergency
-const input = document.getElementById("question");
-const askBtn = document.getElementById("askBtn");
-const voiceBtn = document.getElementById("voiceBtn");
-const chat = document.getElementById("chat");
+const input =
+document.getElementById("question");
 
-const emergencyBtn = document.getElementById("emergencyBtn");
-const status = document.getElementById("status");
+const askBtn =
+document.getElementById("askBtn");
+
+const voiceBtn =
+document.getElementById("voiceBtn");
+
+const response =
+document.getElementById("response");
+
+const emergencyBtn =
+document.getElementById("emergencyBtn");
+
+const gpsText =
+document.getElementById("gps");
+
+
+/* CHAT */
+
+askBtn.onclick =
+async function(){
+
+const question =
+input.value;
+
+if(!question) return;
+
+response.innerHTML =
+"Thinking...";
+
+const res =
+await fetch("/ask",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+question
+})
+
+});
+
+const data =
+await res.json();
+
+response.innerHTML =
+data.answer;
+
+};
+
+
+
+/* VOICE */
+
+let recognition;
+
+if("webkitSpeechRecognition" in window){
+
+recognition =
+new webkitSpeechRecognition();
+
+recognition.continuous=false;
+
+recognition.onresult =
+function(e){
+
+input.value =
+e.results[0][0].transcript;
+
+askBtn.click();
+
+};
+
+}
+
+
+voiceBtn.onclick =
+function(){
+
+if(recognition)
+recognition.start();
+
+};
+
+
+
+/* EMERGENCY HOLD */
 
 let holdTimer;
 
-/* ---------------- CHAT ---------------- */
+emergencyBtn.onmousedown =
+startHold;
 
-function addMessage(text, cls)
-{
-    const div = document.createElement("div");
-    div.className = cls;
-    div.innerText = text;
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-}
+emergencyBtn.ontouchstart =
+startHold;
 
-async function ask()
-{
-    const q = input.value;
-    if(!q) return;
+emergencyBtn.onmouseup =
+cancelHold;
 
-    addMessage(q,"messageUser");
-    input.value="";
-
-    const res = await fetch("/ask",
-    {
-        method:"POST",
-        headers:{ "Content-Type":"application/json"},
-        body:JSON.stringify({question:q})
-    });
-
-    const data = await res.text();
-
-    addMessage(data,"messageBot");
-
-    speak(data);
-}
-
-askBtn.onclick = ask;
-
-/* ENTER KEY */
-
-input.addEventListener("keypress", e=>{
-if(e.key==="Enter") ask();
-});
+emergencyBtn.ontouchend =
+cancelHold;
 
 
-/* ---------------- VOICE ---------------- */
+function startHold(){
 
-const SpeechRecognition =
-window.SpeechRecognition ||
-window.webkitSpeechRecognition;
+holdTimer =
+setTimeout(triggerEmergency,3000);
 
-if(SpeechRecognition)
-{
-    const rec = new SpeechRecognition();
-
-    rec.onresult = e=>{
-        input.value = e.results[0][0].transcript;
-        ask();
-    };
-
-    voiceBtn.onclick = ()=>{
-        rec.start();
-    };
 }
 
 
-/* ---------------- SPEAK ---------------- */
+function cancelHold(){
 
-function speak(text)
-{
-    const utter = new SpeechSynthesisUtterance(text);
-    speechSynthesis.speak(utter);
+clearTimeout(holdTimer);
+
 }
 
 
-/* ---------------- EMERGENCY ---------------- */
+function triggerEmergency(){
 
-emergencyBtn.onmousedown = startHold;
-emergencyBtn.ontouchstart = startHold;
+gpsText.innerHTML =
+"Getting location...";
 
-emergencyBtn.onmouseup = cancelHold;
-emergencyBtn.ontouchend = cancelHold;
+navigator.geolocation.getCurrentPosition(
 
-function startHold()
-{
-    status.innerText="Hold...";
-    holdTimer = setTimeout(triggerEmergency,2000);
+function(pos){
+
+const lat =
+pos.coords.latitude;
+
+const lon =
+pos.coords.longitude;
+
+gpsText.innerHTML =
+lat + ", " + lon;
+
+
+/* CALL YOUR TEST NUMBER */
+
+window.location.href =
+"tel:15066887812" "sms:15066887812";
+
+
+},
+
+function(){
+
+gpsText.innerHTML =
+"GPS unavailable";
+
 }
 
-function cancelHold()
-{
-    clearTimeout(holdTimer);
-    status.innerText="";
-}
-
-
-function triggerEmergency()
-{
-    status.innerText="Getting GPS...";
-
-    navigator.geolocation.getCurrentPosition(
-
-    pos=>{
-
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-
-        status.innerText =
-        "Location captured";
-
-        /* SEND TO SERVER */
-
-        fetch("/emergency",
-        {
-            method:"POST",
-            headers:{
-            "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-            lat,
-            lon,
-            time:new Date()
-            })
-        });
-
-        /* CALL troy cell not 911 test mode */
-
-        window.location.href="tel:15066887812";
-
-    },
-
-    err=>{
-        status.innerText="GPS failed";
-    });
+);
 
 }
