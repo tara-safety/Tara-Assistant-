@@ -37,6 +37,16 @@ margin:auto;
 
 }
 
+@keyframes speak {
+  0% { opacity: .2; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.3); }
+  100% { opacity: .2; transform: translateX(-50%) scale(1); }
+}
+
+.speaking {
+  animation: speak .4s infinite;
+}
+
 #avatarContainer {
   position: relative;
   width: 200px;
