@@ -1,41 +1,50 @@
 body{
+
 margin:0;
-font-family:Arial;
 background:#0b1d2a;
+font-family:Arial;
 color:white;
+
 display:flex;
 justify-content:center;
+
 }
 
+
 .app{
+
 width:100%;
 max-width:420px;
+
 padding:15px;
-text-align:center;
+
+box-sizing:border-box;
+
 }
 
 
 .logo{
+
 width:140px;
-margin:auto;
 display:block;
+margin:auto;
 margin-bottom:10px;
+
 }
 
 
 .status{
+
+text-align:center;
 font-size:14px;
 opacity:.7;
 margin-bottom:10px;
+
 }
 
 
-/* EMERGENCY */
 
-.emergencyWrap{
-margin-top:10px;
-margin-bottom:15px;
-}
+/* emergency */
 
 .emergencyBtn{
 
@@ -45,32 +54,34 @@ height:90px;
 font-size:22px;
 font-weight:bold;
 
-border-radius:15px;
 border:none;
+border-radius:15px;
 
 background:red;
 color:white;
 
 box-shadow:0 0 20px red;
 
-}
+margin-bottom:5px;
 
-
-.emergencyBtn:active{
-background:#ff4444;
 }
 
 
 .gps{
+
 font-size:12px;
-margin-top:6px;
 opacity:.7;
+margin-bottom:10px;
+
 }
 
 
-/* RESPONSE */
+
+/* chat box */
 
 .response{
+
+width:100%;
 
 min-height:120px;
 
@@ -78,35 +89,86 @@ background:#132b3a;
 
 border-radius:12px;
 
-padding:10px;
+padding:12px;
+
+box-sizing:border-box;
 
 margin-bottom:10px;
-
-text-align:left;
 
 overflow:auto;
 
 }
 
 
-/* INPUT */
 
-.inputArea{
-margin-top:10px;
+/* thinking dots */
+
+.thinking{
+
+display:flex;
+gap:6px;
+margin-bottom:10px;
+
+}
+
+.thinking span{
+
+width:8px;
+height:8px;
+
+background:#00e5ff;
+
+border-radius:50%;
+
+animation:blink 1.4s infinite;
+
+}
+
+.thinking span:nth-child(2){
+animation-delay:.2s;
+}
+
+.thinking span:nth-child(3){
+animation-delay:.4s;
+}
+
+.hidden{
+display:none;
+}
+
+@keyframes blink{
+
+0%{opacity:.2;}
+50%{opacity:1;}
+100%{opacity:.2;}
+
 }
 
 
-input{
+
+/* input */
+
+.inputArea{
 
 width:100%;
+
+}
+
+
+#question{
+
+width:100%;
+
 padding:12px;
 
 border-radius:12px;
 border:none;
 
-margin-bottom:8px;
-
 font-size:16px;
+
+box-sizing:border-box;
+
+margin-bottom:8px;
 
 }
 
@@ -119,38 +181,47 @@ gap:10px;
 }
 
 
-button{
+#askBtn{
 
 flex:1;
 
 padding:12px;
 
-border-radius:12px;
 border:none;
+border-radius:12px;
+
+background:#00bcd4;
+font-weight:bold;
+
+}
+
+
+#voiceBtn{
+
+flex:1;
+
+padding:12px;
+
+border:none;
+border-radius:12px;
+
+background:#4caf50;
+color:white;
 
 font-weight:bold;
 
 }
 
 
-#askBtn{
-background:#00bcd4;
-color:black;
-}
-
-
-#voiceBtn{
-background:#4caf50;
-color:white;
-}
-
-
-/* FOOTER */
 
 .footer{
 
+text-align:center;
+
 font-size:12px;
+
 opacity:.5;
+
 margin-top:20px;
 
 }
