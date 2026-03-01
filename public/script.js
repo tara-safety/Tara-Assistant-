@@ -21,7 +21,32 @@ document.getElementById("gps");
 
 
 
-/* CHAT */
+/* ADD MESSAGE TO CHAT */
+
+function addUserMessage(text){
+
+response.innerHTML +=
+"<div class='user'>YOU: "+text+"</div>";
+
+response.scrollTop =
+response.scrollHeight;
+
+}
+
+
+function addBotMessage(text){
+
+response.innerHTML +=
+"<div class='bot'>TARA: "+text+"</div>";
+
+response.scrollTop =
+response.scrollHeight;
+
+}
+
+
+
+/* SEND */
 
 askBtn.onclick =
 async function(){
@@ -31,9 +56,14 @@ input.value.trim();
 
 if(!question) return;
 
+
+addUserMessage(question);
+
+input.value="";
+
+
 thinking.classList.remove("hidden");
 
-response.innerHTML="";
 
 try{
 
@@ -52,19 +82,23 @@ question
 
 });
 
+
 const data =
 await res.json();
 
-response.innerHTML =
-data.answer;
+
+addBotMessage(data.answer);
+
 
 }
 catch{
 
-response.innerHTML =
-"Server connection error";
+addBotMessage(
+"Server error"
+);
 
 }
+
 
 thinking.classList.add("hidden");
 
@@ -72,7 +106,7 @@ thinking.classList.add("hidden");
 
 
 
-/* ENTER KEY */
+/* ENTER */
 
 input.addEventListener(
 "keypress",
@@ -123,14 +157,17 @@ recognition.start();
 
 let holdTimer;
 
+
 function startHold(){
 
-gps.innerHTML="Hold...";
+gps.innerHTML=
+"Hold...";
 
 holdTimer =
 setTimeout(triggerEmergency,2000);
 
 }
+
 
 function cancelHold(){
 
@@ -175,10 +212,10 @@ const lon=
 pos.coords.longitude.toFixed(5);
 
 gps.innerHTML=
-"GPS: "+lat+", "+lon;
+lat+", "+lon;
 
 
-/* CHANGE NUMBER HERE */
+/* CHANGE THIS NUMBER */
 
 window.location.href =
 "tel:15066887812";
