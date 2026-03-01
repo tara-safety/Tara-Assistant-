@@ -8,6 +8,14 @@ app.use(express.static("public"));
 
 app.post("/ask", async (req,res)=>{
 
+app.post("/emergency",(req,res)=>{
+
+console.log("EMERGENCY ALERT", req.body);
+
+res.sendStatus(200);
+
+});
+  
 try{
 
 const question=req.body.question;
