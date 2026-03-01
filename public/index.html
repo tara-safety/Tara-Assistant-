@@ -19,7 +19,7 @@
 <div class="topBar">
 
 <button id="menuBtn" class="menuBtn">☰</button>
-<button id="closeMenu" class="closeMenu">✕</button>
+
 
 <div class="title">
 TARA SAFETY INTELLIGENCE
@@ -88,32 +88,33 @@ Powered by Safety Intelligence<br>
 
 
 <!-- MENU -->
+<!-- MENU BUTTON (header stays clean) -->
+<button id="menuBtn" class="menuBtn">☰</button>
+<h1 class="title">TARA SAFETY INTELLIGENCE</h1>
+
+
+<!-- MENU OVERLAY -->
 <div id="menuOverlay" class="menuOverlay hidden">
 
-<div class="menuBox">
+    <div class="menuPanel">
 
-<button id="closeMenu" class="closeMenu">
-✕
-</button>
+        <button id="closeMenu" class="closeMenu">✕</button>
 
-<h2>MENU</h2>
+        <h2>Menu</h2>
 
-<label>
-<input type="checkbox" checked>
-Voice Enabled
-</label>
+        <label class="menuItem">
+            AI Voice
+            <input type="checkbox" checked>
+        </label>
 
-<br><br>
+        <label class="menuItem">
+            Emergency Mode
+            <input type="checkbox" checked>
+        </label>
 
-<label>
-<input type="checkbox">
-GPS Enabled
-</label>
+    </div>
 
 </div>
-
-</div>
-
 
 <script src="script.js"></script>
 
