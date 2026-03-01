@@ -13,36 +13,20 @@ document.getElementById("response");
 const thinking =
 document.getElementById("thinking");
 
-const menuBtn =
-document.getElementById("menuBtn");
-
-const closeMenu =
-document.getElementById("closeMenu");
-
-const menuOverlay =
-document.getElementById("menuOverlay");
-
 const emergencyBtn =
 document.getElementById("emergencyBtn");
 
 
 
-/* MENU */
-
-menuBtn.onclick =
-()=> menuOverlay.classList.remove("hidden");
-
-closeMenu.onclick =
-()=> menuOverlay.classList.add("hidden");
-
-
-
-/* CHAT */
+/* CHAT DISPLAY */
 
 function addUser(text){
 
 response.innerHTML +=
 "<div style='color:#4fc3f7'>YOU: "+text+"</div>";
+
+response.scrollTop =
+response.scrollHeight;
 
 }
 
@@ -58,6 +42,8 @@ response.scrollHeight;
 }
 
 
+
+/* SEND */
 
 askBtn.onclick =
 async function(){
@@ -98,9 +84,7 @@ addBot(data.answer);
 }
 catch{
 
-addBot(
-"Offline safety mode active"
-);
+addBot("Connection error");
 
 }
 
@@ -109,6 +93,8 @@ thinking.classList.add("hidden");
 };
 
 
+
+/* ENTER KEY */
 
 input.addEventListener(
 "keypress",
@@ -120,29 +106,61 @@ askBtn.click();
 
 
 
-/* EMERGENCY HOLD */
+/* VOICE INPUT */
 
-let holdTimer;
+let recognition;
 
-emergencyBtn.onmousedown =
-()=>{
+if(
+"webkitSpeechRecognition" in window ||
+"SpeechRecognition" in window
+){
 
-holdTimer =
-setTimeout(()=>{
+const SpeechRecognition =
+window.SpeechRecognition ||
+window.webkitSpeechRecognition;
 
-alert(
-"Emergency triggered (test mode)"
-);
+recognition =
+new SpeechRecognition();
 
-},2000);
+recognition.continuous=false;
+
+recognition.onresult =
+function(e){
+
+input.value =
+e.results[0][0].transcript;
+
+askBtn.click();
 
 };
 
-emergencyBtn.onmouseup =
-()=> clearTimeout(holdTimer);
+}
 
-emergencyBtn.ontouchstart =
-emergencyBtn.onmousedown;
 
-emergencyBtn.ontouchend =
-emergencyBtn.onmouseup;
+voiceBtn.onclick =
+function(){
+
+if(recognition)
+recognition.start();
+
+};
+
+
+
+/* EMERGENCY BUTTON */
+
+emergencyBtn.onclick =
+function(){
+
+if(
+confirm(
+"Trigger emergency call?"
+)
+){
+
+window.location.href =
+"tel:YOURNUMBER";
+
+}
+
+};
