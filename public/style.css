@@ -9,6 +9,13 @@ justify-content:center;
 
 }
 
+#chatContainer {
+  position: fixed;
+  bottom: 80px;
+  width: 95%;
+  left: 50%;
+  transform: translateX(-50%);
+}
 
 #container{
 
