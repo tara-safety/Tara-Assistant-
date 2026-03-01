@@ -128,16 +128,31 @@ wakeRec.start();
 
 
 /* EMERGENCY */
+const emergencyBtn =
+document.getElementById("emergencyBtn");
+
+const progress =
+document.getElementById("progressCircle");
+
+let holdTimer;
+
+const TEST_NUMBER = "+15061234567"; // your number
+const DRIVER_ID = "Driver 00";
+
+
 emergencyBtn.addEventListener("touchstart", startHold, { passive:false });
 emergencyBtn.addEventListener("mousedown", startHold);
 
 emergencyBtn.addEventListener("touchend", cancelHold);
 emergencyBtn.addEventListener("mouseup", cancelHold);
 
+
 function startHold(e){
 e.preventDefault();
+
 progress.style.width="100%";
-holdTimer = setTimeout(callEmergency,3000);
+
+holdTimer = setTimeout(triggerEmergency,3000);
 }
 
 function cancelHold(){
@@ -146,22 +161,36 @@ clearTimeout(holdTimer);
 }
 
 
-function sendEmergency(){
+function triggerEmergency(){
+
+navigator.vibrate?.(500);
 
 navigator.geolocation.getCurrentPosition(pos=>{
 
-const lat=pos.coords.latitude;
-const lon=pos.coords.longitude;
+const lat = pos.coords.latitude;
+const lon = pos.coords.longitude;
 
-const msg=
-`Driver sent emergency alert. Location:
-https://maps.google.com/?q=${lat},${lon}`;
+const gpsLink =
+`https://maps.google.com/?q=${lat},${lon}`;
+
+const message =
+`${DRIVER_ID} has sent an alert to 911.
+Location:
+${gpsLink}`;
 
 
-/* TEST NUMBER */
+/* STEP 1: CALL */
+window.location.href =
+`tel:${TEST_NUMBER}`;
 
-window.location.href=
-`sms:+15066887812?body=${encodeURIComponent(msg)}`;
+
+/* STEP 2: AFTER 3 SECONDS OPEN SMS */
+setTimeout(()=>{
+
+window.location.href =
+`sms:${TEST_NUMBER}?body=${encodeURIComponent(message)}`;
+
+},4000);
 
 
 });
