@@ -1,3 +1,4 @@
+const TEST_MODE = true; // true = safe testing, false = real emergency
 const input = document.getElementById("question");
 const askBtn = document.getElementById("askBtn");
 const voiceBtn = document.getElementById("voiceBtn");
