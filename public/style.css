@@ -51,16 +51,17 @@ color:white;
 }
 
 
-/* emergency */
+/* EMERGENCY BUTTON */
 
 .emergencyBtn{
 
-width:95%;
-height:60px;
+width:85%;
 
-margin-top:5px;
+height:55px;
 
-font-size:18px;
+margin-top:6px;
+
+font-size:16px;
 
 border:none;
 border-radius:10px;
@@ -71,23 +72,14 @@ color:white;
 }
 
 
-.gps{
-
-font-size:12px;
-opacity:.7;
-
-}
-
-
-
 /* MAIN */
 
 .main{
 
-margin-top:140px;
+margin-top:150px;
 
 max-width:420px;
-width:95%;
+width:92%;
 
 margin-left:auto;
 margin-right:auto;
@@ -101,13 +93,63 @@ margin-right:auto;
 
 background:#132b3a;
 
-min-height:260px;
+min-height:280px;
 
 border-radius:12px;
 
 padding:12px;
 
 overflow:auto;
+
+}
+
+
+/* THINKING */
+
+.thinking{
+
+text-align:center;
+margin-top:10px;
+
+}
+
+
+.thinking span{
+
+height:8px;
+width:8px;
+
+background:white;
+
+display:inline-block;
+
+border-radius:50%;
+
+margin:3px;
+
+animation:blink 1.4s infinite;
+
+}
+
+
+.thinking span:nth-child(2){
+
+animation-delay:.2s;
+
+}
+
+.thinking span:nth-child(3){
+
+animation-delay:.4s;
+
+}
+
+
+@keyframes blink{
+
+0%{opacity:.2}
+50%{opacity:1}
+100%{opacity:.2}
 
 }
 
@@ -139,7 +181,6 @@ box-sizing:border-box;
 
 display:flex;
 gap:10px;
-
 margin-top:8px;
 
 }
@@ -161,14 +202,17 @@ font-weight:bold;
 
 
 #askBtn{
+
 background:#00bcd4;
+
 }
 
 #voiceBtn{
+
 background:#4caf50;
 color:white;
-}
 
+}
 
 
 /* MENU */
@@ -225,7 +269,6 @@ font-size:20px;
 
 display:flex;
 justify-content:space-between;
-
 margin-bottom:15px;
 
 }
