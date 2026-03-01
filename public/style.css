@@ -13,17 +13,43 @@ color:white;
 .header{
 
 position:fixed;
+
 top:0;
 left:0;
 right:0;
 
+height:60px;
+
 background:#081722;
 
-padding:12px;
+display:flex;
+align-items:center;
+justify-content:center;
 
-text-align:center;
+z-index:1000;
 
-font-weight:bold;
+}
+
+
+/* MENU FAR LEFT */
+
+.menuBtn{
+
+position:absolute;
+
+left:10px;
+
+top:50%;
+
+transform:translateY(-50%);
+
+font-size:26px;
+
+background:none;
+border:none;
+color:white;
+
+cursor:pointer;
 
 }
 
@@ -32,10 +58,17 @@ font-weight:bold;
 
 .emergencyContainer{
 
-margin-top:70px;
+position:fixed;
+
+top:70px;
+
+left:0;
+right:0;
 
 display:flex;
 justify-content:center;
+
+z-index:1000;
 
 }
 
@@ -69,7 +102,7 @@ width:92%;
 
 margin:auto;
 
-margin-top:15px;
+margin-top:220px;
 
 }
 
