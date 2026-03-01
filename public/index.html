@@ -1,79 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>T.A.R.A Safety Intelligence</title>
-
+<title>T.A.R.A Safety Assistant</title>
 <link rel="stylesheet" href="style.css">
-
 </head>
-
 <body>
 
-<div id="avatarContainer">
-  <img src="avatar.png" id="avatar">
-  <div id="mouthPulse"></div>
-</div>
-  
-<div id="container">
+<div class="container">
 
-<img src="taralogo.jpg" id="taraLogo">
+    <!-- EMERGENCY BUTTON -->
+    <div class="emergency-section">
+        <button id="emergencyBtn">PRESS & HOLD EMERGENCY</button>
+        <div id="status"></div>
+    </div>
 
-<div id="avatarContainer">
+    <!-- CHAT -->
+    <div class="chat-section">
 
-<img src="tara-avatar.png" id="avatar">
+        <div id="chat"></div>
 
-<div id="mouth"></div>
+        <div class="input-row">
+            <input id="question" type="text" placeholder="Ask TARA safety question...">
+            <button id="askBtn">Send</button>
+            <button id="voiceBtn">Talk</button>
+        </div>
 
-<div id="thinking">
+    </div>
 
-<span></span>
-<span></span>
-<span></span>
-
-</div>
-
-</div>
-
-
-
-<div id="chatBox"></div>
-
-
-
-<input id="question" placeholder="Ask T.A.R.A about towing safety...">
-
-
-<div id="buttons">
-
-<button id="askBtn">Send</button>
-
-<button id="voiceBtn">Talk</button>
-
-</div>
-
-
-
-<img src="taralogo.jpg" id="logo">
-
-
-<div id="powered">
-
-Powered by Safety Intelligence
-
-</div>
-
-
-<div id="copyright">
-
-© 2026 T.A.R.A Safety Intelligence
-
-</div>
-
+    <!-- LOGO -->
+    <div class="logo-section">
+        <img src="taralogo.jpg" id="logo">
+        <div class="powered">Powered by Safety Intelligence</div>
+    </div>
 
 </div>
 
