@@ -1,69 +1,60 @@
 import express from "express";
+import OpenAI from "openai";
 
 const app = express();
 
 app.use(express.json());
 app.use(express.static("public"));
 
+const openai =
+new OpenAI({
+apiKey: process.env.OPENAI_API_KEY
+});
+
 
 app.post("/ask", async (req,res)=>{
 
-app.post("/emergency",(req,res)=>{
+const question =
+req.body.question;
 
-console.log("EMERGENCY ALERT", req.body);
 
-res.sendStatus(200);
-
-});
-  
 try{
 
-const question=req.body.question;
+const completion =
+await openai.chat.completions.create({
 
+model:"gpt-4o-mini",
 
-const response=await fetch(
-"https://api.openai.com/v1/responses",
+messages:[
+
 {
-method:"POST",
-
-headers:{
-"Authorization":`Bearer ${process.env.OPENAI_API_KEY}`,
-"Content-Type":"application/json"
+role:"system",
+content:
+"You are TARA, a towing and recovery safety AI. Only answer towing, recovery, vehicle safety, and technical vehicle questions. If unrelated, reply: 'This system is restricted to towing and vehicle safety.'"
 },
 
-body:JSON.stringify({
-
-model:"gpt-5-mini",
-
-input:
-"You are T.A.R.A., the Towing and Recovery Assistant powered by Safety Intelligence. "+
-"Provide clear, accurate, professional towing and recovery safety guidance. "+
-"Focus on EV towing, hook points, recovery procedures, technician safety, and damage prevention. "+
-"Keep answers practical and concise. Question: "+question
-
-})
+{
+role:"user",
+content:question
 }
-);
 
+],
 
-const data=await response.json();
+max_tokens:200
 
+});
 
-const answer =
-data.output_text ||
-"T.A.R.A, Troy you are doing good, keep building me and testing.";
-
-
-res.json({answer});
-
-
-}
-catch(error){
-
-console.log(error);
 
 res.json({
-answer:"Connection to Safety Intelligence failed."
+answer:
+completion.choices[0].message.content
+});
+
+}
+catch(e){
+
+res.json({
+answer:"AI error"
 });
 
 }
@@ -71,10 +62,7 @@ answer:"Connection to Safety Intelligence failed."
 });
 
 
-const PORT=process.env.PORT||10000;
-
-app.listen(PORT,()=>{
-
-console.log("T.A.R.A Commercial Server running on port "+PORT);
-
-});
+app.listen(
+process.env.PORT || 10000,
+()=> console.log("Server running")
+);
