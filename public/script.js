@@ -10,11 +10,15 @@ document.getElementById("voiceBtn");
 const response =
 document.getElementById("response");
 
+const thinking =
+document.getElementById("thinking");
+
 const emergencyBtn =
 document.getElementById("emergencyBtn");
 
-const gpsText =
+const gps =
 document.getElementById("gps");
+
 
 
 /* CHAT */
@@ -23,12 +27,15 @@ askBtn.onclick =
 async function(){
 
 const question =
-input.value;
+input.value.trim();
 
 if(!question) return;
 
-response.innerHTML =
-"Thinking...";
+thinking.classList.remove("hidden");
+
+response.innerHTML="";
+
+try{
 
 const res =
 await fetch("/ask",{
@@ -51,7 +58,31 @@ await res.json();
 response.innerHTML =
 data.answer;
 
+}
+catch{
+
+response.innerHTML =
+"Server connection error";
+
+}
+
+thinking.classList.add("hidden");
+
 };
+
+
+
+/* ENTER KEY */
+
+input.addEventListener(
+"keypress",
+function(e){
+
+if(e.key==="Enter")
+askBtn.click();
+
+}
+);
 
 
 
@@ -64,7 +95,7 @@ if("webkitSpeechRecognition" in window){
 recognition =
 new webkitSpeechRecognition();
 
-recognition.continuous=false;
+recognition.lang="en-US";
 
 recognition.onresult =
 function(e){
@@ -77,7 +108,6 @@ askBtn.click();
 };
 
 }
-
 
 voiceBtn.onclick =
 function(){
@@ -93,65 +123,72 @@ recognition.start();
 
 let holdTimer;
 
-emergencyBtn.onmousedown =
-startHold;
-
-emergencyBtn.ontouchstart =
-startHold;
-
-emergencyBtn.onmouseup =
-cancelHold;
-
-emergencyBtn.ontouchend =
-cancelHold;
-
-
 function startHold(){
 
+gps.innerHTML="Hold...";
+
 holdTimer =
-setTimeout(triggerEmergency,3000);
+setTimeout(triggerEmergency,2000);
 
 }
-
 
 function cancelHold(){
 
 clearTimeout(holdTimer);
 
+gps.innerHTML="";
+
 }
+
+
+emergencyBtn.addEventListener(
+"mousedown",
+startHold);
+
+emergencyBtn.addEventListener(
+"mouseup",
+cancelHold);
+
+emergencyBtn.addEventListener(
+"touchstart",
+startHold);
+
+emergencyBtn.addEventListener(
+"touchend",
+cancelHold);
+
 
 
 function triggerEmergency(){
 
-gpsText.innerHTML =
-"Getting location...";
+gps.innerHTML=
+"Getting GPS...";
 
 navigator.geolocation.getCurrentPosition(
 
 function(pos){
 
-const lat =
-pos.coords.latitude;
+const lat=
+pos.coords.latitude.toFixed(5);
 
-const lon =
-pos.coords.longitude;
+const lon=
+pos.coords.longitude.toFixed(5);
 
-gpsText.innerHTML =
-lat + ", " + lon;
+gps.innerHTML=
+"GPS: "+lat+", "+lon;
 
 
-/* CALL YOUR TEST NUMBER */
+/* CHANGE NUMBER HERE */
 
 window.location.href =
-"tel:15066887812" "sms:15066887812";
-
+"tel:15066887812";
 
 },
 
 function(){
 
-gpsText.innerHTML =
-"GPS unavailable";
+gps.innerHTML=
+"GPS failed";
 
 }
 
