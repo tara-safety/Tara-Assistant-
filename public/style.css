@@ -184,6 +184,75 @@ touch-action:manipulation;
 
 }
 
+.emergencyBtn{
+
+width:130px;
+height:130px;
+
+background:red;
+
+border:none;
+border-radius:16px;
+
+color:white;
+
+font-weight:bold;
+
+position:fixed;
+top:70px;
+right:15px;
+
+z-index:2000;
+
+user-select:none;
+-webkit-user-select:none;
+-webkit-touch-callout:none;
+
+overflow:hidden;
+
+}
+
+
+.emergencyInner{
+
+position:relative;
+
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+
+height:100%;
+
+font-size:26px;
+
+}
+
+
+.emergencyText{
+
+font-size:14px;
+margin-top:4px;
+
+}
+
+
+.holdProgress{
+
+position:absolute;
+
+bottom:0;
+left:0;
+
+height:6px;
+width:0%;
+
+background:#00ff9c;
+
+transition:width 0.1s linear;
+
+}
+
 
 /* MAIN */
 
