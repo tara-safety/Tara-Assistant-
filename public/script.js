@@ -1,3 +1,25 @@
+// EXISTING elements
+const input = document.getElementById("question");
+const askBtn = document.getElementById("askBtn");
+const voiceBtn = document.getElementById("voiceBtn");
+const response = document.getElementById("response");
+const thinking = document.getElementById("thinking");
+
+
+// ADD THESE (menu elements)
+const menuBtn = document.getElementById("menuBtn");
+const closeMenu = document.getElementById("closeMenu");
+const menuOverlay = document.getElementById("menuOverlay");
+
+
+// MENU FUNCTIONS
+menuBtn.onclick = function(){
+menuOverlay.classList.remove("hidden");
+};
+
+closeMenu.onclick = function(){
+menuOverlay.classList.add("hidden");
+};
 const input =
 document.getElementById("question");
 
