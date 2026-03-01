@@ -16,7 +16,14 @@ document.getElementById("thinking");
 const emergencyBtn =
 document.getElementById("emergencyBtn");
 
+const menuBtn =
+document.getElementById("menuBtn");
 
+const menuOverlay =
+document.getElementById("menuOverlay");
+
+const closeMenu =
+document.getElementById("closeMenu");
 
 /* CHAT DISPLAY */
 
@@ -162,5 +169,20 @@ window.location.href =
 "tel:15066887812";
 
 }
+
+};
+
+menuBtn.onclick =
+function(){
+
+menuOverlay.classList.remove("hidden");
+
+};
+
+
+closeMenu.onclick =
+function(){
+
+menuOverlay.classList.add("hidden");
 
 };
