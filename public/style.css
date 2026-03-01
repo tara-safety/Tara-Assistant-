@@ -122,6 +122,16 @@ position:relative;
 
 overflow:hidden;
 
+cursor:pointer;
+
+/* STOP TEXT SELECT */
+user-select:none;
+-webkit-user-select:none;
+-webkit-touch-callout:none;
+
+/* STOP LONG PRESS MENU */
+touch-action:manipulation;
+
 }
 
 .emgText{
