@@ -1,124 +1,143 @@
-const input =
-document.getElementById("question");
+const input = document.getElementById("question");
+const askBtn = document.getElementById("askBtn");
+const voiceBtn = document.getElementById("voiceBtn");
+const chat = document.getElementById("chat");
 
-const askBtn =
-document.getElementById("askBtn");
+const emergencyBtn = document.getElementById("emergencyBtn");
+const status = document.getElementById("status");
 
-const voiceBtn =
-document.getElementById("voiceBtn");
+let holdTimer;
 
-const mouth =
-document.getElementById("mouth");
+/* ---------------- CHAT ---------------- */
 
-const thinking =
-document.getElementById("thinking");
-
-const chatBox =
-document.getElementById("chatBox");
-
-
-
-function addMessage(sender,text){
-
-const div =
-document.createElement("div");
-
-div.innerHTML =
-"<b>"+sender+":</b> "+text;
-
-chatBox.appendChild(div);
-
-chatBox.scrollTop =
-chatBox.scrollHeight;
-
+function addMessage(text, cls)
+{
+    const div = document.createElement("div");
+    div.className = cls;
+    div.innerText = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
 }
 
+async function ask()
+{
+    const q = input.value;
+    if(!q) return;
 
+    addMessage(q,"messageUser");
+    input.value="";
 
-function startTalking(){
+    const res = await fetch("/ask",
+    {
+        method:"POST",
+        headers:{ "Content-Type":"application/json"},
+        body:JSON.stringify({question:q})
+    });
 
-mouth.style.opacity="1";
-mouth.classList.add("talking");
+    const data = await res.text();
 
+    addMessage(data,"messageBot");
+
+    speak(data);
 }
 
+askBtn.onclick = ask;
 
-function stopTalking(){
+/* ENTER KEY */
 
-mouth.style.opacity="0";
-mouth.classList.remove("talking");
-
-}
-
-
-
-async function ask(){
-
-const question =
-input.value.trim();
-
-if(!question) return;
-
-
-addMessage("You",question);
-
-input.value="";
-
-thinking.style.display="block";
-
-
-setTimeout(()=>{
-
-thinking.style.display="none";
-
-const answer =
-"Safety reminder: Always use manufacturer-approved tow points.";
-
-addMessage("T.A.R.A",answer);
-
-
-const speech =
-new SpeechSynthesisUtterance(answer);
-
-speech.onstart=startTalking;
-speech.onend=stopTalking;
-
-speechSynthesis.speak(speech);
-
-},1000);
-
-}
-
-
-
-askBtn.onclick=ask;
-
-
-
-input.addEventListener("keypress",
-
-function(e){
-
+input.addEventListener("keypress", e=>{
 if(e.key==="Enter") ask();
-
 });
 
 
+/* ---------------- VOICE ---------------- */
 
-voiceBtn.onclick=function(){
+const SpeechRecognition =
+window.SpeechRecognition ||
+window.webkitSpeechRecognition;
 
-const rec=
-new webkitSpeechRecognition();
+if(SpeechRecognition)
+{
+    const rec = new SpeechRecognition();
 
-rec.onresult=function(e){
+    rec.onresult = e=>{
+        input.value = e.results[0][0].transcript;
+        ask();
+    };
 
-input.value=
-e.results[0][0].transcript;
+    voiceBtn.onclick = ()=>{
+        rec.start();
+    };
+}
 
-ask();
 
-};
+/* ---------------- SPEAK ---------------- */
 
-rec.start();
+function speak(text)
+{
+    const utter = new SpeechSynthesisUtterance(text);
+    speechSynthesis.speak(utter);
+}
 
-};
+
+/* ---------------- EMERGENCY ---------------- */
+
+emergencyBtn.onmousedown = startHold;
+emergencyBtn.ontouchstart = startHold;
+
+emergencyBtn.onmouseup = cancelHold;
+emergencyBtn.ontouchend = cancelHold;
+
+function startHold()
+{
+    status.innerText="Hold...";
+    holdTimer = setTimeout(triggerEmergency,2000);
+}
+
+function cancelHold()
+{
+    clearTimeout(holdTimer);
+    status.innerText="";
+}
+
+
+function triggerEmergency()
+{
+    status.innerText="Getting GPS...";
+
+    navigator.geolocation.getCurrentPosition(
+
+    pos=>{
+
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+
+        status.innerText =
+        "Location captured";
+
+        /* SEND TO SERVER */
+
+        fetch("/emergency",
+        {
+            method:"POST",
+            headers:{
+            "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+            lat,
+            lon,
+            time:new Date()
+            })
+        });
+
+        /* CALL 911 */
+
+        window.location.href="tel:911";
+
+    },
+
+    err=>{
+        status.innerText="GPS failed";
+    });
+
+}
