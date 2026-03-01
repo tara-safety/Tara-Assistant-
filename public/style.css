@@ -75,6 +75,25 @@ z-index:1000;
 
 }
 
+.emergencyWrap{
+
+text-align:center;
+
+margin-top:80px;
+
+}
+
+.holdText{
+
+color:#ffaaaa;
+
+font-weight:bold;
+
+margin-top:8px;
+
+font-size:14px;
+
+}
 
 .emergencyBtn{
 
