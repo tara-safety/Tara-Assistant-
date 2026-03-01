@@ -3,37 +3,64 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>T.A.R.A Safety Assistant</title>
+
+<title>T.A.R.A Safety Intelligence</title>
+
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="container">
+<div class="app">
 
-    <!-- EMERGENCY BUTTON -->
-    <div class="emergency-section">
-        <button id="emergencyBtn">PRESS & HOLD EMERGENCY</button>
-        <div id="status"></div>
+    <!-- LOGO -->
+    <img src="taralogo.jpg" class="logo">
+
+    <div class="status" id="status">
+        Safety system ready
     </div>
 
-    <!-- CHAT -->
-    <div class="chat-section">
 
-        <div id="chat"></div>
+    <!-- EMERGENCY BUTTON -->
+    <div class="emergencyWrap">
 
-        <div class="input-row">
-            <input id="question" type="text" placeholder="Ask TARA safety question...">
-            <button id="askBtn">Send</button>
-            <button id="voiceBtn">Talk</button>
+        <button id="emergencyBtn" class="emergencyBtn">
+            🚨 HOLD FOR EMERGENCY
+        </button>
+
+        <div id="gps" class="gps"></div>
+
+    </div>
+
+
+    <!-- RESPONSE BOX -->
+    <div id="response" class="response"></div>
+
+
+    <!-- INPUT -->
+    <div class="inputArea">
+
+        <input
+            id="question"
+            placeholder="Ask towing or safety question..."
+        >
+
+        <div class="buttons">
+
+            <button id="askBtn">SEND</button>
+
+            <button id="voiceBtn">TALK</button>
+
         </div>
 
     </div>
 
-    <!-- LOGO -->
-    <div class="logo-section">
-        <img src="taralogo.jpg" id="logo">
-        <div class="powered">Powered by Safety Intelligence</div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        Powered by Safety Intelligence<br>
+        © 2026 Safety Buzz Alerts
     </div>
+
 
 </div>
 
