@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -11,17 +9,15 @@
 <link rel="stylesheet" href="style.css">
 
 </head>
-
 <body>
 
 
-<!-- TOP BAR -->
-<div class="topBar">
+<!-- HEADER (fixed) -->
+<div class="header">
 
 <button id="menuBtn" class="menuBtn">☰</button>
 
-
-<div class="title">
+<div class="headerTitle">
 TARA SAFETY INTELLIGENCE
 </div>
 
@@ -29,30 +25,45 @@ TARA SAFETY INTELLIGENCE
 
 
 
-<!-- EMERGENCY FIXED CENTER -->
-<div class="emergencyWrap">
+<!-- SLIDE MENU -->
+<div id="menu" class="menu">
 
-<button id="emergencyBtn" class="emergencyBtn">
+<button id="closeMenu" class="closeMenu">✕</button>
 
-🚨
+<h2>Menu</h2>
 
-<div class="holdLabel">
-HOLD EMERGENCY
+<label class="menuItem">
+Wake Voice
+<input type="checkbox" id="wakeToggle" checked>
+</label>
+
+<label class="menuItem">
+Emergency GPS
+<input type="checkbox" id="gpsToggle" checked>
+</label>
+
 </div>
 
-<div id="holdBar" class="holdBar"></div>
 
-</button>
 
-</div>
+<!-- MAIN -->
+<div class="main">
 
+
+<!-- EMERGENCY BUTTON -->
 <div class="emergencyWrap">
 
-<button id="emergencyBtn" class="emergencyBtn">
-🚨
-HOLD
+<div id="emergencyBtn" class="emergencyBtn">
+
+<div class="progressCircle" id="progressCircle"></div>
+
+<div class="emgText">
+🚨<br>
+HOLD<br>
 EMERGENCY
-</button>
+</div>
+
+</div>
 
 <div class="holdText">
 Hold for 3 seconds
@@ -60,71 +71,45 @@ Hold for 3 seconds
 
 </div>
 
-<!-- CHAT AREA -->
-<div class="container">
-
-<div id="response" class="response"></div>
-
-<div id="thinking" class="thinking hidden">
-<span></span><span></span><span></span>
-</div>
 
 
+<!-- CHAT BOX -->
+<div id="chatBox" class="chatBox"></div>
+
+
+
+<!-- INPUT -->
 <input
 id="question"
-class="question"
+class="input"
 placeholder="Ask towing safety question..."
 >
 
 
-<div class="buttonRow">
+
+<!-- BUTTONS -->
+<div class="btnRow">
 
 <button id="askBtn" class="sendBtn">
 SEND
 </button>
 
-<button id="voiceBtn" class="voiceBtn">
+<button id="voiceBtn" class="talkBtn">
 🎤 TALK
 </button>
 
 </div>
 
 
-<div class="footerText">
+
+<div class="footer">
 Powered by Safety Intelligence<br>
 © Safety Buzz Alerts
 </div>
 
 
-
-<!-- MENU -->
-<!-- MENU BUTTON (header stays clean) -->
-<button id="menuBtn" class="menuBtn">☰</button>
-<h1 class="title">TARA SAFETY INTELLIGENCE</h1>
-
-
-<!-- MENU OVERLAY -->
-<div id="menuOverlay" class="menuOverlay hidden">
-
-    <div class="menuPanel">
-
-        <button id="closeMenu" class="closeMenu">✕</button>
-
-        <h2>Menu</h2>
-
-        <label class="menuItem">
-            AI Voice
-            <input type="checkbox" checked>
-        </label>
-
-        <label class="menuItem">
-            Emergency Mode
-            <input type="checkbox" checked>
-        </label>
-
-    </div>
-
 </div>
+
 
 <script src="script.js"></script>
 
