@@ -15,8 +15,10 @@
 <body>
 
 
-<!-- FIXED HEADER -->
+<!-- HEADER -->
 <div class="header">
+
+<button id="menuBtn" class="menuBtn">☰</button>
 
 <div class="title">
 T.A.R.A SAFETY INTELLIGENCE
@@ -32,7 +34,53 @@ T.A.R.A SAFETY INTELLIGENCE
 
 
 
-<!-- SCROLL AREA -->
+<!-- MENU OVERLAY -->
+<div id="menuOverlay" class="menuOverlay hidden">
+
+<div class="menuPanel">
+
+<div class="menuHeader">
+
+MENU
+
+<button id="closeMenu" class="closeMenu">
+✕
+</button>
+
+</div>
+
+
+<label class="menuItem">
+Voice Responses
+<input type="checkbox" id="toggleVoice" checked>
+</label>
+
+
+<label class="menuItem">
+GPS Auto Send
+<input type="checkbox" id="toggleGPS">
+</label>
+
+
+<label class="menuItem">
+Incident Logging
+<input type="checkbox" id="toggleIncident">
+</label>
+
+
+<label class="menuItem">
+Night Mode
+<input type="checkbox" id="toggleNight" checked>
+</label>
+
+
+</div>
+
+</div>
+
+
+
+<!-- MAIN -->
 <div class="main">
 
 
@@ -46,7 +94,6 @@ T.A.R.A SAFETY INTELLIGENCE
 </div>
 
 
-
 <div class="inputArea">
 
 <input
@@ -55,6 +102,7 @@ type="text"
 placeholder="Ask towing or safety question..."
 autocomplete="off"
 >
+
 
 <div class="buttons">
 
@@ -68,19 +116,20 @@ TALK
 
 </div>
 
+
 </div>
 
 
 <div class="footer">
 
 Powered by Safety Intelligence  
-<br>
 © 2026 Safety Buzz Alerts
 
 </div>
 
 
 </div>
+
 
 
 <script src="script.js"></script>
