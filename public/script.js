@@ -1,25 +1,3 @@
-// EXISTING elements
-const input = document.getElementById("question");
-const askBtn = document.getElementById("askBtn");
-const voiceBtn = document.getElementById("voiceBtn");
-const response = document.getElementById("response");
-const thinking = document.getElementById("thinking");
-
-
-// ADD THESE (menu elements)
-const menuBtn = document.getElementById("menuBtn");
-const closeMenu = document.getElementById("closeMenu");
-const menuOverlay = document.getElementById("menuOverlay");
-
-
-// MENU FUNCTIONS
-menuBtn.onclick = function(){
-menuOverlay.classList.remove("hidden");
-};
-
-closeMenu.onclick = function(){
-menuOverlay.classList.add("hidden");
-};
 const input =
 document.getElementById("question");
 
@@ -35,20 +13,44 @@ document.getElementById("response");
 const thinking =
 document.getElementById("thinking");
 
+const menuBtn =
+document.getElementById("menuBtn");
+
+const closeMenu =
+document.getElementById("closeMenu");
+
+const menuOverlay =
+document.getElementById("menuOverlay");
+
 const emergencyBtn =
 document.getElementById("emergencyBtn");
 
-const gps =
-document.getElementById("gps");
+
+
+/* MENU */
+
+menuBtn.onclick =
+()=> menuOverlay.classList.remove("hidden");
+
+closeMenu.onclick =
+()=> menuOverlay.classList.add("hidden");
 
 
 
-/* ADD MESSAGE TO CHAT */
+/* CHAT */
 
-function addUserMessage(text){
+function addUser(text){
 
 response.innerHTML +=
-"<div class='user'>YOU: "+text+"</div>";
+"<div style='color:#4fc3f7'>YOU: "+text+"</div>";
+
+}
+
+
+function addBot(text){
+
+response.innerHTML +=
+"<div>TARA: "+text+"</div>";
 
 response.scrollTop =
 response.scrollHeight;
@@ -56,36 +58,20 @@ response.scrollHeight;
 }
 
 
-function addBotMessage(text){
-
-response.innerHTML +=
-"<div class='bot'>TARA: "+text+"</div>";
-
-response.scrollTop =
-response.scrollHeight;
-
-}
-
-
-
-/* SEND */
 
 askBtn.onclick =
 async function(){
 
-const question =
+const q =
 input.value.trim();
 
-if(!question) return;
+if(!q) return;
 
-
-addUserMessage(question);
+addUser(q);
 
 input.value="";
 
-
 thinking.classList.remove("hidden");
-
 
 try{
 
@@ -99,28 +85,24 @@ headers:{
 },
 
 body:JSON.stringify({
-question
+question:q
 })
 
 });
 
-
 const data =
 await res.json();
 
-
-addBotMessage(data.answer);
-
+addBot(data.answer);
 
 }
 catch{
 
-addBotMessage(
-"Server error"
+addBot(
+"Offline safety mode active"
 );
 
 }
-
 
 thinking.classList.add("hidden");
 
@@ -128,50 +110,13 @@ thinking.classList.add("hidden");
 
 
 
-/* ENTER */
-
 input.addEventListener(
 "keypress",
-function(e){
-
+e=>{
 if(e.key==="Enter")
 askBtn.click();
-
 }
 );
-
-
-
-/* VOICE */
-
-let recognition;
-
-if("webkitSpeechRecognition" in window){
-
-recognition =
-new webkitSpeechRecognition();
-
-recognition.lang="en-US";
-
-recognition.onresult =
-function(e){
-
-input.value =
-e.results[0][0].transcript;
-
-askBtn.click();
-
-};
-
-}
-
-voiceBtn.onclick =
-function(){
-
-if(recognition)
-recognition.start();
-
-};
 
 
 
@@ -179,78 +124,25 @@ recognition.start();
 
 let holdTimer;
 
-
-function startHold(){
-
-gps.innerHTML=
-"Hold...";
+emergencyBtn.onmousedown =
+()=>{
 
 holdTimer =
-setTimeout(triggerEmergency,2000);
+setTimeout(()=>{
 
-}
-
-
-function cancelHold(){
-
-clearTimeout(holdTimer);
-
-gps.innerHTML="";
-
-}
-
-
-emergencyBtn.addEventListener(
-"mousedown",
-startHold);
-
-emergencyBtn.addEventListener(
-"mouseup",
-cancelHold);
-
-emergencyBtn.addEventListener(
-"touchstart",
-startHold);
-
-emergencyBtn.addEventListener(
-"touchend",
-cancelHold);
-
-
-
-function triggerEmergency(){
-
-gps.innerHTML=
-"Getting GPS...";
-
-navigator.geolocation.getCurrentPosition(
-
-function(pos){
-
-const lat=
-pos.coords.latitude.toFixed(5);
-
-const lon=
-pos.coords.longitude.toFixed(5);
-
-gps.innerHTML=
-lat+", "+lon;
-
-
-/* CHANGE THIS NUMBER */
-
-window.location.href =
-"tel:15066887812";
-
-},
-
-function(){
-
-gps.innerHTML=
-"GPS failed";
-
-}
-
+alert(
+"Emergency triggered (test mode)"
 );
 
-}
+},2000);
+
+};
+
+emergencyBtn.onmouseup =
+()=> clearTimeout(holdTimer);
+
+emergencyBtn.ontouchstart =
+emergencyBtn.onmousedown;
+
+emergencyBtn.ontouchend =
+emergencyBtn.onmouseup;
