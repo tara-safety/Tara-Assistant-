@@ -181,14 +181,14 @@ ${gpsLink}`;
 
 /* STEP 1: CALL */
 window.location.href =
-`tel:${TEST_NUMBER}`;
+`tel:${15066887812}`;
 
 
 /* STEP 2: AFTER 3 SECONDS OPEN SMS */
 setTimeout(()=>{
 
 window.location.href =
-`sms:${TEST_NUMBER}?body=${encodeURIComponent(message)}`;
+`sms:${15066887812}?body=${encodeURIComponent(message)}`;
 
 },4000);
 
