@@ -1,107 +1,132 @@
 import express from "express";
 import OpenAI from "openai";
 import twilio from "twilio";
+import fs from "fs";
 
 const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 
+/* ------------------------
+   ENVIRONMENT
+-------------------------*/
+
 const openai = new OpenAI({
-apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY
 });
 
-const client = twilio(
-process.env.TWILIO_ACCOUNT_SID,
-process.env.TWILIO_AUTH_TOKEN
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
 );
 
+/* ------------------------
+   LOAD KNOWLEDGE BASE
+-------------------------*/
 
-/* ---------------------------
-   AI TOWING + SAFETY FILTER
-----------------------------*/
+let knowledge = [];
+
+try {
+  const data = fs.readFileSync("./knowledge.json");
+  knowledge = JSON.parse(data);
+} catch (err) {
+  console.log("No knowledge file yet.");
+}
+
+/* ------------------------
+   AI ROUTE
+-------------------------*/
 
 app.post("/ask", async (req, res) => {
 
-const userQuestion = req.body.question;
+  const question = req.body.question;
 
-const completion = await openai.chat.completions.create({
+  // Search internal knowledge first
+  const match = knowledge.find(entry =>
+    question.toLowerCase().includes(entry.keyword.toLowerCase())
+  );
 
-model: "gpt-4o-mini",
+  if (match) {
+    return res.json({ answer: match.answer });
+  }
 
-messages: [
-{
-role: "system",
-content:
-`You are TARA, a professional towing safety and automotive technical assistant.
+  // If not found, use AI (restricted)
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: `
+You are TARA, a professional towing, roadside safety, and automotive technical assistant.
 
-ONLY answer questions related to:
+ONLY answer:
 - Towing procedures
-- Roadside safety
-- Vehicle recovery
-- Automotive technical locations (battery, jack point, spare tire, tow hooks)
+- Recovery methods
+- Roadside operator safety
 - EV safety
-- Incident prevention
+- Battery location
+- Jack points
+- Tow hooks
+- Vehicle technical positioning
 
-If question is unrelated (cooking, sports, random topics), respond:
-"I am restricted to towing and roadside safety assistance only."`
-},
-{
-role: "user",
-content: userQuestion
-}
-]
+If unrelated, respond:
+"I am restricted to towing and roadside safety assistance only."
+`
+      },
+      {
+        role: "user",
+        content: question
+      }
+    ]
+  });
+
+  res.json({
+    answer: completion.choices[0].message.content
+  });
 
 });
 
-res.json({
-answer: completion.choices[0].message.content
-});
-
-});
-
-
-/* ---------------------------
-   EMERGENCY ALERT ROUTE
-----------------------------*/
+/* ------------------------
+   EMERGENCY ROUTE
+-------------------------*/
 
 app.post("/emergency", async (req, res) => {
 
-const { lat, lon, driver } = req.body;
+  const { lat, lon, driver } = req.body;
 
-const gpsLink = `https://maps.google.com/?q=${lat},${lon}`;
+  const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
 
-const message =
+  const message =
 `${driver} has sent an EMERGENCY ALERT.
 
 Location:
-${gpsLink}
+${mapLink}
 
 Immediate response required.`;
 
+  try {
 
-/* SEND SMS */
+    await twilioClient.messages.create({
+      body: message,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: process.env.ALERT_PHONE_NUMBER
+    });
 
-await client.messages.create({
-body: message,
-from: process.env.TWILIO_PHONE_NUMBER,
-to: process.env.ALERT_PHONE_NUMBER
+    await twilioClient.calls.create({
+      twiml: `<Response><Say voice="alice">Emergency alert from ${driver}. GPS location sent by SMS.</Say></Response>`,
+      to: process.env.ALERT_PHONE_NUMBER,
+      from: process.env.TWILIO_PHONE_NUMBER
+    });
+
+    res.json({ status: "Alert Sent" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Emergency failed" });
+  }
+
 });
 
-
-/* CALL YOU */
-
-await client.calls.create({
-twiml: `<Response><Say voice="alice">Emergency alert from ${driver}. Location sent by SMS.</Say></Response>`,
-to: process.env.ALERT_PHONE_NUMBER,
-from: process.env.TWILIO_PHONE_NUMBER
+app.listen(10000, () => {
+  console.log("TARA server running");
 });
-
-
-res.json({ status: "Alert sent" });
-
-});
-
-
-app.listen(10000, () =>
-console.log("Server running")
-);
