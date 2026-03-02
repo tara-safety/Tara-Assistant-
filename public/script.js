@@ -136,7 +136,7 @@ document.getElementById("progressCircle");
 
 let holdTimer;
 
-const TEST_NUMBER = "+15061234567"; // your number
+const TEST_NUMBER = "+15066887812"; // your number
 const DRIVER_ID = "Driver 00";
 
 
