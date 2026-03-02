@@ -1,8 +1,6 @@
-{
-  "name": "tara-assistant",
-  "type": "module",
-  "dependencies": {
-    "express": "^4.18.2",
-    "openai": "^4.56.0"
-  }
+"dependencies": {
+  "express": "^4.18.2",
+  "dotenv": "^16.0.3",
+  "openai": "^4.0.0",
+  "twilio": "^4.0.0"
 }
