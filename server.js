@@ -42,13 +42,20 @@ app.post("/ask", async (req, res) => {
   const question = req.body.question;
 
   // Search internal knowledge first
-  const match = knowledge.find(entry =>
-    question.toLowerCase().includes(entry.keyword.toLowerCase())
-  );
+  function normalize(text) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim();
+}
 
-  if (match) {
-    return res.json({ answer: match.answer });
-  }
+const normalizedQuestion = normalize(question);
+
+const match = knowledge.find(entry =>
+  entry.keywords.some(keyword =>
+    normalizedQuestion.includes(normalize(keyword))
+  )
+);
 
   // If not found, use AI (restricted)
   const completion = await openai.chat.completions.create({
