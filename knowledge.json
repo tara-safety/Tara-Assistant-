@@ -1,10 +1,57 @@
 [
   {
-    "keyword": "highway safety",
-    "answer": "On highway recovery, angle truck to shield operator, turn wheels away from traffic, deploy cones minimum 100–300 ft depending on speed, and always maintain escape path."
+    "category": "Hooks & Lift Equipment",
+    "keywords": ["j-hook", "j hook", "jstyle hook", "frame hook", "tow hook"],
+    "answer": "Use the J-hook or frame hook on the designated tow points. Always secure straps properly and avoid the bumper or suspension components."
   },
   {
-    "keyword": "battery location",
-    "answer": "Most modern vehicles have 12V battery under hood. Some EVs relocate it to trunk or under rear seat. Always confirm manufacturer guide before disconnecting."
+    "category": "Hooks & Lift Equipment",
+    "keywords": ["wheel lift", "underlift", "dolly lift"],
+    "answer": "Attach the wheel lift under the vehicle's approved lifting points. Make sure wheels are centered and locked before towing."
+  },
+  {
+    "category": "Hooks & Lift Equipment",
+    "keywords": ["soft straps", "hard hook", "axle hook", "control arms", "tow bar", "fifth wheel", "shackles", "chains", "safety chains"],
+    "answer": "Use the correct straps or hooks for the vehicle type. Always check tension and ensure the vehicle is stable before transport."
+  },
+  {
+    "category": "Flatbed & Recovery Equipment",
+    "keywords": ["flatbed", "rollback", "slideback", "winch", "snatch block", "tow deck", "ramps", "hydraulic lift", "slide plate"],
+    "answer": "Deploy the flatbed or rollback according to manufacturer instructions. Use winches and ramps safely, ensuring the vehicle is aligned and secure."
+  },
+  {
+    "category": "Vehicle Situations",
+    "keywords": ["flat tire", "blowout", "spare tire", "seized lug nuts", "stripped lug", "tire stuck"],
+    "answer": "For tire changes, ensure the vehicle is on stable ground, parking brake engaged, and lug nuts properly torqued when reinstalling."
+  },
+  {
+    "category": "Vehicle Situations",
+    "keywords": ["stuck in mud", "stuck in snow", "stuck in sand"],
+    "answer": "Use appropriate recovery techniques such as winching, soft straps, or dolly assistance. Never exceed equipment limits."
+  },
+  {
+    "category": "Vehicle Situations",
+    "keywords": ["vehicle on side", "rollover", "submerged vehicle", "parking brake stuck", "steering locked", "awd", "4x4", "tight space", "low clearance"],
+    "answer": "These situations are high-risk. Follow safety protocols, use proper stabilization equipment, and consider calling for specialized recovery assistance."
+  },
+  {
+    "category": "Battery / Starting / Electrical",
+    "keywords": ["dead battery", "jump start", "boosting", "battery replacement", "engine won’t crank", "no power", "alternator issue", "parasitic drain", "immobilizer", "push start failure"],
+    "answer": "Check battery voltage and connections. Use manufacturer-approved procedures for jump-starting or battery replacement. Observe all safety protocols, especially with high-voltage systems."
+  },
+  {
+    "category": "Lockouts / Keys",
+    "keywords": ["locked keys inside", "key fob dead", "door won’t unlock", "trunk locked", "child locked inside"],
+    "answer": "Follow proper lockout procedures. Avoid damage to the vehicle and prioritize safety, especially if a child or pet is inside."
+  },
+  {
+    "category": "EV / Hybrid",
+    "keywords": ["ev", "electric vehicle", "hybrid", "high voltage system", "transport mode", "neutral override", "regenerative braking", "battery isolation", "orange cables", "tow mode", "cannot shift to neutral", "charging port locked"],
+    "answer": "Always engage manufacturer-recommended transport mode before towing. Avoid contact with high-voltage components and follow EV-specific towing procedures."
+  },
+  {
+    "category": "Risk / Safety",
+    "keywords": ["live traffic", "blind curve", "low visibility", "night recovery", "steep incline", "unstable vehicle", "leaking fuel", "fire risk", "air suspension", "adaptive suspension"],
+    "answer": "Exercise extreme caution. Set up warning devices, wear PPE, and ensure the vehicle is stable before any recovery operation."
   }
 ]
