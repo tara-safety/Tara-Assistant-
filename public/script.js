@@ -160,39 +160,28 @@ progress.style.width="0%";
 clearTimeout(holdTimer);
 }
 
-
 function triggerEmergency(){
 
-navigator.vibrate?.(500);
+navigator.geolocation.getCurrentPosition(async pos=>{
 
-navigator.geolocation.getCurrentPosition(pos=>{
+await fetch("/emergency",{
 
-const lat = pos.coords.latitude;
-const lon = pos.coords.longitude;
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
 
-const gpsLink =
-`https://maps.google.com/?q=${lat},${lon}`;
+body: JSON.stringify({
+lat: pos.coords.latitude,
+lon: pos.coords.longitude,
+driver: "Driver 00"
+})
 
-const message =
-`${DRIVER_ID} has sent an alert to 911.
-Location:
-${gpsLink}`;
+});
 
-
-/* STEP 1: CALL */
-window.location.href =
-`tel:${15066887812}`;
-
-
-/* STEP 2: AFTER 3 SECONDS OPEN SMS */
-setTimeout(()=>{
-
-window.location.href =
-`sms:${15066887812}?body=${encodeURIComponent(message)}`;
-
-},4000);
-
+alert("Emergency Alert Sent");
 
 });
 
 }
+
