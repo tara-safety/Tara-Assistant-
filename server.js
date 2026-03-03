@@ -2,6 +2,7 @@ import express from "express";
 import OpenAI from "openai";
 import twilio from "twilio";
 import fs from "fs";
+import { processMotionEvent, cancelIncident } from "./services/detectionEngine.js";
 
 const app = express();
 app.use(express.json());
