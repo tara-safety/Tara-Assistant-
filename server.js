@@ -156,3 +156,20 @@ Immediate response required.`;
 app.listen(10000, () => {
   console.log("TARA server running");
 });
+
+app.post("/motion-event", async (req, res) => {
+  const result = processMotionEvent(req.body, async (incident) => {
+    
+    console.log("🚨 INCIDENT ESCALATED:", incident);
+
+    // Twilio alert example
+    await twilioClient.messages.create({
+      body: `Driver ${incident.user_id} impact detected at ${incident.gps}`,
+      from: process.env.TWILIO_PHONE,
+      to: process.env.ALERT_PHONE
+    });
+
+  });
+
+  res.json(result);
+});
