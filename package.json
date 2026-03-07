@@ -12,5 +12,6 @@
     "dotenv": "^16.0.3",
     "openai": "^4.0.0",
     "twilio": "^4.0.0"
+    "@Ssupabase/supabase-js": "^2.39.0"
   }
 }
