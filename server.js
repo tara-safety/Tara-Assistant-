@@ -8,6 +8,12 @@ const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
 /* ------------------------
    ENVIRONMENT
 -------------------------*/
