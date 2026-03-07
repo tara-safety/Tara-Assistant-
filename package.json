@@ -1,16 +1,22 @@
 {
-  "name": "tara-server",
+  "name": "tara-backend",
   "version": "1.0.0",
-  "description": "TARA Roadside AI",
-  "type": "module",
+  "description": "TARA Driver Safety System Backend",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js"
   },
-         "dependencies": {
-  "express": "^4.18.2",
-  "dotenv": "^16.0.3",
-  "openai": "^4.0.0",
-  "twilio": "^4.0.0",
-  "@supabase/supabase-js": "^2.39.0"
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2",
+    "openai": "^4.0.0",
+    "twilio": "^4.0.0"
+  }
 }
