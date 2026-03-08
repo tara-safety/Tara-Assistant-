@@ -274,3 +274,35 @@ const PORT = process.env.PORT;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`TARA server running on port ${PORT}`);
 });
+
+/* ------------------------
+   GET ALERTS FOR DASHBOARD
+-------------------------*/
+
+app.get("/alerts", async (req, res) => {
+
+  try {
+
+    const { data, error } = await supabase
+      .from("alerts")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Supabase read error:", error);
+      return res.status(500).json({ error: "Database read failed" });
+    }
+
+    res.json(data);
+
+  } catch (err) {
+
+    console.error("Alerts route failure:", err);
+
+    res.status(500).json({
+      error: "Server error"
+    });
+
+  }
+
+});
