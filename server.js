@@ -168,6 +168,7 @@ Immediate response required.`;
 
     /* LOG INCIDENT */
 
+     console.log("Sending to Supabase:", driver, lat, lon);
     const { error } = await supabase
       .from("alerts")
       .insert([
