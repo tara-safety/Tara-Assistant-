@@ -1,18 +1,30 @@
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!DOCTYPE html>
 <html>
+
 <head>
-<title>TARA Safety Dashboard</title>
+<meta charset="UTF-8">
+<title>TARA Driver Emergency Dashboard</title>
 
 <style>
-body {
-  font-family: Arial;
+
+body{
+  font-family: Arial, sans-serif;
+  margin:0;
+  padding:0;
 }
 
-#map {
-  height: 600px;
-  width: 100%;
+h2{
+  padding:15px;
+  background:#111;
+  color:white;
+  margin:0;
 }
+
+#map{
+  height:90vh;
+  width:100%;
+}
+
 </style>
 
 </head>
@@ -23,75 +35,92 @@ body {
 
 <div id="map"></div>
 
+<!-- SUPABASE LIBRARY -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
+
+/* --------------------------
+SUPABASE CONNECTION
+--------------------------- */
+
+const supabase = window.supabase.createClient(
+  "YOUR_SUPABASE_URL",
+  "YOUR_SUPABASE_ANON_KEY"
+);
+
+
+/* --------------------------
+MAP VARIABLES
+--------------------------- */
 
 let map;
 let markers = [];
 
-async function loadAlerts() {
 
-  const res = await fetch("/alerts");
-  const alerts = await res.json();
+/* --------------------------
+LOAD EXISTING ALERTS
+--------------------------- */
 
-  markers.forEach(m => m.setMap(null));
-  markers = [];
+async function loadAlerts(){
 
-  alerts.forEach(alert => {
+  try{
 
-    const position = {
-      lat: parseFloat(alert.latitude),
-      lng: parseFloat(alert.longitude)
-    };
+    const res = await fetch("/alerts");
+    const alerts = await res.json();
 
-    const marker = new google.maps.Marker({
-      position: position,
-      map: map,
-      title: alert.driver
+    markers.forEach(m => m.setMap(null));
+    markers = [];
+
+    alerts.forEach(alert => {
+
+      const position = {
+        lat: parseFloat(alert.latitude),
+        lng: parseFloat(alert.longitude)
+      };
+
+      const marker = new google.maps.Marker({
+        position: position,
+        map: map,
+        title: alert.driver || "Driver"
+      });
+
+      const info = new google.maps.InfoWindow({
+        content: `
+        <b>Driver:</b> ${alert.driver || "Unknown"}<br>
+        <b>Alert:</b> ${alert.alert_type || "Emergency"}<br>
+        <b>Time:</b> ${alert.created_at || ""}
+        `
+      });
+
+      marker.addListener("click", () => {
+        info.open(map, marker);
+      });
+
+      markers.push(marker);
+
     });
 
-    const info = new google.maps.InfoWindow({
-      content: `
-        <b>Driver:</b> ${alert.driver}<br>
-        <b>Alert:</b> ${alert.alert_type}<br>
-        <b>Time:</b> ${alert.created_at}
-      `
-    });
+  }catch(err){
 
-    marker.addListener("click", () => {
-      info.open(map, marker);
-    });
+    console.error("Alert load error:",err);
 
-    markers.push(marker);
-
-  });
+  }
 
 }
 
-function initMap() {
 
-  map = new google.maps.Map(document.getElementById("map"), {
-    zoom: 5,
-    center: { lat: 56.1304, lng: -106.3468 }
-  });
+/* --------------------------
+REALTIME ALERT LISTENER
+--------------------------- */
 
-  loadAlerts();
+function startRealtime(){
 
-  setInterval(loadAlerts, 5000);
-
-</script>
-
-<script async defer
-src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_KEY&callback=initMap">
-</script>
-
-</body>
-</html>
-
-supabase
+  supabase
   .channel("alerts-channel")
   .on(
     "postgres_changes",
-    { event: "INSERT", schema: "public", table: "alerts" },
+    { event:"INSERT", schema:"public", table:"alerts" },
     payload => {
 
       const alert = payload.new;
@@ -104,14 +133,14 @@ supabase
       const marker = new google.maps.Marker({
         position: position,
         map: map,
-        title: alert.driver
+        title: alert.driver || "Driver"
       });
 
       const info = new google.maps.InfoWindow({
         content: `
-          <b>Driver:</b> ${alert.driver}<br>
-          <b>Alert:</b> ${alert.alert_type}<br>
-          <b>Time:</b> ${alert.created_at}
+        <b>Driver:</b> ${alert.driver || "Unknown"}<br>
+        <b>Alert:</b> ${alert.alert_type || "Emergency"}<br>
+        <b>Time:</b> ${alert.created_at || ""}
         `
       });
 
@@ -119,6 +148,42 @@ supabase
         info.open(map, marker);
       });
 
+      markers.push(marker);
+
+      console.log("New realtime alert received:",alert);
+
     }
   )
   .subscribe();
+
+}
+
+
+/* --------------------------
+INITIALIZE MAP
+--------------------------- */
+
+function initMap(){
+
+  map = new google.maps.Map(document.getElementById("map"),{
+    zoom:5,
+    center:{lat:56.1304,lng:-106.3468}
+  });
+
+  loadAlerts();
+
+  startRealtime();
+
+}
+
+</script>
+
+
+<!-- GOOGLE MAPS -->
+<script async defer
+src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_KEY&callback=initMap">
+</script>
+
+</body>
+
+</html>
