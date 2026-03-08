@@ -2,20 +2,19 @@ import express from "express";
 import OpenAI from "openai";
 import twilio from "twilio";
 import fs from "fs";
+import { createClient } from "@supabase/supabase-js";
 import { processMotionEvent, cancelIncident } from "./services/detectionEngine.js";
+
+/* ------------------------
+   APP SETUP
+-------------------------*/
 
 const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
 /* ------------------------
-   ENVIRONMENT
+   ENVIRONMENT CLIENTS
 -------------------------*/
 
 const openai = new OpenAI({
@@ -25,6 +24,11 @@ const openai = new OpenAI({
 const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
+);
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
 );
 
 /* ------------------------
@@ -67,15 +71,14 @@ app.post("/ask", async (req, res) => {
     return res.json({ answer: match.answer });
   }
 
-  // If not found, use AI
+  try {
 
-  // If not found, use AI (restricted)
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      {
-        role: "system",
-        content: `
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `
 You are TARA, a professional towing, roadside safety, and automotive technical assistant.
 
 ONLY answer:
@@ -87,34 +90,39 @@ ONLY answer:
 - Jack points
 - Tow hooks
 - Vehicle technical positioning
-- Hook equipment 
+- Hook equipment
 - Lift equipment
-- Vehicle situations 
+- Vehicle situations
 - Call types
 - Vehicle battery
 - Vehicle starting
 - Vehicle electrical
-- Vehicle lockouts 
+- Vehicle lockouts
 - Vehicle key fob
 - EV specific
 - Hybrid specific
 - Risk including safety
 - Towing equipment
 
-If unrelated, respond:
+If unrelated respond:
 "I am restricted to towing and roadside safety assistance only."
 `
-      },
-      {
-        role: "user",
-        content: question
-      }
-    ]
-  });
+        },
+        {
+          role: "user",
+          content: question
+        }
+      ]
+    });
 
-  res.json({
-    answer: completion.choices[0].message.content
-  });
+    res.json({
+      answer: completion.choices[0].message.content
+    });
+
+  } catch (err) {
+    console.error("AI error:", err);
+    res.status(500).json({ error: "AI request failed" });
+  }
 
 });
 
@@ -142,7 +150,7 @@ Immediate response required.`;
 
   try {
 
-    /* SEND SMS ALERT */
+    /* SEND SMS */
 
     await twilioClient.messages.create({
       body: message,
@@ -150,7 +158,7 @@ Immediate response required.`;
       to: process.env.ALERT_PHONE_NUMBER
     });
 
-    /* PLACE EMERGENCY CALL */
+    /* PLACE CALL */
 
     await twilioClient.calls.create({
       twiml: `<Response><Say voice="alice">Emergency alert from ${driver}. GPS location has been sent by text message.</Say></Response>`,
@@ -158,7 +166,7 @@ Immediate response required.`;
       from: process.env.TWILIO_PHONE_NUMBER
     });
 
-    /* LOG TO SUPABASE */
+    /* LOG INCIDENT */
 
     const { error } = await supabase
       .from("alerts")
@@ -173,20 +181,19 @@ Immediate response required.`;
       ]);
 
     if (error) {
-      console.error("Supabase insert error:", error);
+      console.error("Supabase error:", error);
     }
 
-    console.log("🚨 EMERGENCY ALERT SENT:", driver, lat, lon);
+    console.log("🚨 Emergency logged:", driver, lat, lon);
 
     res.json({
       status: "Emergency Alert Sent",
-      driver: driver,
       location: mapLink
     });
 
   } catch (err) {
 
-    console.error("Emergency route failure:", err);
+    console.error("Emergency failure:", err);
 
     res.status(500).json({
       error: "Emergency system failed"
@@ -194,4 +201,76 @@ Immediate response required.`;
 
   }
 
+});
+
+/* ------------------------
+   MOTION EVENT ROUTE
+-------------------------*/
+
+app.post("/motion-event", async (req, res) => {
+
+  const result = processMotionEvent(req.body, async (incident) => {
+
+    console.log("🚨 INCIDENT ESCALATED:", incident);
+
+    await twilioClient.messages.create({
+      body: `Driver ${incident.user_id} impact detected at ${incident.gps}`,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: process.env.ALERT_PHONE_NUMBER
+    });
+
+  });
+
+  res.json(result);
+
+});
+
+/* ------------------------
+   CANCEL INCIDENT
+-------------------------*/
+
+app.post("/cancel-incident", (req, res) => {
+
+  const { incidentId } = req.body;
+  const cancelled = cancelIncident(incidentId);
+
+  res.json({ cancelled });
+
+});
+
+/* ------------------------
+   SIMULATION TEST
+-------------------------*/
+
+app.get("/simulate-impact", async (req, res) => {
+
+  const fakeEvent = {
+    user_id: "Driver-00",
+    acceleration: 8.2,
+    impact_flag: true,
+    gps: "46.123,-64.456"
+  };
+
+  const result = processMotionEvent(fakeEvent, async (incident) => {
+
+    await twilioClient.messages.create({
+      body: `SIMULATED ALERT: ${incident.user_id} impact at ${incident.gps}`,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: process.env.ALERT_PHONE_NUMBER
+    });
+
+  });
+
+  res.json(result);
+
+});
+
+/* ------------------------
+   START SERVER
+-------------------------*/
+
+const PORT = process.env.PORT || 10000;
+
+app.listen(PORT, () => {
+  console.log(`TARA server running on port ${PORT}`);
 });
