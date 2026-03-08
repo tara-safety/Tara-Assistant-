@@ -279,6 +279,10 @@ app.listen(PORT, "0.0.0.0", () => {
 /* ------------------------
    GET ALERTS FOR DASHBOARD
 -------------------------*/
+const supabase = window.supabase.createClient(
+  "YOUR_SUPABASE_URL",
+  "YOUR_SUPABASE_ANON_KEY"
+);
 
 app.get("/alerts", async (req, res) => {
 
