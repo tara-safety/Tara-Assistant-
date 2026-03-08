@@ -88,3 +88,39 @@ src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_KEY&callback=i
 
 </body>
 </html>
+
+supabase
+  .channel("alerts-channel")
+  .on(
+    "postgres_changes",
+    { event: "INSERT", schema: "public", table: "alerts" },
+    payload => {
+
+      const alert = payload.new;
+
+      const position = {
+        lat: parseFloat(alert.latitude),
+        lng: parseFloat(alert.longitude)
+      };
+
+      const marker = new google.maps.Marker({
+        position: position,
+        map: map,
+        title: alert.driver
+      });
+
+      const info = new google.maps.InfoWindow({
+        content: `
+          <b>Driver:</b> ${alert.driver}<br>
+          <b>Alert:</b> ${alert.alert_type}<br>
+          <b>Time:</b> ${alert.created_at}
+        `
+      });
+
+      marker.addListener("click", () => {
+        info.open(map, marker);
+      });
+
+    }
+  )
+  .subscribe();
