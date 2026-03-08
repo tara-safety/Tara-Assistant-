@@ -1,3 +1,8 @@
+const PORT = process.env.PORT;
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`TARA server running on port ${PORT}`);
+});
 import express from "express";
 import OpenAI from "openai";
 import twilio from "twilio";
