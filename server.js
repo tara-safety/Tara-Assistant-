@@ -126,6 +126,10 @@ app.post("/emergency", async (req, res) => {
 
   const { lat, lon, driver } = req.body;
 
+  if (!lat || !lon || !driver) {
+    return res.status(400).json({ error: "Missing emergency data" });
+  }
+
   const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
 
   const message =
@@ -138,73 +142,56 @@ Immediate response required.`;
 
   try {
 
+    /* SEND SMS ALERT */
+
     await twilioClient.messages.create({
       body: message,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: process.env.ALERT_PHONE_NUMBER
     });
 
+    /* PLACE EMERGENCY CALL */
+
     await twilioClient.calls.create({
-      twiml: `<Response><Say voice="alice">Emergency alert from ${driver}. GPS location sent by SMS.</Say></Response>`,
+      twiml: `<Response><Say voice="alice">Emergency alert from ${driver}. GPS location has been sent by text message.</Say></Response>`,
       to: process.env.ALERT_PHONE_NUMBER,
       from: process.env.TWILIO_PHONE_NUMBER
     });
 
-    res.json({ status: "Alert Sent" });
+    /* LOG TO SUPABASE */
+
+    const { error } = await supabase
+      .from("alerts")
+      .insert([
+        {
+          driver: driver,
+          latitude: lat,
+          longitude: lon,
+          alert_type: "emergency",
+          map_link: mapLink
+        }
+      ]);
+
+    if (error) {
+      console.error("Supabase insert error:", error);
+    }
+
+    console.log("🚨 EMERGENCY ALERT SENT:", driver, lat, lon);
+
+    res.json({
+      status: "Emergency Alert Sent",
+      driver: driver,
+      location: mapLink
+    });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Emergency failed" });
+
+    console.error("Emergency route failure:", err);
+
+    res.status(500).json({
+      error: "Emergency system failed"
+    });
+
   }
 
-});
-
-app.listen(10000, () => {
-  console.log("TARA server running");
-});
-
-app.post("/motion-event", async (req, res) => {
-  const result = processMotionEvent(req.body, async (incident) => {
-    
-    console.log("🚨 INCIDENT ESCALATED:", incident);
-
-    // Twilio alert example
-    await twilioClient.messages.create({
-      body: `Driver ${incident.user_id} impact detected at ${incident.gps}`,
-      from: process.env.TWILIO_PHONE,
-      to: process.env.ALERT_PHONE
-    });
-
-  });
-
-  res.json(result);
-});
-
-app.post("/cancel-incident", (req, res) => {
-  const { incidentId } = req.body;
-  const cancelled = cancelIncident(incidentId);
-
-  res.json({ cancelled });
-});
-
-app.get("/simulate-impact", async (req, res) => {
-
-  const fakeEvent = {
-    user_id: "Driver-00",
-    acceleration: 8.2,
-    impact_flag: true,
-    gps: "46.123,-64.456"
-  };
-
-  const result = processMotionEvent(fakeEvent, async (incident) => {
-
-    await twilioClient.messages.create({
-      body: `SIMULATED ALERT: ${incident.user_id} impact at ${incident.gps}`,
-      from: process.env.TWILIO_PHONE,
-      to: process.env.ALERT_PHONE
-    });
-
-  });
-
-  res.json(result);
 });
