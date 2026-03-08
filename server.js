@@ -26,11 +26,6 @@ const twilioClient = twilio(
   process.env.TWILIO_AUTH_TOKEN
 );
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
-
 /* ------------------------
    LOAD KNOWLEDGE BASE
 -------------------------*/
