@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>TARA Safety Dashboard</title>
+
+<style>
+body {
+  font-family: Arial;
+}
+
+#map {
+  height: 600px;
+  width: 100%;
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>TARA Driver Emergency Map</h2>
+
+<div id="map"></div>
+
+<script>
+
+let map;
+let markers = [];
+
+async function loadAlerts() {
+
+  const res = await fetch("/alerts");
+  const alerts = await res.json();
+
+  markers.forEach(m => m.setMap(null));
+  markers = [];
+
+  alerts.forEach(alert => {
+
+    const position = {
+      lat: parseFloat(alert.latitude),
+      lng: parseFloat(alert.longitude)
+    };
+
+    const marker = new google.maps.Marker({
+      position: position,
+      map: map,
+      title: alert.driver
+    });
+
+    const info = new google.maps.InfoWindow({
+      content: `
+        <b>Driver:</b> ${alert.driver}<br>
+        <b>Alert:</b> ${alert.alert_type}<br>
+        <b>Time:</b> ${alert.created_at}
+      `
+    });
+
+    marker.addListener("click", () => {
+      info.open(map, marker);
+    });
+
+    markers.push(marker);
+
+  });
+
+}
+
+function initMap() {
+
+  map = new google.maps.Map(document.getElementById("map"), {
+    zoom: 5,
+    center: { lat: 56.1304, lng: -106.3468 }
+  });
+
+  loadAlerts();
+
+  setInterval(loadAlerts, 5000);
+
+}
+
+</script>
+
+<script async defer
+src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_KEY&callback=initMap">
+</script>
+
+</body>
+</html>
