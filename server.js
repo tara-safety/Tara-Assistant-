@@ -209,10 +209,16 @@ app.get("/alerts", async (req, res) => {
 
   try {
 
-    const { data, error } = await supabase
-      .from("alerts")
-      .select("*")
-      .order("created_at", { ascending: false });
+    if (!supabase) {
+  return res.status(500).json({
+    error: "Supabase not configured"
+  });
+}
+
+const { data, error } = await supabase
+  .from("alerts")
+  .select("*")
+  .order("created_at", { ascending: false });
 
     if (error) {
       console.error(error);
