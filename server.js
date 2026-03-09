@@ -4,12 +4,14 @@ import twilio from "twilio";
 import fs from "fs";
 import { createClient } from "@supabase/supabase-js";
 import { processMotionEvent, cancelIncident } from "./services/detectionEngine.js";
+import cors from "cors";
 
 /* ------------------------
    APP SETUP
 -------------------------*/
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
