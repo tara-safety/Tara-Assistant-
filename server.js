@@ -211,67 +211,6 @@ Immediate response required.`;
 
 });
 
-/* ------------------------
-   MOTION EVENT ROUTE
--------------------------*/
-
-app.post("/motion-event", async (req, res) => {
-
-  const result = processMotionEvent(req.body, async (incident) => {
-
-    console.log("🚨 INCIDENT ESCALATED:", incident);
-
-    await twilioClient.messages.create({
-      body: `Driver ${incident.user_id} impact detected at ${incident.gps}`,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: process.env.ALERT_PHONE_NUMBER
-    });
-
-  });
-
-  res.json(result);
-
-});
-
-/* ------------------------
-   CANCEL INCIDENT
--------------------------*/
-
-app.post("/cancel-incident", (req, res) => {
-
-  const { incidentId } = req.body;
-  const cancelled = cancelIncident(incidentId);
-
-  res.json({ cancelled });
-
-});
-
-/* ------------------------
-   SIMULATION TEST
--------------------------*/
-
-app.get("/simulate-impact", async (req, res) => {
-
-  const fakeEvent = {
-    user_id: "Driver-00",
-    acceleration: 8.2,
-    impact_flag: true,
-    gps: "46.123,-64.456"
-  };
-
-  const result = processMotionEvent(fakeEvent, async (incident) => {
-
-    await twilioClient.messages.create({
-      body: `SIMULATED ALERT: ${incident.user_id} impact at ${incident.gps}`,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: process.env.ALERT_PHONE_NUMBER
-    });
-
-  });
-
-  res.json(result);
-
-});
 
 /* ------------------------
    GET ALERTS FOR DASHBOARD
