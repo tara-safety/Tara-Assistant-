@@ -2,9 +2,10 @@ import express from "express";
 import OpenAI from "openai";
 import twilio from "twilio";
 import fs from "fs";
-import { createClient } from "@supabase/supabase-js";
 import cors from "cors";
 import dotenv from "dotenv";
+import { createClient } from "@supabase/supabase-js";
+
 dotenv.config();
 
 /* ------------------------
@@ -12,12 +13,13 @@ dotenv.config();
 -------------------------*/
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
 /* ------------------------
-   ENVIRONMENT CLIENTS
+   CLIENT SETUP
 -------------------------*/
 
 const openai = new OpenAI({
@@ -28,10 +30,6 @@ const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
-
-/* ------------------------
-   SUPABASE CLIENT
--------------------------*/
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -45,14 +43,24 @@ const supabase = createClient(
 let knowledge = [];
 
 try {
-  const data = fs.readFileSync("./knowledge.json");
-  knowledge = JSON.parse(data);
+  if (fs.existsSync("./knowledge.json")) {
+    const data = fs.readFileSync("./knowledge.json", "utf8");
+    knowledge = JSON.parse(data);
+  }
 } catch (err) {
-  console.log("No knowledge file yet.");
+  console.log("Knowledge base not loaded.");
 }
 
 /* ------------------------
-   AI ROUTE
+   HEALTH CHECK
+-------------------------*/
+
+app.get("/", (req, res) => {
+  res.send("TARA server running");
+});
+
+/* ------------------------
+   AI ASSISTANT
 -------------------------*/
 
 app.post("/ask", async (req, res) => {
@@ -60,10 +68,7 @@ app.post("/ask", async (req, res) => {
   const question = req.body.question || "";
 
   function normalize(text) {
-    return text
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, "")
-      .trim();
+    return text.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
   }
 
   const normalizedQuestion = normalize(question);
@@ -85,35 +90,8 @@ app.post("/ask", async (req, res) => {
       messages: [
         {
           role: "system",
-          content: `
-You are TARA, a professional towing, roadside safety, and automotive technical assistant.
-
-ONLY answer:
-- Towing procedures
-- Recovery methods
-- Roadside operator safety
-- EV safety
-- Battery location
-- Jack points
-- Tow hooks
-- Vehicle technical positioning
-- Hook equipment
-- Lift equipment
-- Vehicle situations
-- Call types
-- Vehicle battery
-- Vehicle starting
-- Vehicle electrical
-- Vehicle lockouts
-- Vehicle key fob
-- EV specific
-- Hybrid specific
-- Risk including safety
-- Towing equipment
-
-If unrelated respond:
-"I am restricted to towing and roadside safety assistance only."
-`
+          content:
+            "You are TARA, a professional towing and roadside safety assistant. Only answer towing or roadside related questions. If unrelated say you are restricted to towing assistance."
         },
         {
           role: "user",
@@ -127,14 +105,19 @@ If unrelated respond:
     });
 
   } catch (err) {
+
     console.error("AI error:", err);
-    res.status(500).json({ error: "AI request failed" });
+
+    res.status(500).json({
+      error: "AI request failed"
+    });
+
   }
 
 });
 
 /* ------------------------
-   EMERGENCY ROUTE
+   EMERGENCY ALERT
 -------------------------*/
 
 app.post("/emergency", async (req, res) => {
@@ -142,7 +125,9 @@ app.post("/emergency", async (req, res) => {
   const { lat, lon, driver } = req.body;
 
   if (!lat || !lon || !driver) {
-    return res.status(400).json({ error: "Missing emergency data" });
+    return res.status(400).json({
+      error: "Missing emergency data"
+    });
   }
 
   const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
@@ -168,19 +153,19 @@ Immediate response required.`;
     /* PLACE CALL */
 
     await twilioClient.calls.create({
-      twiml: `<Response><Say voice="alice">Emergency alert from ${driver}. GPS location has been sent by text message.</Say></Response>`,
+      twiml:
+        `<Response><Say voice="alice">Emergency alert from ${driver}. GPS location sent by text.</Say></Response>`,
       to: process.env.ALERT_PHONE_NUMBER,
       from: process.env.TWILIO_PHONE_NUMBER
     });
 
-    /* LOG INCIDENT */
+    /* SAVE ALERT */
 
-     console.log("Sending to Supabase:", driver, lat, lon);
     const { error } = await supabase
       .from("alerts")
       .insert([
         {
-          driver: driver,
+          driver,
           latitude: lat,
           longitude: lon,
           alert_type: "emergency",
@@ -192,16 +177,14 @@ Immediate response required.`;
       console.error("Supabase error:", error);
     }
 
-    console.log("🚨 Emergency logged:", driver, lat, lon);
-
     res.json({
-      status: "Emergency Alert Sent",
+      status: "Emergency alert sent",
       location: mapLink
     });
 
   } catch (err) {
 
-    console.error("Emergency failure:", err);
+    console.error("Emergency error:", err);
 
     res.status(500).json({
       error: "Emergency system failed"
@@ -211,9 +194,8 @@ Immediate response required.`;
 
 });
 
-
 /* ------------------------
-   GET ALERTS FOR DASHBOARD
+   DASHBOARD ALERTS
 -------------------------*/
 
 app.get("/alerts", async (req, res) => {
@@ -226,15 +208,17 @@ app.get("/alerts", async (req, res) => {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Supabase read error:", error);
-      return res.status(500).json({ error: "Database read failed" });
+      console.error(error);
+      return res.status(500).json({
+        error: "Database error"
+      });
     }
 
     res.json(data);
 
   } catch (err) {
 
-    console.error("Alerts route failure:", err);
+    console.error(err);
 
     res.status(500).json({
       error: "Server error"
@@ -243,7 +227,6 @@ app.get("/alerts", async (req, res) => {
   }
 
 });
-
 
 /* ------------------------
    START SERVER
