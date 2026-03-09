@@ -117,23 +117,20 @@ async function loadAlerts() {
 
   alerts.forEach(alert => {
 
-    const div = document.createElement("div");
+  const div = document.createElement("div");
 
-    const mapLink = `https://maps.google.com/?q=${alert.latitude},${alert.longitude}`;
+  const mapLink = `https://maps.google.com/?q=${alert.latitude},${alert.longitude}`;
 
-div.innerHTML = `
-  <b>${alert.driver}</b><br>
-  Location: 
-  <a href="${mapLink}" target="_blank">
-  View Map
-  </a><br>
-  Time: ${alert.created_at}
-  <hr>
-`;
+  div.innerHTML = `
+    <b>${alert.driver}</b><br>
+    Location: <a href="${mapLink}" target="_blank">Open Map</a><br>
+    Time: ${new Date(alert.created_at).toLocaleString()}<br>
+    <hr>
+  `;
 
-    container.appendChild(div);
+  container.appendChild(div);
 
-  });
+});
 
 }
 
