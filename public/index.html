@@ -119,12 +119,17 @@ async function loadAlerts() {
 
     const div = document.createElement("div");
 
-    div.innerHTML = `
-      <b>${alert.driver}</b><br>
-      Location: ${alert.latitude}, ${alert.longitude}<br>
-      Time: ${alert.created_at}
-      <hr>
-    `;
+    const mapLink = `https://maps.google.com/?q=${alert.latitude},${alert.longitude}`;
+
+div.innerHTML = `
+  <b>${alert.driver}</b><br>
+  Location: 
+  <a href="${mapLink}" target="_blank">
+  View Map
+  </a><br>
+  Time: ${alert.created_at}
+  <hr>
+`;
 
     container.appendChild(div);
 
