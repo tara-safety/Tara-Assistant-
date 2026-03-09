@@ -62,52 +62,46 @@ let markers = [];
 LOAD EXISTING ALERTS
 --------------------------- */
 
-async function loadAlerts(){
+<script>
 
-  try{
+async function loadAlerts() {
+
+  try {
 
     const res = await fetch("/alerts");
+
+    if (!res.ok) return;
+
     const alerts = await res.json();
 
-    markers.forEach(m => m.setMap(null));
-    markers = [];
+    const container = document.getElementById("alerts");
+    container.innerHTML = "";
 
     alerts.forEach(alert => {
 
-      const position = {
-        lat: parseFloat(alert.latitude),
-        lng: parseFloat(alert.longitude)
-      };
+      const div = document.createElement("div");
 
-      const marker = new google.maps.Marker({
-        position: position,
-        map: map,
-        title: alert.driver || "Driver"
-      });
+      div.innerHTML = `
+        <b>${alert.driver}</b><br>
+        Location: ${alert.latitude}, ${alert.longitude}<br>
+        Time: ${alert.created_at}
+        <hr>
+      `;
 
-      const info = new google.maps.InfoWindow({
-        content: `
-        <b>Driver:</b> ${alert.driver || "Unknown"}<br>
-        <b>Alert:</b> ${alert.alert_type || "Emergency"}<br>
-        <b>Time:</b> ${alert.created_at || ""}
-        `
-      });
-
-      marker.addListener("click", () => {
-        info.open(map, marker);
-      });
-
-      markers.push(marker);
+      container.appendChild(div);
 
     });
 
-  }catch(err){
-
-    console.error("Alert load error:",err);
-
+  } catch (err) {
+    console.log("Alert load failed");
   }
 
 }
+
+loadAlerts();
+setInterval(loadAlerts, 5000);
+
+</script>
 
 
 /* --------------------------
