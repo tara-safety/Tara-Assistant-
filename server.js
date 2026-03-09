@@ -5,6 +5,8 @@ import fs from "fs";
 import cors from "cors";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
+import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
@@ -16,7 +18,10 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+app.use(express.static(path.join(__dirname, "public")));
 
 /* ------------------------
    CLIENT SETUP
