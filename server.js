@@ -206,6 +206,9 @@ Immediate response required.`;
 
 });
 
+L.marker([alert.latitude, alert.longitude])
+  .addTo(map)
+  .bindPopup(`${alert.driver} emergency alert`);
 /* ------------------------
    DASHBOARD ALERTS
 -------------------------*/
