@@ -1,40 +1,44 @@
 let activeIncidents = {};
 
-const IMPACT_THRESHOLD = 6.5; // adjust later
+export function processMotionEvent(event, escalateCallback) {
 
-export function processMotionEvent(data, escalateCallback) {
-  const { user_id, acceleration, impact_flag, gps } = data;
+  const id = event.user_id;
 
-  if (!impact_flag || acceleration < IMPACT_THRESHOLD) {
-    return { triggered: false };
+  if (!event.impact_flag) {
+    return { status: "no impact detected" };
   }
 
-  const incidentId = Date.now().toString();
+  const incidentId = Date.now();
 
   activeIncidents[incidentId] = {
-    user_id,
-    gps,
-    status: "pending"
+    id: incidentId,
+    user_id: event.user_id,
+    gps: event.gps,
+    acceleration: event.acceleration,
+    created: Date.now()
   };
 
-  // 10 second countdown
+  // simulate escalation delay
   setTimeout(() => {
-    if (activeIncidents[incidentId]?.status === "pending") {
-      activeIncidents[incidentId].status = "escalated";
+
+    if (activeIncidents[incidentId]) {
       escalateCallback(activeIncidents[incidentId]);
     }
+
   }, 10000);
 
   return {
-    triggered: true,
+    status: "incident created",
     incidentId
   };
 }
 
-export function cancelIncident(incidentId) {
-  if (activeIncidents[incidentId]) {
-    activeIncidents[incidentId].status = "cancelled";
+export function cancelIncident(id) {
+
+  if (activeIncidents[id]) {
+    delete activeIncidents[id];
     return true;
   }
+
   return false;
 }
