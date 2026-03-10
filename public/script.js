@@ -10,8 +10,13 @@ const progress = document.getElementById("progressCircle");
 
 /* ---------------- MENU ---------------- */
 
-menuBtn.onclick = () => menu.classList.add("open");
-closeMenu.onclick = () => menu.classList.remove("open");
+menuBtn.onclick = () => {
+menu.style.left = "0";
+};
+
+closeMenu.onclick = () => {
+menu.style.left = "-260px";
+};
 
 /* ---------------- CHAT ---------------- */
 
