@@ -197,3 +197,29 @@ emergencyBtn.innerHTML = "🚨<br>HOLD<br>EMERGENCY";
 });
 
 }
+
+/* ---------- DRIVER MINDER -----------*\
+
+let driverMonitoring = false;
+
+function activateDriverMinder(){
+
+driverMonitoring = true;
+
+window.addEventListener("devicemotion", event=>{
+
+const force = Math.abs(event.acceleration.x || 0) +
+Math.abs(event.acceleration.y || 0) +
+Math.abs(event.acceleration.z || 0);
+
+if(force > 25 && driverMonitoring){
+
+sendEmergency();
+
+}
+
+});
+
+}
+
+activateDriverMinder();
