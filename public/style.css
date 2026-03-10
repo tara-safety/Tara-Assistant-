@@ -149,9 +149,10 @@ top:0;
 
 
 .holdText{
-
-margin-top:8px;
-color:#ffbbbb;
+  text-align:center;
+  font-size:16px;
+  margin-top:10px;
+  color:#ffbbbb;
 
 }
 
