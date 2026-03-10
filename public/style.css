@@ -1,7 +1,12 @@
 body{
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:linear-gradient(#9bc6b0,#0a2f3a);
+
+background:linear-gradient(
+180deg,
+#9fbfb2,
+#0b3d46
+);
+
+font-family:Arial, sans-serif;
 }
 
 .main{
