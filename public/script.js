@@ -1,3 +1,4 @@
+console.log("TARA script loaded");
 const askBtn = document.getElementById("askBtn");
 const questionInput = document.getElementById("question");
 const chatBox = document.getElementById("chatBox");
