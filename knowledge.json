@@ -107,3 +107,8 @@ const completion = await openai.chat.completions.create({
     }
   ]
 });
+
+knowledge_files/.txt
+.md
+.json
+.csv
