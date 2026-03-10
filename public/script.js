@@ -166,3 +166,34 @@ clearInterval(holdTimer);
 emergencyBtn.innerHTML = "🚨<br>HOLD<br>EMERGENCY";
 
 }
+
+async function sendEmergency(){
+
+navigator.geolocation.getCurrentPosition(async position=>{
+
+const lat = position.coords.latitude;
+const lon = position.coords.longitude;
+
+await fetch("/emergency",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+driver:"Driver",
+lat,
+lon
+})
+});
+
+emergencyBtn.innerText = "ALERT SENT";
+
+setTimeout(()=>{
+
+emergencyBtn.innerHTML = "🚨<br>HOLD<br>EMERGENCY";
+
+},3000);
+
+});
+
+}
