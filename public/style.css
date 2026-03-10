@@ -134,6 +134,28 @@ z-index:2;
 
 }
 
+.emergencyBtn:active{
+  animation:alertPulse 1s infinite;
+}
+
+@keyframes alertPulse{
+
+0%{
+transform:scale(1);
+box-shadow:0 0 10px red;
+}
+
+50%{
+transform:scale(1.08);
+box-shadow:0 0 25px red;
+}
+
+100%{
+transform:scale(1);
+box-shadow:0 0 10px red;
+}
+
+}
 
 .progressCircle{
 
