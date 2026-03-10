@@ -157,6 +157,13 @@ box-shadow:0 0 10px red;
 
 }
 
+button{
+  transition:all 0.15s ease;
+}
+
+button:active{
+  transform:scale(0.95);
+}
 .progressCircle{
 
 position:absolute;
