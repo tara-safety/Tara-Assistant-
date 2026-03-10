@@ -208,6 +208,14 @@ margin-top:10px;
 }
 
 
+.driverMinder{
+  margin-top:20px;
+  background:#ffd54f;
+  padding:14px;
+  border-radius:10px;
+  font-weight:bold;
+}
+
 .footer{
 
 text-align:center;
