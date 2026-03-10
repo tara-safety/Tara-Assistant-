@@ -51,15 +51,22 @@ chatBox.scrollTop = chatBox.scrollHeight;
 };
 
 /* ---------------- VOICE ---------------- */
-
 voiceBtn.onclick = () => {
-  const rec = new webkitSpeechRecognition();
-  rec.lang = "en-US";
-  rec.onresult = e => {
-    input.value = e.results[0][0].transcript;
-    sendQuestion();
-  };
-  rec.start();
+
+const recognition = new(window.SpeechRecognition || window.webkitSpeechRecognition)();
+
+recognition.lang = "en-US";
+
+recognition.start();
+
+recognition.onresult = function(event){
+
+const transcript = event.results[0][0].transcript;
+
+document.getElementById("question").value = transcript;
+
+};
+
 };
 
 /* ---------------- WAKE WORD ---------------- */
