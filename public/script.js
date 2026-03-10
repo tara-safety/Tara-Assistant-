@@ -51,7 +51,7 @@ chatBox.scrollTop = chatBox.scrollHeight;
 };
 
 /* ---------------- VOICE ---------------- */
-const voiceBtn = document.getElementById("voiceBtn");
+
 
 voiceBtn.onclick = () => {
 
@@ -123,7 +123,6 @@ function triggerEmergency() {
   });
 }
 
-const emergencyBtn = document.getElementById("emergencyBtn");
 
 let holdTimer;
 
@@ -198,7 +197,7 @@ emergencyBtn.innerHTML = "🚨<br>HOLD<br>EMERGENCY";
 
 }
 
-/* ---------- DRIVER MINDER -----------*\
+/* ---------- DRIVER MINDER -----------*/
 
 let driverMonitoring = false;
 
