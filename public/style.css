@@ -74,6 +74,13 @@ cursor:pointer;
 
 }
 
+.menuBtn{
+  position:absolute;
+  left:15px;
+  font-size:26px;
+  background:none;
+  border:none;
+}
 
 /* SLIDE MENU */
 
@@ -126,23 +133,8 @@ transform:translateX(0);
   box-shadow:0 10px 25px rgba(0,0,0,0.35);
 }
 
-
-/* STOP TEXT SELECT */
-user-select:none;
--webkit-user-select:none;
--webkit-touch-callout:none;
-
-/* STOP LONG PRESS MENU */
-touch-action:manipulation;
-
-}
-
-.emgText{
-position:absolute;
-font-weight:bold;
-
-z-index:2;
-
+button:active{
+  transform:scale(0.95);
 }
 
 .emergencyBtn:active{
@@ -172,20 +164,21 @@ button{
   transition:all 0.15s ease;
 }
 
-button:active{
-  transform:scale(0.95);
+/* STOP TEXT SELECT */
+user-select:none;
+-webkit-user-select:none;
+-webkit-touch-callout:none;
+
+/* STOP LONG PRESS MENU */
+touch-action:manipulation;
+
 }
-.progressCircle{
 
+.emgText{
 position:absolute;
+font-weight:bold;
 
-width:0%;
-height:100%;
-
-background:rgba(255,255,255,.3);
-
-left:0;
-top:0;
+z-index:2;
 
 }
 
@@ -283,10 +276,4 @@ color:#00ffd0;
 }
 
 
-.menuBtn{
-  position:absolute;
-  left:15px;
-  font-size:26px;
-  background:none;
-  border:none;
-}
+
