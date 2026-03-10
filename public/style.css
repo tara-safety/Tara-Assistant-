@@ -88,19 +88,19 @@ transform:translateX(0);
 /* MAIN */
 
 .main{
-
-margin-top:70px;
-padding:15px;
-
+  padding-top:80px;
+  padding-left:15px;
+  padding-right:15px;
 }
 
 
 /* EMERGENCY */
 
 .emergencyWrap{
-
-text-align:center;
-
+  position:sticky;
+  top:70px;
+  text-align:center;
+  z-index:900;
 }
 
 .emergencyBtn{
@@ -169,19 +169,11 @@ color:#ffbbbb;
 /* CHAT */
 
 .chatBox{
-
-background:#082331;
-
-height:260px;
-
-border-radius:15px;
-
-padding:10px;
-
-overflow:auto;
-
-margin-top:20px;
-
+  margin-top:20px;
+  background:#8fc3a5;
+  border-radius:20px;
+  padding:20px;
+  min-height:160px;
 }
 
 
@@ -218,36 +210,19 @@ margin-top:10px;
 /* BUTTONS */
 
 .btnRow{
-
-display:flex;
-gap:10px;
-
-margin-top:10px;
-
+  display:flex;
+  justify-content:space-between;
+  margin-top:20px;
 }
 
-.sendBtn{
-
-flex:1;
-padding:15px;
-
-background:#00c8ff;
-
-border:none;
-border-radius:12px;
-
-}
-
+.sendBtn,
 .talkBtn{
-
-flex:1;
-padding:15px;
-
-background:#28a745;
-
-border:none;
-border-radius:12px;
-
+  width:45%;
+  padding:14px;
+  border:none;
+  background:#159a4c;
+  font-weight:bold;
+  font-size:18px;
 }
 
 
@@ -259,4 +234,26 @@ margin-top:15px;
 
 color:#00ffd0;
 
+}
+
+.header{
+  position:fixed;
+  top:0;
+  width:100%;
+  height:60px;
+  background:#0e9a45;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:bold;
+  font-size:22px;
+  z-index:1000;
+}
+
+.menuBtn{
+  position:absolute;
+  left:15px;
+  font-size:26px;
+  background:none;
+  border:none;
 }
