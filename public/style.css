@@ -30,7 +30,7 @@ body{
 .headerTitle{
 
 font-weight:bold;
-font-size:18px;
+font-size:12px;
 
 }
 
@@ -116,7 +116,7 @@ touch-action:manipulation;
 }
 
 .emgText{
-
+position:absolute;
 font-weight:bold;
 
 z-index:2;
