@@ -212,14 +212,23 @@ z-index:2;
 /* CHAT */
 
 .chatBox{
-  background:#7fb89e;
-  border-radius:20px;
-  padding:18px;
 
-  height:180px;
-  overflow-y:auto;
+background:#7fb89e;
 
-  margin-top:20px;
+border-radius:20px;
+
+padding:15px;
+
+height:180px;
+
+overflow-y:auto;
+
+font-size:15px;
+
+line-height:1.4;
+
+box-shadow:0 5px 15px rgba(0,0,0,0.2);
+
 }
 
 
