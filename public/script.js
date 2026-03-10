@@ -51,6 +51,8 @@ chatBox.scrollTop = chatBox.scrollHeight;
 };
 
 /* ---------------- VOICE ---------------- */
+const voiceBtn = document.getElementById("voiceBtn");
+
 voiceBtn.onclick = () => {
 
 const recognition = new(window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -119,4 +121,48 @@ function triggerEmergency() {
 
     alert("Emergency Alert Sent");
   });
+}
+
+const emergencyBtn = document.getElementById("emergencyBtn");
+
+let holdTimer;
+
+emergencyBtn.addEventListener("mousedown", startHold);
+emergencyBtn.addEventListener("touchstart", startHold);
+
+emergencyBtn.addEventListener("mouseup", cancelHold);
+emergencyBtn.addEventListener("touchend", cancelHold);
+
+function startHold(){
+
+let count = 3;
+
+emergencyBtn.innerText = count;
+
+holdTimer = setInterval(()=>{
+
+count--;
+
+if(count > 0){
+
+emergencyBtn.innerText = count;
+
+}else{
+
+clearInterval(holdTimer);
+
+sendEmergency();
+
+}
+
+},1000);
+
+}
+
+function cancelHold(){
+
+clearInterval(holdTimer);
+
+emergencyBtn.innerHTML = "🚨<br>HOLD<br>EMERGENCY";
+
 }
