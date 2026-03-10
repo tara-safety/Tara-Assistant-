@@ -199,15 +199,13 @@ margin-top:10px;
 
 
 /* BUTTONS */
-
 .buttonRow{
   display:flex;
   gap:15px;
   margin-top:15px;
 }
 
-.sendBtn,
-.speakBtn{
+.buttonRow button{
   flex:1;
   padding:16px;
   border:none;
@@ -216,6 +214,7 @@ margin-top:10px;
   font-weight:bold;
   font-size:18px;
 }
+
 
 
 .driverMinder{
