@@ -89,3 +89,21 @@ async function loadFile(filePath) {
 }
 
 loadFile("./files/towing_safety.txt");
+
+const docs = await searchKnowledge(question);
+
+const context = docs.map(d => d.content).join("\n");
+
+const completion = await openai.chat.completions.create({
+  model: "gpt-4o-mini",
+  messages: [
+    {
+      role: "system",
+      content: "Answer using the provided context."
+    },
+    {
+      role: "user",
+      content: `Context:\n${context}\n\nQuestion:${question}`
+    }
+  ]
+});
