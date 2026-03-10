@@ -1,6 +1,6 @@
-const chatBox = document.getElementById("chatBox");
-const input = document.getElementById("question");
 const askBtn = document.getElementById("askBtn");
+const questionInput = document.getElementById("question");
+const chatBox = document.getElementById("chatBox");
 const voiceBtn = document.getElementById("voiceBtn");
 const menuBtn = document.getElementById("menuBtn");
 const menu = document.getElementById("menu");
@@ -20,36 +20,35 @@ menu.style.left = "-260px";
 
 /* ---------------- CHAT ---------------- */
 
-function addMessage(text, type) {
-  const div = document.createElement("div");
-  div.className = type;
-  div.innerText = text;
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
+askBtn.onclick = async () => {
 
-async function sendQuestion() {
-  const text = input.value.trim();
-  if (!text) return;
+const question = questionInput.value.trim();
 
-  addMessage("YOU: " + text, "user");
-  input.value = "";
+if(!question) return;
 
-  const res = await fetch("/ask", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question: text })
-  });
+chatBox.innerHTML += `<div><b>You:</b> ${question}</div>`;
 
-  const data = await res.json();
-  addMessage("TARA: " + data.answer, "bot");
-}
+questionInput.value = "";
 
-askBtn.onclick = sendQuestion;
+chatBox.innerHTML += `<div id="thinking">TARA is thinking...</div>`;
 
-input.addEventListener("keypress", e => {
-  if (e.key === "Enter") sendQuestion();
+const res = await fetch("/ask",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({question})
 });
+
+const data = await res.json();
+
+document.getElementById("thinking").remove();
+
+chatBox.innerHTML += `<div><b>TARA:</b> ${data.answer}</div>`;
+
+chatBox.scrollTop = chatBox.scrollHeight;
+
+};
 
 /* ---------------- VOICE ---------------- */
 
