@@ -6,30 +6,25 @@ body{
 
 .main{
   padding-top:120px;
-  padding-left:15px;
-  padding-right:15px;
+  padding-left:20px;
+  padding-right:20px;
 }
 
 
 /* HEADER */
 
 .header{
-
-position:fixed;
-top:0;
-
-width:100%;
-height:60px;
-
-background:#021018;
-
-display:flex;
-align-items:center;
-
-padding-left:60px;
-
-z-index:1000;
-
+  position:fixed;
+  top:0;
+  width:100%;
+  height:70px;
+  background:#18a34a;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:32px;
+  font-weight:bold;
+  z-index:1000;
 }
 
 .headerTitle{
@@ -90,10 +85,9 @@ transform:translateX(0);
 
 .emergencyWrap{
   position:sticky;
-  top:80px;
+  top:90px;
   text-align:center;
-  margin-bottom:20px;
-  z-index:900;
+  margin-bottom:25px;
 }
 
 .emergencyBtn{
@@ -182,15 +176,11 @@ margin-top:10px;
 /* INPUT */
 
 .input{
-
-width:90%;
-padding:14px;
-
-border-radius:12px;
-border:none;
-
-margin-top:10px;
-
+  width:100%;
+  padding:12px;
+  border-radius:6px;
+  border:none;
+  margin-top:10px;
 }
 
 
