@@ -8,6 +8,8 @@ body{
   padding-top:110px;
   padding-left:18px;
   padding-right:18px;
+  display:flex;
+  flex-direction:column;
 }
 
 
@@ -164,7 +166,7 @@ top:0;
   border-radius:20px;
   padding:18px;
   min-height:160px;
-  margin-top:15px;
+  margin-top:20px;
   font-size:16px;
 }
 
