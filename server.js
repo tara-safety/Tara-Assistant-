@@ -246,12 +246,6 @@ const { data, error } = await supabase
 
 });
 
-const map = L.map('map').setView([46.1, -64.7], 7);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: 'Map data © OpenStreetMap'
-}).addTo(map);
-
 /* ------------------------
    START SERVER
 -------------------------*/
