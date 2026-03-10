@@ -21,6 +21,10 @@ body{
   padding-bottom:50px;
 }
 
+body{
+-webkit-user-select:none;
+user-select:none;
+}
 /* HEADER */
 
 .header{
