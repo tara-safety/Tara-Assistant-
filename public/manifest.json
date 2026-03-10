@@ -1,0 +1,21 @@
+{
+"name": "TARA Safety Assistant",
+"short_name": "TARA",
+"start_url": "/",
+"display": "standalone",
+"background_color": "#0b3d46",
+"theme_color": "#1e9f4f",
+"description": "Tow truck driver safety assistant",
+"icons": [
+{
+"src": "/icon-192.png",
+"sizes": "192x192",
+"type": "image/png"
+},
+{
+"src": "/icon-512.png",
+"sizes": "512x512",
+"type": "image/png"
+}
+]
+}
