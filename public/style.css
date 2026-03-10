@@ -1,11 +1,13 @@
 body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:linear-gradient(#9bc6b0,#0a2f3a);
+}
 
-margin:0;
-font-family:Arial;
-background:linear-gradient(#031520,#062b3a);
-
-color:white;
-
+.main{
+  padding-top:120px;
+  padding-left:15px;
+  padding-right:15px;
 }
 
 
@@ -84,45 +86,30 @@ box-sizing:border-box;
 transform:translateX(0);
 }
 
-
-/* MAIN */
-
-.main{
-  padding-top:80px;
-  padding-left:15px;
-  padding-right:15px;
-}
-
-
 /* EMERGENCY */
 
 .emergencyWrap{
   position:sticky;
-  top:70px;
+  top:80px;
   text-align:center;
+  margin-bottom:20px;
   z-index:900;
 }
 
 .emergencyBtn{
-
-width:140px;
-height:140px;
-
-background:red;
-
-border-radius:20px;
-
-margin:auto;
-
-display:flex;
-justify-content:center;
-align-items:center;
-
-position:relative;
-
-overflow:hidden;
-
-cursor:pointer;
+  width:150px;
+  height:150px;
+  background:red;
+  border-radius:25px;
+  margin:auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  font-weight:bold;
+  font-size:18px;
+  box-shadow:0 8px 20px rgba(0,0,0,0.4);
+}
 
 /* STOP TEXT SELECT */
 user-select:none;
@@ -169,11 +156,11 @@ color:#ffbbbb;
 /* CHAT */
 
 .chatBox{
-  margin-top:20px;
-  background:#8fc3a5;
+  background:#7fb89e;
   border-radius:20px;
   padding:20px;
   min-height:160px;
+  margin-top:20px;
 }
 
 
@@ -211,18 +198,20 @@ margin-top:10px;
 
 .btnRow{
   display:flex;
-  justify-content:space-between;
+  gap:20px;
   margin-top:20px;
 }
 
 .sendBtn,
 .talkBtn{
-  width:45%;
-  padding:14px;
+  flex:1;
+  padding:16px;
   border:none;
-  background:#159a4c;
+  background:#17964c;
+  color:black;
   font-weight:bold;
   font-size:18px;
+  border-radius:6px;
 }
 
 
