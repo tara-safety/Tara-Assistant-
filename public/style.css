@@ -12,6 +12,9 @@ body{
   flex-direction:column;
 }
 
+body{
+  padding-bottom:40px;
+}
 
 /* HEADER */
 
