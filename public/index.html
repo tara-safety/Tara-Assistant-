@@ -140,6 +140,13 @@ async function loadAlerts() {
 
 loadAlerts();
 
+alerts.forEach(alert => {
+
+  L.marker([alert.latitude, alert.longitude])
+    .addTo(map)
+    .bindPopup(`${alert.driver} emergency`);
+
+});
 /* refresh every 5 seconds */
 
 setInterval(loadAlerts, 5000);
