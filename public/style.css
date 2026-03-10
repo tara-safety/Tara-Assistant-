@@ -5,14 +5,15 @@ body{
 }
 
 .main{
-  padding-top:120px;
-  padding-left:20px;
-  padding-right:20px;
+  padding-top:110px;
+  padding-left:18px;
+  padding-right:18px;
 }
 
 
 /* HEADER */
 
+.
 .header{
   position:fixed;
   top:0;
@@ -22,8 +23,9 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:32px;
+  font-size:24px;
   font-weight:bold;
+  color:black;
   z-index:1000;
 }
 
@@ -152,9 +154,10 @@ color:#ffbbbb;
 .chatBox{
   background:#7fb89e;
   border-radius:20px;
-  padding:20px;
+  padding:18px;
   min-height:160px;
-  margin-top:20px;
+  margin-top:15px;
+  font-size:16px;
 }
 
 
