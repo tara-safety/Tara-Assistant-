@@ -82,12 +82,13 @@ cursor:pointer;
 
 }
 
-.menuBtn{
-  position:absolute;
-  left:15px;
-  font-size:26px;
-  background:none;
-  border:none;
+#menuBtn{
+position:absolute;
+left:15px;
+font-size:26px;
+background:none;
+border:none;
+cursor:pointer;
 }
 
 /* SLIDE MENU */
@@ -183,16 +184,15 @@ button{
 }
 
 .emergencyBtn{
-animation:safetyPulse 2.5s infinite;
-}
-/* STOP TEXT SELECT */
-user-select:none;
--webkit-user-select:none;
--webkit-touch-callout:none;
+  animation:safetyPulse 2.5s infinite;
 
-/* STOP LONG PRESS MENU */
-touch-action:manipulation;
+  /* STOP TEXT SELECT */
+  user-select:none;
+  -webkit-user-select:none;
+  -webkit-touch-callout:none;
 
+  /* STOP LONG PRESS MENU */
+  touch-action:manipulation;
 }
 
 .emgText{
@@ -283,6 +283,15 @@ font-size:18px;
 color:black;
 
 box-shadow:0 5px 15px rgba(0,0,0,0.25);
+}
+
+#menuBtn{
+position:absolute;
+left:15px;
+font-size:26px;
+background:none;
+border:none;
+cursor:pointer;
 }
 
 
