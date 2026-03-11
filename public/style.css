@@ -153,10 +153,10 @@ transform:translateX(0);
 
 /* EMERGENCY */
 .emergencyWrap{
-  display:flex;
-  justify-content:center;
-  margin-top:-10px;
-  margin-bottom:10px;
+display:flex;
+justify-content:center;
+margin-top:20px;
+margin-bottom:10px;
 }
 
 .emergencyBtn{
