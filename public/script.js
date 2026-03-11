@@ -26,15 +26,38 @@ menu.classList.remove("open");
 
 /* SEND BUTTON */
 
-askBtn.onclick = () => {
+askBtn.addEventListener("click", sendQuestion);
+voiceBtn.addEventListener("click", startVoice);
+
+function sendQuestion(){
 
 const text = questionInput.value.trim();
 if(!text) return;
 
-chatBox.innerHTML += <div><b>You:</b> ${text}</div>;
-questionInput.value = “”;
+chatBox.innerHTML += `<div><b>You:</b> ${text}</div>`;
+questionInput.value="";
 
+}
+
+function startVoice(){
+
+const SpeechRecognition =
+window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if(!SpeechRecognition){
+alert("Voice not supported");
+return;
+}
+
+const recognition = new SpeechRecognition();
+
+recognition.start();
+
+recognition.onresult = e=>{
+questionInput.value = e.results[0][0].transcript;
 };
+
+}
 
 /* WAKE WORD */
 
