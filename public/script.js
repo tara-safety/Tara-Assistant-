@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", function(){
 
 console.log("TARA script loaded");
