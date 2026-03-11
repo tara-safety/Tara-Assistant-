@@ -43,6 +43,8 @@ headers:{
 body:JSON.stringify({question:text})
 });
 
+let voiceEnabled = true;
+  
 const data = await res.json();
 
 chatBox.innerHTML += `<div class="bot"><b>TARA:</b> ${data.answer}</div>`;
