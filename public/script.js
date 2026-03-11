@@ -1,4 +1,4 @@
-:::writing{variant=“standard” id=“tara_clean_script”}
+:::writing{variant=“standard” id=“48261”}
 document.addEventListener(“DOMContentLoaded”, function(){
 
 console.log(“TARA controls active”);
@@ -14,54 +14,50 @@ const emergencyBtn = document.getElementById(“emergencyBtn”);
 const chatBox = document.getElementById(“chatBox”);
 const questionInput = document.getElementById(“question”);
 
-/* –––––––– MENU –––––––– */
+/* MENU */
 
 menuBtn.onclick = () => {
-
 menu.style.left = “0”;
-
 };
 
 closeMenu.onclick = () => {
-
 menu.style.left = “-260px”;
-
 };
 
-/* –––––––– SEND BUTTON –––––––– */
+/* SEND BUTTON */
 
 askBtn.onclick = () => {
 
 const text = questionInput.value.trim();
-
 if(!text) return;
 
 chatBox.innerHTML += <div><b>You:</b> ${text}</div>;
-
 questionInput.value = “”;
 
 };
 
-/* ---------------- WAKE WORD ---------------- */
+/* WAKE WORD */
 
-if ("webkitSpeechRecognition" in window) {
+if (“webkitSpeechRecognition” in window) {
 
 const wakeRec = new webkitSpeechRecognition();
-
 wakeRec.continuous = true;
 
 wakeRec.onresult = e => {
-  const t = e.results[e.results.length - 1][0].transcript.toLowerCase();
-  if (t.includes("hey tara")) {
-    alert("TARA Listening");
-  }
+
+const t = e.results[e.results.length - 1][0].transcript.toLowerCase();
+
+if (t.includes(“hey tara”)) {
+alert(“TARA Listening”);
+}
+
 };
 
 wakeRec.start();
 
 }
 
-/* –––––––– TALK BUTTON –––––––– */
+/* TALK BUTTON */
 
 voiceBtn.onclick = () => {
 
@@ -74,18 +70,15 @@ return;
 }
 
 const recognition = new SpeechRecognition();
-
 recognition.start();
 
 recognition.onresult = function(event){
-
 questionInput.value = event.results[0][0].transcript;
-
 };
 
 };
 
-/* –––––––– EMERGENCY BUTTON –––––––– */
+/* EMERGENCY BUTTON */
 
 let holdTimer;
 
@@ -97,24 +90,18 @@ emergencyBtn.addEventListener(“touchend”, cancelHold);
 
 function startHold(){
 
-emergencyBtn.innerText = “3”;
-
 let count = 3;
+emergencyBtn.innerText = count;
 
 holdTimer = setInterval(()=>{
 
 count–;
 
 if(count > 0){
-
 emergencyBtn.innerText = count;
-
 }else{
-
 clearInterval(holdTimer);
-
 sendEmergency();
-
 }
 
 },1000);
