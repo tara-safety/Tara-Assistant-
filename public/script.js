@@ -25,16 +25,37 @@ menu.classList.remove("open");
 
 /* SEND BUTTON */
 
-askBtn.addEventListener("click", sendQuestion);
-voiceBtn.addEventListener("click", startVoice);
-
-function sendQuestion(){
+async function sendQuestion(){
 
 const text = questionInput.value.trim();
 if(!text) return;
 
-chatBox.innerHTML += `<div><b>You:</b> ${text}</div>`;
+chatBox.innerHTML += `<div class="user"><b>You:</b> ${text}</div>`;
 questionInput.value="";
+
+try{
+
+const res = await fetch("/ask",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({question:text})
+});
+
+const data = await res.json();
+
+chatBox.innerHTML += `<div class="bot"><b>TARA:</b> ${data.answer}</div>`;
+
+chatBox.scrollTop = chatBox.scrollHeight;
+
+speakResponse(data.answer);
+
+}catch(err){
+
+chatBox.innerHTML += `<div class="bot">Connection error</div>`;
+
+}
 
 }
 
