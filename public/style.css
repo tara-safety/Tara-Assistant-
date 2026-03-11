@@ -120,18 +120,27 @@ transform:translateX(0);
 }
 
 .emergencyBtn{
-  width:140px;
-  height:140px;
-  border-radius:25px;
-  border:none;
 
-  background:red;
-  color:white;
+width:140px;
+height:140px;
 
-  font-weight:bold;
-  font-size:18px;
+border-radius:25px;
+border:none;
 
-  box-shadow:0 10px 25px rgba(0,0,0,0.35);
+background:red;
+color:white;
+
+font-weight:bold;
+font-size:18px;
+
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+text-align:center;
+
+box-shadow:0 10px 25px rgba(0,0,0,0.35);
+
 }
 
 button:active{
