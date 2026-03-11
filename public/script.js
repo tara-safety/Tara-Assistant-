@@ -1,18 +1,17 @@
-:::writing{variant=“standard” id=“48261”}
-document.addEventListener(“DOMContentLoaded”, function(){
+document.addEventListener("DOMContentLoaded", function(){
 
-console.log(“TARA controls active”);
+console.log("TARA controls active");
 
 /* ELEMENTS */
 
-const askBtn = document.getElementById(“askBtn”);
-const voiceBtn = document.getElementById(“voiceBtn”);
-const menuBtn = document.getElementById(“menuBtn”);
-const closeMenu = document.getElementById(“closeMenu”);
-const menu = document.getElementById(“menu”);
-const emergencyBtn = document.getElementById(“emergencyBtn”);
-const chatBox = document.getElementById(“chatBox”);
-const questionInput = document.getElementById(“question”);
+const askBtn = document.getElementById("askBtn");
+const voiceBtn = document.getElementById("voiceBtn");
+const menuBtn = document.getElementById("menuBtn");
+const closeMenu = document.getElementById("closeMenu");
+const menu = document.getElementById("menu");
+const emergencyBtn = document.getElementById("emergencyBtn");
+const chatBox = document.getElementById("chatBox");
+const questionInput = document.getElementById("question");
 
 /* MENU */
 
@@ -61,7 +60,7 @@ questionInput.value = e.results[0][0].transcript;
 
 /* WAKE WORD */
 
-if (“webkitSpeechRecognition” in window) {
+if ("webkitSpeechRecognition" in window) {
 
 const wakeRec = new webkitSpeechRecognition();
 wakeRec.continuous = true;
@@ -70,8 +69,8 @@ wakeRec.onresult = e => {
 
 const t = e.results[e.results.length - 1][0].transcript.toLowerCase();
 
-if (t.includes(“hey tara”)) {
-alert(“TARA Listening”);
+if (t.includes("hey tara")) {
+alert("TARA Listening");
 }
 
 };
@@ -80,36 +79,15 @@ wakeRec.start();
 
 }
 
-/* TALK BUTTON */
-
-voiceBtn.onclick = () => {
-
-const SpeechRecognition =
-window.SpeechRecognition || window.webkitSpeechRecognition;
-
-if(!SpeechRecognition){
-alert(“Voice not supported on this device”);
-return;
-}
-
-const recognition = new SpeechRecognition();
-recognition.start();
-
-recognition.onresult = function(event){
-questionInput.value = event.results[0][0].transcript;
-};
-
-};
-
 /* EMERGENCY BUTTON */
 
 let holdTimer;
 
-emergencyBtn.addEventListener(“mousedown”, startHold);
-emergencyBtn.addEventListener(“touchstart”, startHold);
+emergencyBtn.addEventListener("mousedown", startHold);
+emergencyBtn.addEventListener("touchstart", startHold);
 
-emergencyBtn.addEventListener(“mouseup”, cancelHold);
-emergencyBtn.addEventListener(“touchend”, cancelHold);
+emergencyBtn.addEventListener("mouseup", cancelHold);
+emergencyBtn.addEventListener("touchend", cancelHold);
 
 function startHold(){
 
@@ -118,7 +96,7 @@ emergencyBtn.innerText = count;
 
 holdTimer = setInterval(()=>{
 
-count–;
+count--;
 
 if(count > 0){
 emergencyBtn.innerText = count;
@@ -135,7 +113,7 @@ function cancelHold(){
 
 clearInterval(holdTimer);
 
-emergencyBtn.innerHTML = “🚨HOLDEMERGENCY”;
+emergencyBtn.innerHTML = "🚨<br>HOLD<br>EMERGENCY";
 
 }
 
@@ -143,23 +121,22 @@ function sendEmergency(){
 
 navigator.geolocation.getCurrentPosition(async pos => {
 
-await fetch(”/emergency”,{
-method:“POST”,
+await fetch("/emergency",{
+method:"POST",
 headers:{
-“Content-Type”:“application/json”
+"Content-Type":"application/json"
 },
 body:JSON.stringify({
 lat: pos.coords.latitude,
 lon: pos.coords.longitude,
-driver:“Driver”
+driver:"Driver"
 })
 });
 
-alert(“Emergency Alert Sent”);
+alert("Emergency Alert Sent");
 
 });
 
 }
 
 });
-:::
