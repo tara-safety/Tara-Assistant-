@@ -8,14 +8,10 @@ background:linear-gradient(
 
 font-family:Arial, sans-serif;
 }
-
 .main{
-  padding-top:110px;
-  padding-left:18px;
-  padding-right:18px;
-  display:flex;
-  flex-direction:column;
+margin-top:80px;
 }
+
 
 body{
   padding-bottom:50px;
