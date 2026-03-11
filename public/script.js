@@ -42,6 +42,25 @@ questionInput.value = “”;
 
 };
 
+/* ---------------- WAKE WORD ---------------- */
+
+if ("webkitSpeechRecognition" in window) {
+
+const wakeRec = new webkitSpeechRecognition();
+
+wakeRec.continuous = true;
+
+wakeRec.onresult = e => {
+  const t = e.results[e.results.length - 1][0].transcript.toLowerCase();
+  if (t.includes("hey tara")) {
+    alert("TARA Listening");
+  }
+};
+
+wakeRec.start();
+
+}
+
 /* –––––––– TALK BUTTON –––––––– */
 
 voiceBtn.onclick = () => {
