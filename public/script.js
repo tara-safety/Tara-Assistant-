@@ -1,5 +1,3 @@
-document.addEventListener("DOMContentLoaded", function(){
-
 console.log("TARA script loaded");
 
 const askBtn = document.getElementById("askBtn");
@@ -10,7 +8,7 @@ const menuBtn = document.getElementById("menuBtn");
 const menu = document.getElementById("menu");
 const closeMenu = document.getElementById("closeMenu");
 const emergencyBtn = document.getElementById("emergencyBtn");
-
+document.addEventListener("DOMContentLoaded", function(){
 });
 
 /* ---------------- MENU ---------------- */
