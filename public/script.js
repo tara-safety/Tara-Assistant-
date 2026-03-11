@@ -1,6 +1,3 @@
-document.querySelectorAll("button").forEach(btn=>{
-btn.onclick=()=>alert(btn.id + " clicked");
-});
 :::writing{variant=“standard” id=“48261”}
 document.addEventListener(“DOMContentLoaded”, function(){
 
@@ -20,11 +17,11 @@ const questionInput = document.getElementById(“question”);
 /* MENU */
 
 menuBtn.onclick = () => {
-menu.style.left = “0”;
+menu.classList.add("open");
 };
 
 closeMenu.onclick = () => {
-menu.style.left = “-260px”;
+menu.classList.remove("open");
 };
 
 /* SEND BUTTON */
