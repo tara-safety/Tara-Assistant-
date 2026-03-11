@@ -1,3 +1,6 @@
+document.querySelectorAll("button").forEach(btn=>{
+btn.onclick=()=>alert(btn.id + " clicked");
+});
 :::writing{variant=“standard” id=“48261”}
 document.addEventListener(“DOMContentLoaded”, function(){
 
