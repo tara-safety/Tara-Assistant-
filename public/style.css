@@ -3,6 +3,8 @@ pointer-events:auto !important;
 }
 
 body{
+margin:0;
+}
 
 background:linear-gradient(
 180deg,
