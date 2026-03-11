@@ -1,12 +1,6 @@
 *{
 pointer-events:auto !important;
-}
-
-body
-
-body{
-margin:0;
-padding:0;
+box-sizing:border-box;
 }
 
 html, body{
@@ -14,7 +8,6 @@ margin:0;
 padding:0;
 height:100%;
 overflow-x:hidden;
-}
 
 background:linear-gradient(
 180deg,
@@ -25,9 +18,15 @@ background:linear-gradient(
 font-family:Arial, sans-serif;
 }
 
+body{
+padding-bottom:50px;
+-webkit-user-select:none;
+user-select:none;
+}
+
 .main{
 
-margin-top:90px;
+margin-top:110px;
 
 padding-left:18px;
 padding-right:18px;
@@ -132,7 +131,7 @@ top:0;
 left:0;
 
 width:260px;
-height:100vh;
+height:100%;
 
 background:#021018;
 
