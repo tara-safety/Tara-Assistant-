@@ -245,7 +245,8 @@ driverMinderActive = !driverMinderActive;
 if(driverMinderActive){
 
 driverMinderBtn.innerText = "DRIVER MINDER ON";
-startMotionMonitoring();
+
+requestMotionPermission();
 
 }else{
 
@@ -254,9 +255,37 @@ driverMinderBtn.innerText = "DRIVER MINDER OFF";
 }
 
 }
-
 /* MOTION SENSOR */
 
+async function requestMotionPermission(){
+
+if(typeof DeviceMotionEvent !== "undefined" &&
+typeof DeviceMotionEvent.requestPermission === "function"){
+
+try{
+
+const response = await DeviceMotionEvent.requestPermission();
+
+if(response === "granted"){
+startMotionMonitoring();
+}else{
+alert("Motion permission denied");
+}
+
+}catch(err){
+
+alert("Motion permission error");
+
+}
+
+}else{
+
+startMotionMonitoring();
+
+}
+
+}
+  
 function startMotionMonitoring(){
 
 if(typeof DeviceMotionEvent === "undefined"){
