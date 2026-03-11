@@ -31,6 +31,12 @@ const question = questionInput.value.trim();
 
 if(!question) return;
 
+<input
+id="question"
+class="messageInput"
+placeholder="Type your message here"
+>
+  
 chatBox.innerHTML += `<div><b>You:</b> ${question}</div>`;
 
 questionInput.value = "";
