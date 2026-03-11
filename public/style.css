@@ -42,7 +42,9 @@ background:#18a34a;
 
 display:flex;
 align-items:center;
-justify-content:center;
+justify-content:flex-start;
+
+padding-left:60px;
 
 font-size:20px;
 font-weight:bold;
