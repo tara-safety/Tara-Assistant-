@@ -225,5 +225,80 @@ alert("Emergency Alert Sent");
 });
 
 }
+/* ------------------ DRIVER MINDER ------------------ */
 
+let driverMinderActive = false;
+let lastMotionTime = Date.now();
+
+const driverMinderBtn = document.getElementById("driverMinderBtn");
+
+if(driverMinderBtn){
+
+driverMinderBtn.addEventListener("click", toggleDriverMinder);
+
+}
+
+function toggleDriverMinder(){
+
+driverMinderActive = !driverMinderActive;
+
+if(driverMinderActive){
+
+driverMinderBtn.innerText = "DRIVER MINDER ON";
+startMotionMonitoring();
+
+}else{
+
+driverMinderBtn.innerText = "DRIVER MINDER OFF";
+
+}
+
+}
+
+/* MOTION SENSOR */
+
+function startMotionMonitoring(){
+
+if(typeof DeviceMotionEvent === "undefined"){
+alert("Motion sensors not supported");
+return;
+}
+
+window.addEventListener("devicemotion", function(event){
+
+if(!driverMinderActive) return;
+
+const x = event.accelerationIncludingGravity.x;
+const y = event.accelerationIncludingGravity.y;
+const z = event.accelerationIncludingGravity.z;
+
+const impact = Math.abs(x) + Math.abs(y) + Math.abs(z);
+
+/* IMPACT DETECTION */
+
+if(impact > 35){
+
+console.log("IMPACT DETECTED");
+
+driverDownAlert();
+
+}
+
+lastMotionTime = Date.now();
+
+});
+
+}
+
+/* DRIVER DOWN ALERT */
+
+function driverDownAlert(){
+
+driverMinderActive = false;
+
+alert("DRIVER DOWN DETECTED - Sending Alert");
+
+sendEmergency();
+
+}
 });
