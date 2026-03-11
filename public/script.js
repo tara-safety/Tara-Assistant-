@@ -59,7 +59,17 @@ chatBox.innerHTML += `<div class="bot">Connection error</div>`;
 
 }
 
-let voiceEnabled = true;
+const voiceToggle = document.getElementById("voiceToggle");
+
+if(voiceToggle){
+
+voiceToggle.addEventListener("change", function(){
+
+voiceEnabled = this.checked;
+
+});
+
+}
   
 function startVoice(){
 
