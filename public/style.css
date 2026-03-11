@@ -9,6 +9,13 @@ margin:0;
 padding:0;
 }
 
+html, body{
+margin:0;
+padding:0;
+height:100%;
+overflow-x:hidden;
+}
+
 background:linear-gradient(
 180deg,
 #9fbfb2,
@@ -24,9 +31,11 @@ margin-top:90px;
 
 padding-left:18px;
 padding-right:18px;
+padding-bottom:40px;
 
 display:flex;
 flex-direction:column;
+gap:12px;
 
 max-width:520px;
 margin-left:auto;
