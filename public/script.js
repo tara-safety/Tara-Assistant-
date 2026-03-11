@@ -100,12 +100,10 @@ emergencyBtn.addEventListener("mouseup", cancelHold);
 
 function startHold(e) {
   e.preventDefault();
-  progress.style.width = "100%";
   holdTimer = setTimeout(triggerEmergency, 3000);
 }
 
 function cancelHold() {
-  progress.style.width = "0%";
   clearTimeout(holdTimer);
 }
 
