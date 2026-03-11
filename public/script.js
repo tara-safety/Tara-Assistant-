@@ -96,6 +96,13 @@ questionInput.value = e.results[0][0].transcript;
 
 }
 
+document
+.getElementById("voiceToggle")
+.addEventListener("change",function(){
+
+voiceEnabled = this.checked;
+
+});
 /* WAKE WORD */
 
 if ("webkitSpeechRecognition" in window) {
