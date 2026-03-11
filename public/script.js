@@ -59,6 +59,8 @@ chatBox.innerHTML += `<div class="bot">Connection error</div>`;
 
 }
 
+let voiceEnabled = true;
+  
 function startVoice(){
 
 const SpeechRecognition =
@@ -69,6 +71,21 @@ alert("Voice not supported");
 return;
 }
 
+function speakResponse(text){
+
+if(!voiceEnabled) return;
+
+const speech = new SpeechSynthesisUtterance(text);
+
+speech.rate = 1;
+speech.pitch = 1;
+
+speech.lang = "en-US";
+
+speechSynthesis.speak(speech);
+
+}
+  
 const recognition = new SpeechRecognition();
 
 recognition.start();
