@@ -25,6 +25,21 @@ voiceEnabled = this.checked;
 });
 }
 
+let iosVoiceUnlocked = false;
+
+document.addEventListener("click", function(){
+
+if(!iosVoiceUnlocked){
+
+const unlock = new SpeechSynthesisUtterance("");
+speechSynthesis.speak(unlock);
+
+iosVoiceUnlocked = true;
+
+}
+
+});
+  
 /* ------------------ MENU ------------------ */
 
 if(menuBtn){
