@@ -63,13 +63,6 @@ try {
   console.log("Knowledge base not loaded.");
 }
 
-/* ------------------------
-   HEALTH CHECK
--------------------------*/
-
-app.get("/", (req, res) => {
-  res.send("TARA server running");
-});
 
 /* ------------------------
    AI ASSISTANT
