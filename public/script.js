@@ -1,3 +1,4 @@
+alert("TARA script loaded");
 :::writing{variant=“standard” id=“48261”}
 document.addEventListener(“DOMContentLoaded”, function(){
 
