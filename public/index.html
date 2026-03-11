@@ -1,79 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>TARA Safety Intelligence</title>
 
-<button id="menuBtn">☰</button>
+<link rel="stylesheet" href="style.css">
 
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1e9f4f">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="TARA">
+
+<link rel="apple-touch-icon" href="/icon-192.png">
+
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+
+<button id="menuBtn" class="menuBtn">☰</button>
+
+<span>DASHBOARD</span>
+
+</div>
+
+
+<!-- SLIDE MENU -->
 <div id="menu" class="menu">
 
 <button id="closeMenu">✕</button>
 
+<h2>Menu</h2>
+
 </div>
-  
-<link rel="stylesheet" href="style.css">
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#1e9f4f">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="TARA">
-<link rel="apple-touch-icon" href="/icon-192.png">
-</head>
+
+
+<div class="main">
+
+<!-- EMERGENCY -->
+<div class="emergencyWrap">
+
+<div id="emergencyBtn" class="emergencyBtn">
+
+🚨<br>
+HOLD<br>
+EMERGENCY
+
+</div>
+
+</div>
+
+<div class="holdText">
+Hold for 3 seconds
+</div>
+
+
+<!-- CHAT -->
+<div id="chatBox" class="chatBox"></div>
+
+
+<!-- INPUT -->
+<input
+id="question"
+class="messageInput"
+placeholder="Type your message here">
+
+
+<!-- BUTTONS -->
+<div class="buttonRow">
+
+<button id="askBtn">
+SEND
+</button>
+
+<button id="voiceBtn">
+🎤 SPEAK
+</button>
+
+</div>
+
+
+<div id="driverMinder" class="driverMinder">
+
+⚠ DRIVER MINDER — Tap to Activate
+
+</div>
+
+
+</div>
+
+
 <script>
 
 if ('serviceWorker' in navigator) {
+
 navigator.serviceWorker.register('/service-worker.js')
 .then(() => console.log("Service Worker Registered"));
+
 }
 
 </script>
-<body>
 
-
-<!-- HEADER (fixed) -->
-<div class="header">
-  ☰ <span>DASHBOARD</span>
-  </div>
-
-<div class="main">
-  
-  <div class="emergencyWrap">
-<button class="emergencyBtn">EMERGENCY</button>
-</div>
-  
-  <div class="holdText">Hold for 3 seconds</div>
-  </div>
-  
-  <div id="chatBox" class="chatBox"></div>
-  
-  <input class="messageInput" placeholder="Type your message here">
-  
-  <div class="buttonRow">
-<button>SEND</button>
-<button>SPEAK</button>
-</div>
-
-  <div class="driverMinder">
-⚠ DRIVER MINDER — Tap to Activate
-</div>
-    
-
-</div>
-
-
-<link rel="manifest" href="/manifest.json">
-
-
-<meta name="theme-color" content="#1e9f4f">
-
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="TARA">
-<link rel="apple-touch-icon" href="/icon-192.png">
 
 <script src="script.js"></script>
 
