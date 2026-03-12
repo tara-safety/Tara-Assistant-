@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function(){
 
-console.log("TARA Safety AI Active");
+console.log("TARA Safety System Online");
 
 /* ---------------- SETTINGS ---------------- */
 
@@ -14,16 +14,12 @@ const INACTIVITY_LIMIT = 8 * 60 * 1000;
 
 const askBtn = document.getElementById("askBtn");
 const voiceBtn = document.getElementById("voiceBtn");
-const menuBtn = document.getElementById("menuBtn");
-const closeMenu = document.getElementById("closeMenu");
-const menu = document.getElementById("menu");
-
 const emergencyBtn = document.getElementById("emergencyBtn");
 const driverMinderBtn = document.getElementById("driverMinderBtn");
 const towModeBtn = document.getElementById("towModeBtn");
 
-const chatBox = document.getElementById("chatBox");
 const questionInput = document.getElementById("question");
+const chatBox = document.getElementById("chatBox");
 const voiceToggle = document.getElementById("voiceToggle");
 
 /* ---------------- STATES ---------------- */
@@ -31,15 +27,14 @@ const voiceToggle = document.getElementById("voiceToggle");
 let voiceEnabled = true;
 let driverMinderActive = false;
 let towModeActive = false;
-let wakeListening = false;
 
 let inactivityTimer;
-let countdownTimer;
 let motionStarted = false;
 
 let alarmAudio;
+let holdTimer;
 
-/* ---------------- IOS AUDIO UNLOCK ---------------- */
+/* ---------------- AUDIO UNLOCK ---------------- */
 
 document.addEventListener("click", function(){
 
@@ -55,108 +50,83 @@ alarmAudio.loop = true;
 
 });
 
-/* ---------------- MENU ---------------- */
-
-if(menuBtn){
-menuBtn.onclick=()=>menu.classList.add("open");
-}
-
-if(closeMenu){
-closeMenu.onclick=()=>menu.classList.remove("open");
-}
-
-/* ---------------- BUTTON EVENTS ---------------- */
-
-if(askBtn) askBtn.addEventListener("click", sendQuestion);
-if(voiceBtn) voiceBtn.addEventListener("click", startVoice);
-if(driverMinderBtn) driverMinderBtn.addEventListener("click", toggleDriverMinder);
-if(towModeBtn) towModeBtn.addEventListener("click", toggleTowMode);
-
 /* ---------------- VOICE TOGGLE ---------------- */
 
 if(voiceToggle){
 
-voiceToggle.addEventListener("change", function(){
-voiceEnabled=this.checked;
+voiceToggle.addEventListener("change",function(){
+voiceEnabled = this.checked;
 });
 
 }
 
-/* ---------------- SEND QUESTION ---------------- */
+/* ---------------- ASK BUTTON ---------------- */
+
+if(askBtn){
+askBtn.addEventListener("click",sendQuestion);
+}
 
 async function sendQuestion(){
 
-const text=questionInput.value.trim();
+const text = questionInput.value.trim();
 if(!text) return;
 
-chatBox.innerHTML+=`<div class="user"><b>You:</b> ${text}</div>`;
+chatBox.innerHTML += `<div><b>You:</b> ${text}</div>`;
 questionInput.value="";
 
 try{
 
-const res=await fetch("/ask",{
+const res = await fetch("/ask",{
 method:"POST",
 headers:{ "Content-Type":"application/json" },
 body:JSON.stringify({question:text})
 });
 
-const data=await res.json();
+const data = await res.json();
 
-chatBox.innerHTML+=`<div class="bot"><b>TARA:</b> ${data.answer}</div>`;
-
-chatBox.scrollTop=chatBox.scrollHeight;
+chatBox.innerHTML += `<div><b>TARA:</b> ${data.answer}</div>`;
 
 speakResponse(data.answer);
 
-}catch(err){
+}catch{
 
-chatBox.innerHTML+=`<div class="bot">Connection error</div>`;
-
-}
+chatBox.innerHTML += `<div>Connection error</div>`;
 
 }
 
-/* ---------------- SPEAK RESPONSE ---------------- */
+}
+
+/* ---------------- SPEECH OUTPUT ---------------- */
 
 function speakResponse(text){
 
 if(!voiceEnabled) return;
 
-function speakNow(){
-
-const speech=new SpeechSynthesisUtterance(text);
+const speech = new SpeechSynthesisUtterance(text);
 
 speech.lang="en-US";
 speech.rate=1;
-speech.pitch=1;
 
 speechSynthesis.cancel();
 speechSynthesis.speak(speech);
 
 }
 
-if(speechSynthesis.getVoices().length===0){
-
-speechSynthesis.onvoiceschanged=speakNow;
-
-}else{
-
-speakNow();
-
-}
-
-}
-
 /* ---------------- VOICE INPUT ---------------- */
+
+if(voiceBtn){
+voiceBtn.addEventListener("click",startVoice);
+}
 
 function startVoice(){
 
-const SpeechRecognition=
+const SpeechRecognition =
 window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if(!SpeechRecognition){
 
 alert("Voice not supported");
+
 return;
 
 }
@@ -164,7 +134,7 @@ return;
 navigator.mediaDevices.getUserMedia({audio:true})
 .then(function(){
 
-const recognition=new SpeechRecognition();
+const recognition = new SpeechRecognition();
 
 recognition.lang="en-US";
 
@@ -172,7 +142,7 @@ recognition.start();
 
 recognition.onresult=function(e){
 
-questionInput.value=e.results[0][0].transcript;
+questionInput.value = e.results[0][0].transcript;
 
 };
 
@@ -184,23 +154,19 @@ questionInput.value=e.results[0][0].transcript;
 
 function startWakeWord(){
 
-if(wakeListening) return;
-
-const SpeechRecognition=
+const SpeechRecognition =
 window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if(!SpeechRecognition) return;
 
-wakeListening=true;
-
-const recognition=new SpeechRecognition();
+const recognition = new SpeechRecognition();
 
 recognition.continuous=true;
-recognition.interimResults=false;
 
 recognition.onresult=function(e){
 
-const text=e.results[e.results.length-1][0].transcript.toLowerCase();
+const text =
+e.results[e.results.length-1][0].transcript.toLowerCase();
 
 if(text.includes("hey tara")){
 
@@ -218,18 +184,16 @@ recognition.start();
 
 /* ---------------- TOW MODE ---------------- */
 
-function toggleTowMode(){
+if(towModeBtn){
 
-towModeActive=!towModeActive;
+towModeBtn.addEventListener("click",function(){
+
+towModeActive = !towModeActive;
 
 if(towModeActive){
 
-questionInput.value="";
-questionInput.blur();
-
-toggleDriverMinder(true);
-
 startWakeWord();
+toggleDriverMinder(true);
 
 alert("Tow Mode Activated");
 
@@ -237,15 +201,23 @@ alert("Tow Mode Activated");
 
 toggleDriverMinder(false);
 
-wakeListening=false;
-
 alert("Tow Mode Disabled");
 
 }
 
+});
+
 }
 
 /* ---------------- DRIVER MINDER ---------------- */
+
+if(driverMinderBtn){
+
+driverMinderBtn.addEventListener("click",function(){
+toggleDriverMinder();
+});
+
+}
 
 function toggleDriverMinder(force){
 
@@ -255,46 +227,22 @@ else driverMinderActive=!driverMinderActive;
 
 if(driverMinderActive){
 
+resetInactivityTimer();
+startMotionMonitoring();
+
 driverMinderBtn.innerText="DRIVER MINDER ON";
 
-resetInactivityTimer();
-
-requestMotionPermission();
-
 }else{
-
-driverMinderBtn.innerText="DRIVER MINDER OFF";
 
 clearTimeout(inactivityTimer);
 
-}
-
-}
-
-/* ---------------- MOTION PERMISSION ---------------- */
-
-async function requestMotionPermission(){
-
-if(typeof DeviceMotionEvent !== "undefined" &&
-typeof DeviceMotionEvent.requestPermission==="function"){
-
-const response=await DeviceMotionEvent.requestPermission();
-
-if(response==="granted"){
-
-startMotionMonitoring();
-
-}
-
-}else{
-
-startMotionMonitoring();
+driverMinderBtn.innerText="DRIVER MINDER OFF";
 
 }
 
 }
 
-/* ---------------- MOTION MONITOR ---------------- */
+/* ---------------- MOTION ---------------- */
 
 function startMotionMonitoring(){
 
@@ -302,13 +250,13 @@ if(motionStarted) return;
 
 motionStarted=true;
 
-window.addEventListener("devicemotion", function(event){
+window.addEventListener("devicemotion",function(e){
 
 if(!driverMinderActive) return;
 
-const x=event.accelerationIncludingGravity.x||0;
-const y=event.accelerationIncludingGravity.y||0;
-const z=event.accelerationIncludingGravity.z||0;
+const x=e.accelerationIncludingGravity.x||0;
+const y=e.accelerationIncludingGravity.y||0;
+const z=e.accelerationIncludingGravity.z||0;
 
 const impact=Math.abs(x)+Math.abs(y)+Math.abs(z);
 
@@ -324,7 +272,7 @@ resetInactivityTimer();
 
 }
 
-/* ---------------- INACTIVITY TIMER ---------------- */
+/* ---------------- INACTIVITY ---------------- */
 
 function resetInactivityTimer(){
 
@@ -342,11 +290,9 @@ startEmergencyCountdown();
 
 }
 
-/* ---------------- EMERGENCY COUNTDOWN ---------------- */
+/* ---------------- COUNTDOWN ---------------- */
 
 function startEmergencyCountdown(){
-
-driverMinderActive=false;
 
 let count=30;
 
@@ -360,14 +306,12 @@ cancelBtn.style.position="fixed";
 cancelBtn.style.bottom="120px";
 cancelBtn.style.left="50%";
 cancelBtn.style.transform="translateX(-50%)";
-cancelBtn.style.zIndex="9999";
 
 document.body.appendChild(cancelBtn);
 
 cancelBtn.onclick=function(){
 
-clearInterval(countdownTimer);
-
+clearInterval(timer);
 stopAlarm();
 
 cancelBtn.remove();
@@ -376,14 +320,13 @@ alert("Emergency Cancelled");
 
 };
 
-countdownTimer=setInterval(function(){
+const timer=setInterval(function(){
 
 count--;
 
 if(count<=0){
 
-clearInterval(countdownTimer);
-
+clearInterval(timer);
 cancelBtn.remove();
 
 triggerEmergency();
@@ -391,6 +334,52 @@ triggerEmergency();
 }
 
 },1000);
+
+}
+
+/* ---------------- EMERGENCY HOLD BUTTON ---------------- */
+
+if(emergencyBtn){
+
+emergencyBtn.addEventListener("mousedown",startHold);
+emergencyBtn.addEventListener("touchstart",startHold);
+
+emergencyBtn.addEventListener("mouseup",cancelHold);
+emergencyBtn.addEventListener("touchend",cancelHold);
+
+}
+
+function startHold(){
+
+let count=3;
+
+emergencyBtn.innerText=count;
+
+holdTimer=setInterval(function(){
+
+count--;
+
+if(count<=0){
+
+clearInterval(holdTimer);
+
+triggerEmergency();
+
+}else{
+
+emergencyBtn.innerText=count;
+
+}
+
+},1000);
+
+}
+
+function cancelHold(){
+
+clearInterval(holdTimer);
+
+emergencyBtn.innerHTML="🚨<br>HOLD<br>EMERGENCY";
 
 }
 
@@ -451,7 +440,7 @@ lon:lon
 
 alert("Emergency Alert Sent");
 
-}catch(err){
+}catch{
 
 alert("Emergency Send Failed");
 
@@ -466,7 +455,7 @@ const footer=document.createElement("div");
 footer.style.textAlign="center";
 footer.style.fontSize="11px";
 footer.style.opacity="0.7";
-footer.style.marginTop="8px";
+footer.style.marginTop="10px";
 
 footer.innerHTML="Powered by AI Intelligence • Safety Buzz Alerts • © TARA Safety Systems";
 
