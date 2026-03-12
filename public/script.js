@@ -10,14 +10,16 @@ const COMPANY = "TARA Safety";
 const IMPACT_LIMIT = 35;
 const INACTIVITY_LIMIT = 8 * 60 * 1000;
 
+/* ---------------- STATE ---------------- */
+
 let voiceEnabled = true;
 let driverMinderActive = false;
 let towModeActive = false;
 let motionStarted = false;
 
-let inactivityTimer;
-let alarmAudio;
-let holdTimer;
+let inactivityTimer = null;
+let holdTimer = null;
+let alarmAudio = null;
 let systemUnlocked = false;
 
 /* ---------------- ELEMENTS ---------------- */
@@ -29,31 +31,37 @@ const driverMinderBtn = document.getElementById("driverMinderBtn");
 const towModeBtn = document.getElementById("towModeBtn");
 const towCameraBtn = document.getElementById("towCameraBtn");
 
+const menuBtn = document.getElementById("menuBtn");
+const menu = document.querySelector(".menu");
+
 const questionInput = document.getElementById("question");
 const chatBox = document.getElementById("chatBox");
+
+/* ---------------- MENU ---------------- */
+
+if(menuBtn && menu){
+
+menuBtn.addEventListener("click", function(){
+menu.classList.toggle("open");
+});
+
+}
 
 /* ---------------- PERMISSION UNLOCK ---------------- */
 
 document.addEventListener("click", async function(){
 
 if(systemUnlocked) return;
-
 systemUnlocked = true;
 
 console.log("Unlocking permissions");
 
-/* speech unlock */
-
-const u = new SpeechSynthesisUtterance("");
-speechSynthesis.speak(u);
-
-/* mic unlock */
+const speech = new SpeechSynthesisUtterance("");
+speechSynthesis.speak(speech);
 
 try{
 await navigator.mediaDevices.getUserMedia({audio:true});
 }catch(e){}
-
-/* motion unlock (iOS) */
 
 if(typeof DeviceMotionEvent !== "undefined" &&
 typeof DeviceMotionEvent.requestPermission === "function"){
@@ -63,8 +71,6 @@ await DeviceMotionEvent.requestPermission();
 }catch(e){}
 
 }
-
-/* preload alarm */
 
 alarmAudio = new Audio(
 "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"
@@ -77,7 +83,7 @@ alarmAudio.loop = true;
 /* ---------------- ASK TARA ---------------- */
 
 if(askBtn){
-askBtn.addEventListener("click",sendQuestion);
+askBtn.addEventListener("click", sendQuestion);
 }
 
 async function sendQuestion(){
@@ -119,7 +125,6 @@ if(!voiceEnabled) return;
 const speech = new SpeechSynthesisUtterance(text);
 
 speech.lang="en-US";
-speech.rate=1;
 
 speechSynthesis.cancel();
 speechSynthesis.speak(speech);
@@ -129,7 +134,7 @@ speechSynthesis.speak(speech);
 /* ---------------- VOICE INPUT ---------------- */
 
 if(voiceBtn){
-voiceBtn.addEventListener("click",startVoice);
+voiceBtn.addEventListener("click", startVoice);
 }
 
 function startVoice(){
@@ -138,15 +143,11 @@ const SpeechRecognition =
 window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if(!SpeechRecognition){
-
 alert("Voice not supported");
-
 return;
-
 }
 
 const recognition = new SpeechRecognition();
-
 recognition.lang="en-US";
 
 recognition.start();
@@ -174,7 +175,7 @@ if(!SpeechRecognition) return;
 
 const recognition = new SpeechRecognition();
 
-recognition.continuous=true;
+recognition.continuous = true;
 
 recognition.onresult=function(e){
 
@@ -195,23 +196,22 @@ recognition.start();
 
 }
 
-/* ---------------- TOW MODE AI ---------------- */
+/* ---------------- TOW MODE ---------------- */
 
 if(towModeBtn){
 
-towModeBtn.addEventListener("click",function(){
+towModeBtn.addEventListener("click", function(){
 
 towModeActive = !towModeActive;
 
 if(towModeActive){
 
 startWakeWord();
-
-alert("Tow Mode AI Active");
+chatBox.innerHTML += "<div>🚚 Tow Mode Activated</div>";
 
 }else{
 
-alert("Tow Mode Disabled");
+chatBox.innerHTML += "<div>🚚 Tow Mode Disabled</div>";
 
 }
 
@@ -219,11 +219,11 @@ alert("Tow Mode Disabled");
 
 }
 
-/* ---------------- TOW CAMERA AI ---------------- */
+/* ---------------- TOW CAMERA ---------------- */
 
 if(towCameraBtn){
 
-towCameraBtn.addEventListener("click",openCamera);
+towCameraBtn.addEventListener("click", openCamera);
 
 }
 
@@ -238,15 +238,12 @@ input.capture="environment";
 input.onchange = async function(){
 
 const file = input.files[0];
-
 if(!file) return;
 
 const form = new FormData();
-
 form.append("image",file);
-form.append("driver",DRIVER_NAME);
 
-chatBox.innerHTML += `<div>📷 Analyzing tow situation...</div>`;
+chatBox.innerHTML += "<div>📷 Analyzing tow situation...</div>";
 
 try{
 
@@ -263,7 +260,7 @@ speak(data.advice);
 
 }catch{
 
-chatBox.innerHTML += `<div>Image analysis failed</div>`;
+chatBox.innerHTML += "<div>Image analysis failed</div>";
 
 }
 
@@ -273,20 +270,15 @@ input.click();
 
 }
 
-
 /* ---------------- DRIVER MINDER ---------------- */
 
-/* ---------------- DRIVER MINDER ---------------- */
+if(driverMinderBtn){
 
-let driverMinderActive = false;
-
-if (driverMinderBtn) {
-
-driverMinderBtn.addEventListener("click", function () {
+driverMinderBtn.addEventListener("click", function(){
 
 driverMinderActive = !driverMinderActive;
 
-if (driverMinderActive) {
+if(driverMinderActive){
 
 driverMinderBtn.innerText = "Driver Minder ON";
 
@@ -295,7 +287,7 @@ chatBox.innerHTML += "<div>🟢 Driver Minder Activated</div>";
 resetInactivityTimer();
 startMotionMonitoring();
 
-} else {
+}else{
 
 driverMinderBtn.innerText = "Driver Minder OFF";
 
@@ -308,15 +300,16 @@ clearTimeout(inactivityTimer);
 });
 
 }
+
 /* ---------------- MOTION ---------------- */
 
 function startMotionMonitoring(){
 
 if(motionStarted) return;
 
-motionStarted=true;
+motionStarted = true;
 
-window.addEventListener("devicemotion",function(e){
+window.addEventListener("devicemotion", function(e){
 
 if(!driverMinderActive) return;
 
@@ -347,15 +340,13 @@ function resetInactivityTimer(){
 
 clearTimeout(inactivityTimer);
 
-inactivityTimer=setTimeout(function(){
+inactivityTimer = setTimeout(function(){
 
 if(driverMinderActive){
-
 startEmergencyCountdown();
-
 }
 
-},INACTIVITY_LIMIT);
+}, INACTIVITY_LIMIT);
 
 }
 
@@ -363,23 +354,23 @@ startEmergencyCountdown();
 
 if(emergencyBtn){
 
-emergencyBtn.addEventListener("mousedown",startHold);
-emergencyBtn.addEventListener("touchstart",startHold);
+emergencyBtn.addEventListener("mousedown", startHold);
+emergencyBtn.addEventListener("touchstart", startHold);
 
-emergencyBtn.addEventListener("mouseup",cancelHold);
-emergencyBtn.addEventListener("touchend",cancelHold);
+emergencyBtn.addEventListener("mouseup", cancelHold);
+emergencyBtn.addEventListener("touchend", cancelHold);
 
 }
 
 function startHold(){
 
-let count=3;
+let count = 3;
 
-holdTimer=setInterval(function(){
+holdTimer = setInterval(function(){
 
 count--;
 
-if(count<=0){
+if(count <= 0){
 
 clearInterval(holdTimer);
 
@@ -397,15 +388,15 @@ clearInterval(holdTimer);
 
 }
 
-/* ---------------- EMERGENCY FLOW ---------------- */
+/* ---------------- EMERGENCY ---------------- */
 
 function startEmergencyCountdown(){
 
-let count=30;
+let count = 30;
 
 playAlarm();
 
-const cancelBtn=document.createElement("button");
+const cancelBtn = document.createElement("button");
 
 cancelBtn.innerText="Cancel Emergency";
 
@@ -424,7 +415,7 @@ cancelBtn.remove();
 
 };
 
-const timer=setInterval(function(){
+const timer = setInterval(function(){
 
 count--;
 
@@ -456,7 +447,7 @@ function stopAlarm(){
 if(alarmAudio){
 
 alarmAudio.pause();
-alarmAudio.currentTime=0;
+alarmAudio.currentTime = 0;
 
 }
 
