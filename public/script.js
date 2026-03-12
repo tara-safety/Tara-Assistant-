@@ -1,6 +1,13 @@
 document.addEventListener("DOMContentLoaded", function(){
 
-console.log("TARA Safety System Active");
+console.log("TARA Safety AI Active");
+
+/* ---------------- SETTINGS ---------------- */
+
+const DRIVER_NAME = "Tow Operator";
+const COMPANY = "TARA Safety";
+const IMPACT_LIMIT = 35;
+const INACTIVITY_LIMIT = 8 * 60 * 1000;
 
 /* ---------------- ELEMENTS ---------------- */
 
@@ -16,15 +23,9 @@ const towModeBtn = document.getElementById("towModeBtn");
 
 const chatBox = document.getElementById("chatBox");
 const questionInput = document.getElementById("question");
-
 const voiceToggle = document.getElementById("voiceToggle");
 
-/* ---------------- SETTINGS ---------------- */
-
-const DRIVER_NAME = "Tow Operator";
-const COMPANY = "TARA Safety";
-const IMPACT_LIMIT = 35;
-const INACTIVITY_LIMIT = 8 * 60 * 1000;
+/* ---------------- STATES ---------------- */
 
 let voiceEnabled = true;
 let driverMinderActive = false;
@@ -34,31 +35,30 @@ let inactivityTimer;
 let countdownTimer;
 let motionStarted = false;
 
-/* ---------------- IOS SHAKE FIX ---------------- */
+let alarmAudio;
 
-window.addEventListener("shake", function(e){
-e.preventDefault();
-});
+/* ---------------- IOS AUDIO UNLOCK ---------------- */
 
-/* ---------------- VOICE ---------------- */
+document.addEventListener("click", function(){
 
-if(voiceToggle){
-voiceToggle.addEventListener("change", function(){
-voiceEnabled = this.checked;
-});
+if(!alarmAudio){
+
+alarmAudio = new Audio(
+"https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"
+);
+
+alarmAudio.loop = true;
+
 }
 
-let iosVoiceUnlocked=false;
+});
 
-document.addEventListener("click",function(){
+/* ---------------- STOP IOS UNDO TYPING ---------------- */
 
-if(!iosVoiceUnlocked){
+window.addEventListener("devicemotion", function(){
 
-const unlock=new SpeechSynthesisUtterance("");
-speechSynthesis.speak(unlock);
-
-iosVoiceUnlocked=true;
-
+if(document.activeElement){
+document.activeElement.blur();
 }
 
 });
@@ -73,22 +73,21 @@ if(closeMenu){
 closeMenu.onclick=()=>menu.classList.remove("open");
 }
 
-/* ---------------- BUTTONS ---------------- */
+/* ---------------- BUTTON EVENTS ---------------- */
 
-if(askBtn){
-askBtn.addEventListener("click",sendQuestion);
-}
+if(askBtn) askBtn.addEventListener("click", sendQuestion);
+if(voiceBtn) voiceBtn.addEventListener("click", startVoice);
+if(driverMinderBtn) driverMinderBtn.addEventListener("click", toggleDriverMinder);
+if(towModeBtn) towModeBtn.addEventListener("click", toggleTowMode);
 
-if(voiceBtn){
-voiceBtn.addEventListener("click",startVoice);
-}
+/* ---------------- VOICE TOGGLE ---------------- */
 
-if(driverMinderBtn){
-driverMinderBtn.addEventListener("click",toggleDriverMinder);
-}
+if(voiceToggle){
 
-if(towModeBtn){
-towModeBtn.addEventListener("click",toggleTowMode);
+voiceToggle.addEventListener("change", function(){
+voiceEnabled=this.checked;
+});
+
 }
 
 /* ---------------- SEND QUESTION ---------------- */
@@ -105,7 +104,7 @@ try{
 
 const res=await fetch("/ask",{
 method:"POST",
-headers:{"Content-Type":"application/json"},
+headers:{ "Content-Type":"application/json" },
 body:JSON.stringify({question:text})
 });
 
@@ -129,25 +128,30 @@ chatBox.innerHTML+=`<div class="bot">Connection error</div>`;
 
 function startVoice(){
 
-const SpeechRecognition=
-window.SpeechRecognition||window.webkitSpeechRecognition;
+const SpeechRecognition =
+window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if(!SpeechRecognition){
+
 alert("Voice not supported");
+
 return;
+
 }
 
-const recognition=new SpeechRecognition();
+const recognition = new SpeechRecognition();
 
 recognition.start();
 
 recognition.onresult=function(e){
+
 questionInput.value=e.results[0][0].transcript;
+
 };
 
 }
 
-/* ---------------- SPEAK ---------------- */
+/* ---------------- SPEAK RESPONSE ---------------- */
 
 function speakResponse(text){
 
@@ -163,7 +167,7 @@ speechSynthesis.speak(speech);
 
 }
 
-/* ---------------- EMERGENCY BUTTON ---------------- */
+/* ---------------- EMERGENCY HOLD BUTTON ---------------- */
 
 let holdTimer;
 
@@ -194,6 +198,7 @@ emergencyBtn.innerText=count;
 }else{
 
 clearInterval(holdTimer);
+
 triggerEmergency();
 
 }
@@ -218,8 +223,8 @@ towModeActive=!towModeActive;
 
 if(towModeActive){
 
-questionInput.blur();
 questionInput.value="";
+questionInput.blur();
 
 toggleDriverMinder(true);
 
@@ -245,9 +250,6 @@ else driverMinderActive=!driverMinderActive;
 
 if(driverMinderActive){
 
-questionInput.blur();
-questionInput.value="";
-
 driverMinderBtn.innerText="DRIVER MINDER ON";
 
 resetInactivityTimer();
@@ -268,19 +270,23 @@ clearTimeout(inactivityTimer);
 
 async function requestMotionPermission(){
 
-if(typeof DeviceMotionEvent!=="undefined" &&
-typeof DeviceMotionEvent.requestPermission==="function"){
+if(typeof DeviceMotionEvent !== "undefined" &&
+typeof DeviceMotionEvent.requestPermission === "function"){
 
 try{
 
 const response=await DeviceMotionEvent.requestPermission();
 
 if(response==="granted"){
+
 startMotionMonitoring();
+
 }
 
 }catch(err){
+
 alert("Motion permission error");
+
 }
 
 }else{
@@ -299,7 +305,7 @@ if(motionStarted) return;
 
 motionStarted=true;
 
-window.addEventListener("devicemotion",function(event){
+window.addEventListener("devicemotion", function(event){
 
 if(!driverMinderActive) return;
 
@@ -309,11 +315,7 @@ const z=event.accelerationIncludingGravity.z||0;
 
 const impact=Math.abs(x)+Math.abs(y)+Math.abs(z);
 
-/* IMPACT */
-
 if(impact>IMPACT_LIMIT){
-
-console.log("Impact detected");
 
 startEmergencyCountdown();
 
@@ -325,7 +327,7 @@ resetInactivityTimer();
 
 }
 
-/* ---------------- INACTIVITY ---------------- */
+/* ---------------- INACTIVITY TIMER ---------------- */
 
 function resetInactivityTimer(){
 
@@ -335,8 +337,6 @@ inactivityTimer=setTimeout(function(){
 
 if(driverMinderActive){
 
-console.log("No movement detected");
-
 startEmergencyCountdown();
 
 }
@@ -345,7 +345,7 @@ startEmergencyCountdown();
 
 }
 
-/* ---------------- COUNTDOWN ---------------- */
+/* ---------------- EMERGENCY COUNTDOWN ---------------- */
 
 function startEmergencyCountdown(){
 
@@ -370,9 +370,10 @@ document.body.appendChild(cancelBtn);
 cancelBtn.onclick=function(){
 
 clearInterval(countdownTimer);
-cancelBtn.remove();
 
 stopAlarm();
+
+cancelBtn.remove();
 
 alert("Emergency Cancelled");
 
@@ -387,6 +388,7 @@ console.log("Emergency in",count);
 if(count<=0){
 
 clearInterval(countdownTimer);
+
 cancelBtn.remove();
 
 triggerEmergency();
@@ -399,21 +401,23 @@ triggerEmergency();
 
 /* ---------------- ALARM ---------------- */
 
-let alarm;
-
 function playAlarm(){
 
-alarm=new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
-alarm.loop=true;
-alarm.play();
+if(alarmAudio){
+
+alarmAudio.play().catch(()=>{});
+
+}
 
 }
 
 function stopAlarm(){
 
-if(alarm){
-alarm.pause();
-alarm=null;
+if(alarmAudio){
+
+alarmAudio.pause();
+alarmAudio.currentTime=0;
+
 }
 
 }
@@ -424,26 +428,39 @@ function triggerEmergency(){
 
 stopAlarm();
 
-navigator.geolocation.getCurrentPosition(async function(pos){
+navigator.geolocation.getCurrentPosition(function(pos){
+
+sendEmergency(pos.coords.latitude,pos.coords.longitude);
+
+});
+
+}
+
+async function sendEmergency(lat,lon){
+
+try{
 
 await fetch("/emergency",{
 method:"POST",
-headers:{"Content-Type":"application/json"},
+headers:{ "Content-Type":"application/json" },
 body:JSON.stringify({
 
 driver:DRIVER_NAME,
 company:COMPANY,
 time:new Date().toISOString(),
-
-lat:pos.coords.latitude,
-lon:pos.coords.longitude
+lat:lat,
+lon:lon
 
 })
 });
 
 alert("Emergency Alert Sent");
 
-});
+}catch(err){
+
+alert("Emergency Send Failed");
+
+}
 
 }
 
