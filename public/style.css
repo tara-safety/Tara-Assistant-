@@ -4,6 +4,16 @@ box-sizing:border-box;
 }
 
 html, body{
+-webkit-user-select:none;
+user-select:none;
+touch-action:manipulation;
+}
+
+input, textarea{
+-webkit-user-modify: read-write-plaintext-only;
+}
+
+html, body{
 margin:0;
 padding:0;
 height:100%;
