@@ -58,6 +58,10 @@ user-select:none;
 touch-action:manipulation;
 }
 
+input, textarea{
+-webkit-user-modify: read-write-plaintext-only;
+}
+
 /* HEADER */
 
 .header{
