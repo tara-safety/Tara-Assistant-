@@ -315,7 +315,7 @@ driverDownAlert();
 
 }
 
-lastMotionTime = Date.now();
+resetInactivityTimer();
 
 });
 
