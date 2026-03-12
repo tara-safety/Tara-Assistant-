@@ -229,7 +229,9 @@ alert("Emergency Alert Sent");
 
 let driverMinderActive = false;
 let lastMotionTime = Date.now();
-
+let inactivityTimer;
+const INACTIVITY_LIMIT = 8 * 60 * 1000; // 8 minutes
+  
 const driverMinderBtn = document.getElementById("driverMinderBtn");
 
 if(driverMinderBtn){
