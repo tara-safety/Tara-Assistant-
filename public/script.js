@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function(){
 
-console.log("TARA Safety System Online");
+console.log("TARA System Booting");
 
 /* ---------------- SETTINGS ---------------- */
 
@@ -10,6 +10,16 @@ const COMPANY = "TARA Safety";
 const IMPACT_LIMIT = 35;
 const INACTIVITY_LIMIT = 8 * 60 * 1000;
 
+let voiceEnabled = true;
+let driverMinderActive = false;
+let towModeActive = false;
+let motionStarted = false;
+
+let inactivityTimer;
+let alarmAudio;
+let holdTimer;
+let systemUnlocked = false;
+
 /* ---------------- ELEMENTS ---------------- */
 
 const askBtn = document.getElementById("askBtn");
@@ -17,28 +27,44 @@ const voiceBtn = document.getElementById("voiceBtn");
 const emergencyBtn = document.getElementById("emergencyBtn");
 const driverMinderBtn = document.getElementById("driverMinderBtn");
 const towModeBtn = document.getElementById("towModeBtn");
+const towCameraBtn = document.getElementById("towCameraBtn");
 
 const questionInput = document.getElementById("question");
 const chatBox = document.getElementById("chatBox");
-const voiceToggle = document.getElementById("voiceToggle");
 
-/* ---------------- STATES ---------------- */
+/* ---------------- PERMISSION UNLOCK ---------------- */
 
-let voiceEnabled = true;
-let driverMinderActive = false;
-let towModeActive = false;
+document.addEventListener("click", async function(){
 
-let inactivityTimer;
-let motionStarted = false;
+if(systemUnlocked) return;
 
-let alarmAudio;
-let holdTimer;
+systemUnlocked = true;
 
-/* ---------------- AUDIO UNLOCK ---------------- */
+console.log("Unlocking permissions");
 
-document.addEventListener("click", function(){
+/* speech unlock */
 
-if(!alarmAudio){
+const u = new SpeechSynthesisUtterance("");
+speechSynthesis.speak(u);
+
+/* mic unlock */
+
+try{
+await navigator.mediaDevices.getUserMedia({audio:true});
+}catch(e){}
+
+/* motion unlock (iOS) */
+
+if(typeof DeviceMotionEvent !== "undefined" &&
+typeof DeviceMotionEvent.requestPermission === "function"){
+
+try{
+await DeviceMotionEvent.requestPermission();
+}catch(e){}
+
+}
+
+/* preload alarm */
 
 alarmAudio = new Audio(
 "https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"
@@ -46,21 +72,9 @@ alarmAudio = new Audio(
 
 alarmAudio.loop = true;
 
-}
-
 });
 
-/* ---------------- VOICE TOGGLE ---------------- */
-
-if(voiceToggle){
-
-voiceToggle.addEventListener("change",function(){
-voiceEnabled = this.checked;
-});
-
-}
-
-/* ---------------- ASK BUTTON ---------------- */
+/* ---------------- ASK TARA ---------------- */
 
 if(askBtn){
 askBtn.addEventListener("click",sendQuestion);
@@ -86,7 +100,7 @@ const data = await res.json();
 
 chatBox.innerHTML += `<div><b>TARA:</b> ${data.answer}</div>`;
 
-speakResponse(data.answer);
+speak(data.answer);
 
 }catch{
 
@@ -96,9 +110,9 @@ chatBox.innerHTML += `<div>Connection error</div>`;
 
 }
 
-/* ---------------- SPEECH OUTPUT ---------------- */
+/* ---------------- SPEECH ---------------- */
 
-function speakResponse(text){
+function speak(text){
 
 if(!voiceEnabled) return;
 
@@ -131,9 +145,6 @@ return;
 
 }
 
-navigator.mediaDevices.getUserMedia({audio:true})
-.then(function(){
-
 const recognition = new SpeechRecognition();
 
 recognition.lang="en-US";
@@ -142,11 +153,13 @@ recognition.start();
 
 recognition.onresult=function(e){
 
-questionInput.value = e.results[0][0].transcript;
+const speech = e.results[0][0].transcript;
+
+questionInput.value = speech;
+
+sendQuestion();
 
 };
-
-});
 
 }
 
@@ -170,7 +183,7 @@ e.results[e.results.length-1][0].transcript.toLowerCase();
 
 if(text.includes("hey tara")){
 
-speakResponse("Yes driver");
+speak("Yes driver");
 
 startVoice();
 
@@ -182,7 +195,7 @@ recognition.start();
 
 }
 
-/* ---------------- TOW MODE ---------------- */
+/* ---------------- TOW MODE AI ---------------- */
 
 if(towModeBtn){
 
@@ -193,13 +206,10 @@ towModeActive = !towModeActive;
 if(towModeActive){
 
 startWakeWord();
-toggleDriverMinder(true);
 
-alert("Tow Mode Activated");
+alert("Tow Mode AI Active");
 
 }else{
-
-toggleDriverMinder(false);
 
 alert("Tow Mode Disabled");
 
@@ -209,36 +219,84 @@ alert("Tow Mode Disabled");
 
 }
 
+/* ---------------- TOW CAMERA AI ---------------- */
+
+if(towCameraBtn){
+
+towCameraBtn.addEventListener("click",openCamera);
+
+}
+
+function openCamera(){
+
+const input = document.createElement("input");
+
+input.type="file";
+input.accept="image/*";
+input.capture="environment";
+
+input.onchange = async function(){
+
+const file = input.files[0];
+
+if(!file) return;
+
+const form = new FormData();
+
+form.append("image",file);
+form.append("driver",DRIVER_NAME);
+
+chatBox.innerHTML += `<div>📷 Analyzing tow situation...</div>`;
+
+try{
+
+const res = await fetch("/tow-ai",{
+method:"POST",
+body:form
+});
+
+const data = await res.json();
+
+chatBox.innerHTML += `<div><b>Tow AI:</b> ${data.advice}</div>`;
+
+speak(data.advice);
+
+}catch{
+
+chatBox.innerHTML += `<div>Image analysis failed</div>`;
+
+}
+
+};
+
+input.click();
+
+}
+
 /* ---------------- DRIVER MINDER ---------------- */
 
 if(driverMinderBtn){
 
 driverMinderBtn.addEventListener("click",function(){
-toggleDriverMinder();
-});
 
-}
-
-function toggleDriverMinder(force){
-
-if(force===true) driverMinderActive=true;
-else if(force===false) driverMinderActive=false;
-else driverMinderActive=!driverMinderActive;
+driverMinderActive = !driverMinderActive;
 
 if(driverMinderActive){
 
 resetInactivityTimer();
 startMotionMonitoring();
 
-driverMinderBtn.innerText="DRIVER MINDER ON";
+alert("Driver Minder ON");
 
 }else{
 
 clearTimeout(inactivityTimer);
 
-driverMinderBtn.innerText="DRIVER MINDER OFF";
+alert("Driver Minder OFF");
 
 }
+
+});
 
 }
 
@@ -254,13 +312,16 @@ window.addEventListener("devicemotion",function(e){
 
 if(!driverMinderActive) return;
 
-const x=e.accelerationIncludingGravity.x||0;
-const y=e.accelerationIncludingGravity.y||0;
-const z=e.accelerationIncludingGravity.z||0;
+const acc = e.accelerationIncludingGravity;
 
-const impact=Math.abs(x)+Math.abs(y)+Math.abs(z);
+if(!acc) return;
 
-if(impact>IMPACT_LIMIT){
+const impact =
+Math.abs(acc.x||0)+
+Math.abs(acc.y||0)+
+Math.abs(acc.z||0);
+
+if(impact > IMPACT_LIMIT){
 
 startEmergencyCountdown();
 
@@ -290,7 +351,45 @@ startEmergencyCountdown();
 
 }
 
-/* ---------------- COUNTDOWN ---------------- */
+/* ---------------- EMERGENCY BUTTON ---------------- */
+
+if(emergencyBtn){
+
+emergencyBtn.addEventListener("mousedown",startHold);
+emergencyBtn.addEventListener("touchstart",startHold);
+
+emergencyBtn.addEventListener("mouseup",cancelHold);
+emergencyBtn.addEventListener("touchend",cancelHold);
+
+}
+
+function startHold(){
+
+let count=3;
+
+holdTimer=setInterval(function(){
+
+count--;
+
+if(count<=0){
+
+clearInterval(holdTimer);
+
+triggerEmergency();
+
+}
+
+},1000);
+
+}
+
+function cancelHold(){
+
+clearInterval(holdTimer);
+
+}
+
+/* ---------------- EMERGENCY FLOW ---------------- */
 
 function startEmergencyCountdown(){
 
@@ -313,10 +412,7 @@ cancelBtn.onclick=function(){
 
 clearInterval(timer);
 stopAlarm();
-
 cancelBtn.remove();
-
-alert("Emergency Cancelled");
 
 };
 
@@ -337,60 +433,12 @@ triggerEmergency();
 
 }
 
-/* ---------------- EMERGENCY HOLD BUTTON ---------------- */
-
-if(emergencyBtn){
-
-emergencyBtn.addEventListener("mousedown",startHold);
-emergencyBtn.addEventListener("touchstart",startHold);
-
-emergencyBtn.addEventListener("mouseup",cancelHold);
-emergencyBtn.addEventListener("touchend",cancelHold);
-
-}
-
-function startHold(){
-
-let count=3;
-
-emergencyBtn.innerText=count;
-
-holdTimer=setInterval(function(){
-
-count--;
-
-if(count<=0){
-
-clearInterval(holdTimer);
-
-triggerEmergency();
-
-}else{
-
-emergencyBtn.innerText=count;
-
-}
-
-},1000);
-
-}
-
-function cancelHold(){
-
-clearInterval(holdTimer);
-
-emergencyBtn.innerHTML="🚨<br>HOLD<br>EMERGENCY";
-
-}
-
 /* ---------------- ALARM ---------------- */
 
 function playAlarm(){
 
 if(alarmAudio){
-
 alarmAudio.play().catch(()=>{});
-
 }
 
 }
@@ -409,8 +457,6 @@ alarmAudio.currentTime=0;
 /* ---------------- SEND EMERGENCY ---------------- */
 
 function triggerEmergency(){
-
-stopAlarm();
 
 navigator.geolocation.getCurrentPosition(function(pos){
 
@@ -454,10 +500,10 @@ const footer=document.createElement("div");
 
 footer.style.textAlign="center";
 footer.style.fontSize="11px";
-footer.style.opacity="0.7";
+footer.style.opacity="0.6";
 footer.style.marginTop="10px";
 
-footer.innerHTML="Powered by AI Intelligence • Safety Buzz Alerts • © TARA Safety Systems";
+footer.innerHTML="Powered by AI Intelligence • Safety Buzz Alerts • © TARA Safety";
 
 document.body.appendChild(footer);
 
