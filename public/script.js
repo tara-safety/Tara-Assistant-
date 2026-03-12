@@ -277,19 +277,35 @@ input.click();
 
 /* ---------------- DRIVER MINDER ---------------- */
 
+/* ---------------- DRIVER MINDER ---------------- */
+
+let driverMinderActive = false;
+
 if(driverMinderBtn){
 
-driverMinderBtn.addEventListener("click", toggleDriverMinder);
-
-}
-
-function toggleDriverMinder(){
-
-driverMinderBtn.classList.toggle("active", driverMinderActive);
+driverMinderBtn.addEventListener("click", function(){
 
 if(driverMinderActive){
 
-driverMinderBtn.innerText = "DRIVER MINDER ON";
+stopDriverMinder();
+
+}else{
+
+startDriverMinder();
+
+}
+
+});
+
+}
+
+function startDriverMinder(){
+
+driverMinderActive = true;
+
+driverMinderBtn.innerText = "Driver Minder ON";
+
+driverMinderBtn.style.background = "#2ecc71";
 
 chatBox.innerHTML += "<div>🟢 Driver Minder Activated</div>";
 
@@ -297,15 +313,19 @@ resetInactivityTimer();
 
 startMotionMonitoring();
 
-}else{
+}
 
-driverMinderBtn.innerText = "DRIVER MINDER OFF";
+function stopDriverMinder(){
+
+driverMinderActive = false;
+
+driverMinderBtn.innerText = "Driver Minder OFF";
+
+driverMinderBtn.style.background = "#555";
 
 chatBox.innerHTML += "<div>⚪ Driver Minder Disabled</div>";
 
 clearTimeout(inactivityTimer);
-
-}
 
 }
 
