@@ -243,7 +243,7 @@ driverMinderBtn.addEventListener("click", toggleDriverMinder);
 function toggleDriverMinder(){
 
 driverMinderActive = !driverMinderActive;
-
+resetInactivityTimer();
 if(driverMinderActive){
 
 driverMinderBtn.innerText = "DRIVER MINDER ON";
