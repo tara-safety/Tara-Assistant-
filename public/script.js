@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function(){
 
-console.log("TARA AI Safety System Active");
+console.log("TARA Safety System Active");
 
 /* ---------------- ELEMENTS ---------------- */
 
@@ -11,16 +11,36 @@ const closeMenu = document.getElementById("closeMenu");
 const menu = document.getElementById("menu");
 
 const emergencyBtn = document.getElementById("emergencyBtn");
+const driverMinderBtn = document.getElementById("driverMinderBtn");
+const towModeBtn = document.getElementById("towModeBtn");
 
 const chatBox = document.getElementById("chatBox");
 const questionInput = document.getElementById("question");
 
 const voiceToggle = document.getElementById("voiceToggle");
-const driverMinderBtn = document.getElementById("driverMinderBtn");
 
-/* ---------------- VOICE SETTINGS ---------------- */
+/* ---------------- SETTINGS ---------------- */
+
+const DRIVER_NAME = "Tow Operator";
+const COMPANY = "TARA Safety";
+const IMPACT_LIMIT = 35;
+const INACTIVITY_LIMIT = 8 * 60 * 1000;
 
 let voiceEnabled = true;
+let driverMinderActive = false;
+let towModeActive = false;
+
+let inactivityTimer;
+let countdownTimer;
+let motionStarted = false;
+
+/* ---------------- IOS SHAKE FIX ---------------- */
+
+window.addEventListener("shake", function(e){
+e.preventDefault();
+});
+
+/* ---------------- VOICE ---------------- */
 
 if(voiceToggle){
 voiceToggle.addEventListener("change", function(){
@@ -28,18 +48,16 @@ voiceEnabled = this.checked;
 });
 }
 
-/* Unlock speech for iOS */
+let iosVoiceUnlocked=false;
 
-let iosVoiceUnlocked = false;
-
-document.addEventListener("click", function(){
+document.addEventListener("click",function(){
 
 if(!iosVoiceUnlocked){
 
-const unlock = new SpeechSynthesisUtterance("");
+const unlock=new SpeechSynthesisUtterance("");
 speechSynthesis.speak(unlock);
 
-iosVoiceUnlocked = true;
+iosVoiceUnlocked=true;
 
 }
 
@@ -48,52 +66,60 @@ iosVoiceUnlocked = true;
 /* ---------------- MENU ---------------- */
 
 if(menuBtn){
-menuBtn.addEventListener("click", ()=> menu.classList.add("open"));
+menuBtn.onclick=()=>menu.classList.add("open");
 }
 
 if(closeMenu){
-closeMenu.addEventListener("click", ()=> menu.classList.remove("open"));
+closeMenu.onclick=()=>menu.classList.remove("open");
 }
 
-/* ---------------- BUTTON EVENTS ---------------- */
+/* ---------------- BUTTONS ---------------- */
 
 if(askBtn){
-askBtn.addEventListener("click", sendQuestion);
+askBtn.addEventListener("click",sendQuestion);
 }
 
 if(voiceBtn){
-voiceBtn.addEventListener("click", startVoice);
+voiceBtn.addEventListener("click",startVoice);
+}
+
+if(driverMinderBtn){
+driverMinderBtn.addEventListener("click",toggleDriverMinder);
+}
+
+if(towModeBtn){
+towModeBtn.addEventListener("click",toggleTowMode);
 }
 
 /* ---------------- SEND QUESTION ---------------- */
 
 async function sendQuestion(){
 
-const text = questionInput.value.trim();
+const text=questionInput.value.trim();
 if(!text) return;
 
-chatBox.innerHTML += `<div class="user"><b>You:</b> ${text}</div>`;
+chatBox.innerHTML+=`<div class="user"><b>You:</b> ${text}</div>`;
 questionInput.value="";
 
 try{
 
-const res = await fetch("/ask",{
+const res=await fetch("/ask",{
 method:"POST",
-headers:{ "Content-Type":"application/json" },
+headers:{"Content-Type":"application/json"},
 body:JSON.stringify({question:text})
 });
 
-const data = await res.json();
+const data=await res.json();
 
-chatBox.innerHTML += `<div class="bot"><b>TARA:</b> ${data.answer}</div>`;
+chatBox.innerHTML+=`<div class="bot"><b>TARA:</b> ${data.answer}</div>`;
 
-chatBox.scrollTop = chatBox.scrollHeight;
+chatBox.scrollTop=chatBox.scrollHeight;
 
 speakResponse(data.answer);
 
 }catch(err){
 
-chatBox.innerHTML += `<div class="bot">Connection error</div>`;
+chatBox.innerHTML+=`<div class="bot">Connection error</div>`;
 
 }
 
@@ -103,35 +129,34 @@ chatBox.innerHTML += `<div class="bot">Connection error</div>`;
 
 function startVoice(){
 
-const SpeechRecognition =
-window.SpeechRecognition || window.webkitSpeechRecognition;
+const SpeechRecognition=
+window.SpeechRecognition||window.webkitSpeechRecognition;
 
 if(!SpeechRecognition){
 alert("Voice not supported");
 return;
 }
 
-const recognition = new SpeechRecognition();
+const recognition=new SpeechRecognition();
 
 recognition.start();
 
-recognition.onresult = function(event){
-questionInput.value = event.results[0][0].transcript;
+recognition.onresult=function(e){
+questionInput.value=e.results[0][0].transcript;
 };
 
 }
 
-/* ---------------- SPEAK RESPONSE ---------------- */
+/* ---------------- SPEAK ---------------- */
 
 function speakResponse(text){
 
 if(!voiceEnabled) return;
 
-const speech = new SpeechSynthesisUtterance(text);
+const speech=new SpeechSynthesisUtterance(text);
 
-speech.rate = 1;
-speech.pitch = 1;
-speech.lang = "en-US";
+speech.rate=1;
+speech.pitch=1;
 
 speechSynthesis.cancel();
 speechSynthesis.speak(speech);
@@ -144,32 +169,32 @@ let holdTimer;
 
 if(emergencyBtn){
 
-emergencyBtn.addEventListener("mousedown", startHold);
-emergencyBtn.addEventListener("touchstart", startHold);
+emergencyBtn.addEventListener("mousedown",startHold);
+emergencyBtn.addEventListener("touchstart",startHold);
 
-emergencyBtn.addEventListener("mouseup", cancelHold);
-emergencyBtn.addEventListener("touchend", cancelHold);
+emergencyBtn.addEventListener("mouseup",cancelHold);
+emergencyBtn.addEventListener("touchend",cancelHold);
 
 }
 
 function startHold(){
 
-let count = 3;
+let count=3;
 
-emergencyBtn.innerText = count;
+emergencyBtn.innerText=count;
 
-holdTimer = setInterval(function(){
+holdTimer=setInterval(function(){
 
 count--;
 
-if(count > 0){
+if(count>0){
 
-emergencyBtn.innerText = count;
+emergencyBtn.innerText=count;
 
 }else{
 
 clearInterval(holdTimer);
-sendEmergency();
+triggerEmergency();
 
 }
 
@@ -181,57 +206,49 @@ function cancelHold(){
 
 clearInterval(holdTimer);
 
-emergencyBtn.innerHTML = "🚨<br>HOLD<br>EMERGENCY";
+emergencyBtn.innerHTML="🚨<br>HOLD<br>EMERGENCY";
 
 }
 
-/* ---------------- EMERGENCY SEND ---------------- */
+/* ---------------- TOW MODE ---------------- */
 
-function sendEmergency(){
+function toggleTowMode(){
 
-navigator.geolocation.getCurrentPosition(async function(pos){
+towModeActive=!towModeActive;
 
-await fetch("/emergency",{
-method:"POST",
-headers:{ "Content-Type":"application/json" },
-body:JSON.stringify({
-lat:pos.coords.latitude,
-lon:pos.coords.longitude,
-driver:"Driver"
-})
-});
+if(towModeActive){
 
-alert("Emergency Alert Sent");
+questionInput.blur();
+questionInput.value="";
 
-});
+toggleDriverMinder(true);
+
+alert("Tow Mode Activated");
+
+}else{
+
+toggleDriverMinder(false);
+
+alert("Tow Mode Disabled");
+
+}
 
 }
 
 /* ---------------- DRIVER MINDER ---------------- */
 
-let driverMinderActive = false;
-let inactivityTimer;
-let motionStarted = false;
+function toggleDriverMinder(force){
 
-let alertCountdown = null;
-
-const INACTIVITY_LIMIT = 8 * 60 * 1000; // 8 minutes
-const IMPACT_LIMIT = 35; // testing threshold
-
-if(driverMinderBtn){
-driverMinderBtn.addEventListener("click", toggleDriverMinder);
-}
-
-function toggleDriverMinder(){
-
-driverMinderActive = !driverMinderActive;
+if(force===true) driverMinderActive=true;
+else if(force===false) driverMinderActive=false;
+else driverMinderActive=!driverMinderActive;
 
 if(driverMinderActive){
 
-questionInput.value="";
 questionInput.blur();
+questionInput.value="";
 
-driverMinderBtn.innerText = "DRIVER MINDER ON";
+driverMinderBtn.innerText="DRIVER MINDER ON";
 
 resetInactivityTimer();
 
@@ -239,7 +256,7 @@ requestMotionPermission();
 
 }else{
 
-driverMinderBtn.innerText = "DRIVER MINDER OFF";
+driverMinderBtn.innerText="DRIVER MINDER OFF";
 
 clearTimeout(inactivityTimer);
 
@@ -251,21 +268,19 @@ clearTimeout(inactivityTimer);
 
 async function requestMotionPermission(){
 
-if(typeof DeviceMotionEvent !== "undefined" &&
-typeof DeviceMotionEvent.requestPermission === "function"){
+if(typeof DeviceMotionEvent!=="undefined" &&
+typeof DeviceMotionEvent.requestPermission==="function"){
 
 try{
 
-const response = await DeviceMotionEvent.requestPermission();
+const response=await DeviceMotionEvent.requestPermission();
 
-if(response === "granted"){
+if(response==="granted"){
 startMotionMonitoring();
 }
 
 }catch(err){
-
 alert("Motion permission error");
-
 }
 
 }else{
@@ -282,41 +297,29 @@ function startMotionMonitoring(){
 
 if(motionStarted) return;
 
-motionStarted = true;
+motionStarted=true;
 
-window.addEventListener("devicemotion", function(event){
+window.addEventListener("devicemotion",function(event){
 
 if(!driverMinderActive) return;
 
-const x = event.accelerationIncludingGravity.x || 0;
-const y = event.accelerationIncludingGravity.y || 0;
-const z = event.accelerationIncludingGravity.z || 0;
+const x=event.accelerationIncludingGravity.x||0;
+const y=event.accelerationIncludingGravity.y||0;
+const z=event.accelerationIncludingGravity.z||0;
 
-const impact = Math.abs(x)+Math.abs(y)+Math.abs(z);
+const impact=Math.abs(x)+Math.abs(y)+Math.abs(z);
 
-/* IMPACT DETECTED */
+/* IMPACT */
 
-if(impact > IMPACT_LIMIT){
+if(impact>IMPACT_LIMIT){
 
 console.log("Impact detected");
 
-startDriverDownCountdown();
+startEmergencyCountdown();
 
 }
 
 resetInactivityTimer();
-
-/* SHAKE CANCEL */
-
-if(alertCountdown){
-
-clearInterval(alertCountdown);
-
-alertCountdown = null;
-
-console.log("Driver confirmed OK");
-
-}
 
 });
 
@@ -328,41 +331,65 @@ function resetInactivityTimer(){
 
 clearTimeout(inactivityTimer);
 
-inactivityTimer = setTimeout(function(){
+inactivityTimer=setTimeout(function(){
 
 if(driverMinderActive){
 
 console.log("No movement detected");
 
-startDriverDownCountdown();
+startEmergencyCountdown();
 
 }
 
-}, INACTIVITY_LIMIT);
+},INACTIVITY_LIMIT);
 
 }
 
-/* ---------------- DRIVER DOWN COUNTDOWN ---------------- */
+/* ---------------- COUNTDOWN ---------------- */
 
-function startDriverDownCountdown(){
+function startEmergencyCountdown(){
 
-driverMinderActive = false;
+driverMinderActive=false;
 
-let count = 30;
-
-alert("Driver Down Detected - Move phone to cancel");
-
-alertCountdown = setInterval(function(){
-
-count--;
-
-if(count <= 0){
-
-clearInterval(alertCountdown);
+let count=30;
 
 playAlarm();
 
-sendEmergency();
+const cancelBtn=document.createElement("button");
+
+cancelBtn.innerText="Cancel Emergency";
+
+cancelBtn.style.position="fixed";
+cancelBtn.style.bottom="120px";
+cancelBtn.style.left="50%";
+cancelBtn.style.transform="translateX(-50%)";
+cancelBtn.style.zIndex="9999";
+
+document.body.appendChild(cancelBtn);
+
+cancelBtn.onclick=function(){
+
+clearInterval(countdownTimer);
+cancelBtn.remove();
+
+stopAlarm();
+
+alert("Emergency Cancelled");
+
+};
+
+countdownTimer=setInterval(function(){
+
+count--;
+
+console.log("Emergency in",count);
+
+if(count<=0){
+
+clearInterval(countdownTimer);
+cancelBtn.remove();
+
+triggerEmergency();
 
 }
 
@@ -372,29 +399,64 @@ sendEmergency();
 
 /* ---------------- ALARM ---------------- */
 
+let alarm;
+
 function playAlarm(){
 
-const alarm = new Audio(
-"https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"
-);
-
-alarm.loop = true;
-
+alarm=new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
+alarm.loop=true;
 alarm.play();
 
 }
 
-/* ---------------- FOOTER BRANDING ---------------- */
+function stopAlarm(){
 
-const footer = document.createElement("div");
+if(alarm){
+alarm.pause();
+alarm=null;
+}
+
+}
+
+/* ---------------- SEND EMERGENCY ---------------- */
+
+function triggerEmergency(){
+
+stopAlarm();
+
+navigator.geolocation.getCurrentPosition(async function(pos){
+
+await fetch("/emergency",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+
+driver:DRIVER_NAME,
+company:COMPANY,
+time:new Date().toISOString(),
+
+lat:pos.coords.latitude,
+lon:pos.coords.longitude
+
+})
+});
+
+alert("Emergency Alert Sent");
+
+});
+
+}
+
+/* ---------------- FOOTER ---------------- */
+
+const footer=document.createElement("div");
 
 footer.style.textAlign="center";
 footer.style.fontSize="11px";
 footer.style.opacity="0.7";
-footer.style.marginTop="10px";
+footer.style.marginTop="8px";
 
-footer.innerHTML =
-"Powered by AI Intelligence • Safety Buzz Alerts • © TARA Safety Systems";
+footer.innerHTML="Powered by AI Intelligence • Safety Buzz Alerts • © TARA Safety Systems";
 
 document.body.appendChild(footer);
 
