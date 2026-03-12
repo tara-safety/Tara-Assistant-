@@ -232,16 +232,15 @@ alert("Emergency Alert Sent");
 /* ------------------ DRIVER MINDER ------------------ */
 
 let driverMinderActive = false;
-let lastMotionTime = Date.now();
 let inactivityTimer;
+let motionStarted = false;
+
 const INACTIVITY_LIMIT = 8 * 60 * 1000; // 8 minutes
-  
+
 const driverMinderBtn = document.getElementById("driverMinderBtn");
 
 if(driverMinderBtn){
-
 driverMinderBtn.addEventListener("click", toggleDriverMinder);
-
 }
 
 function toggleDriverMinder(){
@@ -255,10 +254,9 @@ questionInput.blur();
 driverMinderBtn.innerText = "DRIVER MINDER ON";
 
 resetInactivityTimer();
-  
+
 requestMotionPermission();
-startMotionMonitoring();
-  
+
 }else{
 
 driverMinderBtn.innerText = "DRIVER MINDER OFF";
@@ -266,17 +264,14 @@ driverMinderBtn.innerText = "DRIVER MINDER OFF";
 clearTimeout(inactivityTimer);
 
 motionStarted = false;
+
 }
 
+}
 
-/* MOTION SENSOR */
-let motionStarted = false;
+/* ------------------ MOTION PERMISSION ------------------ */
 
-function startMotionMonitoring(){
-
-if(motionStarted) return;
-
-motionStarted = true;
+async function requestMotionPermission(){
 
 if(typeof DeviceMotionEvent !== "undefined" &&
 typeof DeviceMotionEvent.requestPermission === "function"){
@@ -304,13 +299,14 @@ startMotionMonitoring();
 }
 
 }
-  
+
+/* ------------------ START MOTION MONITORING ------------------ */
+
 function startMotionMonitoring(){
 
-if(typeof DeviceMotionEvent === "undefined"){
-alert("Motion sensors not supported");
-return;
-}
+if(motionStarted) return;
+
+motionStarted = true;
 
 window.addEventListener("devicemotion", function(event){
 
@@ -321,6 +317,24 @@ const y = event.accelerationIncludingGravity.y;
 const z = event.accelerationIncludingGravity.z;
 
 const impact = Math.abs(x) + Math.abs(y) + Math.abs(z);
+
+/* IMPACT DETECTION */
+
+if(impact > 35){
+
+console.log("IMPACT DETECTED");
+
+driverDownAlert();
+
+}
+
+resetInactivityTimer();
+
+});
+
+}
+
+/* ------------------ INACTIVITY TIMER ------------------ */
 
 function resetInactivityTimer(){
 
@@ -339,23 +353,8 @@ driverDownAlert();
 }, INACTIVITY_LIMIT);
 
 }
-/* IMPACT DETECTION */
 
-if(impact > 35){
-
-console.log("IMPACT DETECTED");
-
-driverDownAlert();
-
-}
-
-resetInactivityTimer();
-
-});
-
-}
-
-/* DRIVER DOWN ALERT */
+/* ------------------ DRIVER DOWN ALERT ------------------ */
 
 function driverDownAlert(){
 
@@ -366,4 +365,3 @@ alert("DRIVER DOWN DETECTED - Sending Alert");
 sendEmergency();
 
 }
-});
