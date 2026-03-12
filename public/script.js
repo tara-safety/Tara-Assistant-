@@ -275,28 +275,37 @@ input.click();
 
 /* ---------------- DRIVER MINDER ---------------- */
 
+/* ---------------- DRIVER MINDER ---------------- */
+
 if(driverMinderBtn){
 
-driverMinderBtn.addEventListener("click",function(){
+driverMinderBtn.addEventListener("click", toggleDriverMinder);
+
+}
+
+function toggleDriverMinder(){
 
 driverMinderActive = !driverMinderActive;
 
 if(driverMinderActive){
 
-resetInactivityTimer();
-startMotionMonitoring();
+driverMinderBtn.innerText = "DRIVER MINDER ON";
 
-alert("Driver Minder ON");
+chatBox.innerHTML += "<div>🟢 Driver Minder Activated</div>";
+
+resetInactivityTimer();
+
+startMotionMonitoring();
 
 }else{
 
+driverMinderBtn.innerText = "DRIVER MINDER OFF";
+
+chatBox.innerHTML += "<div>⚪ Driver Minder Disabled</div>";
+
 clearTimeout(inactivityTimer);
 
-alert("Driver Minder OFF");
-
 }
-
-});
 
 }
 
