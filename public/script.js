@@ -268,7 +268,7 @@ clearTimeout(inactivityTimer);
 
 }
 /* MOTION SENSOR */
-
+let motionStarted = false;
 async function requestMotionPermission(){
 
 if(typeof DeviceMotionEvent !== "undefined" &&
