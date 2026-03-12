@@ -1,3 +1,7 @@
+window.addEventListener("shake", function(e){
+e.preventDefault();
+});
+
 document.addEventListener("DOMContentLoaded", function(){
 
 console.log("TARA controls active");
