@@ -305,6 +305,23 @@ const z = event.accelerationIncludingGravity.z;
 
 const impact = Math.abs(x) + Math.abs(y) + Math.abs(z);
 
+function resetInactivityTimer(){
+
+clearTimeout(inactivityTimer);
+
+inactivityTimer = setTimeout(function(){
+
+if(driverMinderActive){
+
+console.log("NO MOVEMENT DETECTED");
+
+driverDownAlert();
+
+}
+
+}, INACTIVITY_LIMIT);
+
+}
 /* IMPACT DETECTION */
 
 if(impact > 35){
