@@ -269,7 +269,12 @@ clearTimeout(inactivityTimer);
 }
 /* MOTION SENSOR */
 let motionStarted = false;
-async function requestMotionPermission(){
+
+function startMotionMonitoring(){
+
+if(motionStarted) return;
+
+motionStarted = true;
 
 if(typeof DeviceMotionEvent !== "undefined" &&
 typeof DeviceMotionEvent.requestPermission === "function"){
