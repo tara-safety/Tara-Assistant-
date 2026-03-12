@@ -256,6 +256,7 @@ requestMotionPermission();
 
 driverMinderBtn.innerText = "DRIVER MINDER OFF";
 
+clearTimeout(inactivityTimer);
 }
 
 }
