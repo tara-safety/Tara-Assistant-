@@ -268,7 +268,7 @@ clearTimeout(inactivityTimer);
 motionStarted = false;
 }
 
-}
+
 /* MOTION SENSOR */
 let motionStarted = false;
 
