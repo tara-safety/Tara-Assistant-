@@ -257,7 +257,8 @@ driverMinderBtn.innerText = "DRIVER MINDER ON";
 resetInactivityTimer();
   
 requestMotionPermission();
-
+startMotionMonitoring();
+  
 }else{
 
 driverMinderBtn.innerText = "DRIVER MINDER OFF";
