@@ -250,6 +250,8 @@ driverMinderActive = !driverMinderActive;
 
 if(driverMinderActive){
 
+questionInput.blur();
+
 driverMinderBtn.innerText = "DRIVER MINDER ON";
 
 resetInactivityTimer();
