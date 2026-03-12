@@ -1,399 +1,344 @@
-*{
-pointer-events:auto !important;
-box-sizing:border-box;
+document.addEventListener("DOMContentLoaded", function(){
+
+console.log("TARA controls active");
+
+/* ---------------- ELEMENTS ---------------- */
+
+const askBtn = document.getElementById("askBtn");
+const voiceBtn = document.getElementById("voiceBtn");
+const menuBtn = document.getElementById("menuBtn");
+const closeMenu = document.getElementById("closeMenu");
+const menu = document.getElementById("menu");
+
+const emergencyBtn = document.getElementById("emergencyBtn");
+
+const chatBox = document.getElementById("chatBox");
+const questionInput = document.getElementById("question");
+
+const voiceToggle = document.getElementById("voiceToggle");
+
+const driverMinderBtn = document.getElementById("driverMinderBtn");
+
+/* ---------------- VOICE SETTINGS ---------------- */
+
+let voiceEnabled = true;
+
+if(voiceToggle){
+voiceToggle.addEventListener("change", function(){
+voiceEnabled = this.checked;
+});
 }
 
-html, body{
-margin:0;
-padding:0;
-height:100%;
-overflow-x:hidden;
+/* Unlock speech for iOS */
 
-background:linear-gradient(
-180deg,
-#9fbfb2,
-#0b3d46
-);
+let iosVoiceUnlocked = false;
 
-font-family:Arial, sans-serif;
-}
+document.addEventListener("click", function(){
 
-body{
-padding-bottom:50px;
--webkit-user-select:none;
-user-select:none;
-}
+if(!iosVoiceUnlocked){
 
-.main{
+const unlock = new SpeechSynthesisUtterance("");
+speechSynthesis.speak(unlock);
 
-margin-top:110px;
-
-padding-left:18px;
-padding-right:18px;
-padding-bottom:40px;
-
-display:flex;
-flex-direction:column;
-gap:12px;
-
-max-width:520px;
-margin-left:auto;
-margin-right:auto;
-
-}
-
-
-body{
-  padding-bottom:50px;
-}
-
-body{
--webkit-user-select:none;
-user-select:none;
-}
-
-html, body{
--webkit-user-select:none;
-user-select:none;
-touch-action:manipulation;
-}
-
-input, textarea{
--webkit-user-modify: read-write-plaintext-only;
-}
-
-/* HEADER */
-
-.header{
-
-position:fixed;
-top:0;
-left:0;
-
-width:100%;
-height:70px;
-line-height:70px;
-
-background:#18a34a;
-
-display:flex;
-align-items:center;
-justify-content:center;
-
-font-size:20px;
-font-weight:bold;
-
-color:black;
-
-box-shadow:0 4px 12px rgba(0,0,0,0.35);
-
-z-index:1000;
+iosVoiceUnlocked = true;
 
 }
 
-.header span{
+});
 
-position:absolute;
-left:50%;
-transform:translateX(-50%);
+/* ---------------- MENU ---------------- */
 
-font-weight:bold;
-
-}
-.header span{
-letter-spacing:1px;
+if(menuBtn){
+menuBtn.onclick = () => menu.classList.add("open");
 }
 
-.headerTitle{
-
-font-weight:bold;
-font-size:12px;
-
+if(closeMenu){
+closeMenu.onclick = () => menu.classList.remove("open");
 }
 
-.header{
-box-shadow:0 4px 10px rgba(0,0,0,0.25);
+/* ---------------- BUTTON EVENTS ---------------- */
+
+if(askBtn){
+askBtn.addEventListener("click", sendQuestion);
 }
 
-/* MENU BUTTON */
-
-#menuBtn{
-
-position:absolute;
-left:18px;
-
-font-size:26px;
-
-background:none;
-border:none;
-
-color:white;
-
-cursor:pointer;
-
+if(voiceBtn){
+voiceBtn.addEventListener("click", startVoice);
 }
 
-/* SLIDE MENU */
+/* ---------------- SEND QUESTION ---------------- */
 
-.menu{
+async function sendQuestion(){
 
-position:fixed;
-top:0;
-left:0;
+const text = questionInput.value.trim();
+if(!text) return;
 
-width:260px;
-height:100%;
+chatBox.innerHTML += '<div class="user"><b>You:</b> '+text+'</div>';
+questionInput.value="";
 
-background:#021018;
+try{
 
-padding:20px;
+const res = await fetch("/ask",{
+method:"POST",
+headers:{ "Content-Type":"application/json" },
+body:JSON.stringify({question:text})
+});
 
-transform:translateX(-100%);
-transition:transform .3s ease;
+const data = await res.json();
 
-z-index:2000;
+chatBox.innerHTML += '<div class="bot"><b>TARA:</b> '+data.answer+'</div>';
 
-box-sizing:border-box;
+chatBox.scrollTop = chatBox.scrollHeight;
 
-}
+speakResponse(data.answer);
 
-.menu.open{
-transform:translateX(0);
-}
+}catch(err){
 
-/* EMERGENCY */
-.emergencyWrap{
-display:flex;
-justify-content:center;
-margin-top:20px;
-margin-bottom:10px;
-}
+chatBox.innerHTML += '<div class="bot">Connection error</div>';
 
-.emergencyBtn{
-
-width:140px;
-height:140px;
-
-border-radius:25px;
-border:none;
-
-background:red;
-color:white;
-
-font-weight:bold;
-font-size:18px;
-
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-text-align:center;
-
-box-shadow:0 10px 25px rgba(0,0,0,0.35);
-
-}
-
-button:active{
-  transform:scale(0.95);
-}
-
-.emergencyBtn:active{
-  animation:alertPulse 1s infinite;
-}
-
-@keyframes alertPulse{
-
-0%{
-transform:scale(1);
-box-shadow:0 0 10px red;
-}
-
-50%{
-transform:scale(1.08);
-box-shadow:0 0 25px red;
-}
-
-100%{
-transform:scale(1);
-box-shadow:0 0 10px red;
 }
 
 }
 
-button{
-  transition:all 0.15s ease;
+/* ---------------- VOICE INPUT ---------------- */
+
+function startVoice(){
+
+const SpeechRecognition =
+window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if(!SpeechRecognition){
+alert("Voice not supported");
+return;
 }
 
-@keyframes safetyPulse{
+const recognition = new SpeechRecognition();
 
-0%{ box-shadow:0 0 8px red; }
+recognition.start();
 
-50%{ box-shadow:0 0 25px red; }
+recognition.onresult = function(event){
 
-100%{ box-shadow:0 0 8px red; }
+questionInput.value = event.results[0][0].transcript;
 
-}
-
-.emergencyBtn{
-  animation:safetyPulse 2.5s infinite;
-
-  /* STOP TEXT SELECT */
-  user-select:none;
-  -webkit-user-select:none;
-  -webkit-touch-callout:none;
-
-  /* STOP LONG PRESS MENU */
-  touch-action:manipulation;
-}
-
-.emgText{
-position:absolute;
-font-weight:bold;
-
-z-index:2;
+};
 
 }
 
+/* ---------------- SPEAK RESPONSE ---------------- */
 
-.holdText{
-  text-align:center;
-  font-size:16px;
-  margin-top:10px;
-  color:#ffbbbb;
+function speakResponse(text){
 
-}
+if(!voiceEnabled) return;
 
+const speech = new SpeechSynthesisUtterance(text);
 
-/* CHAT */
+speech.rate = 1;
+speech.pitch = 1;
+speech.lang = "en-US";
 
-.chatBox{
-
-background:#7fb89e;
-
-border-radius:20px;
-
-padding:15px;
-
-min-height:180px;
-
-overflow-y:auto;
-
-font-size:15px;
-
-line-height:1.4;
-
-box-shadow:0 5px 15px rgba(0,0,0,0.2);
+speechSynthesis.cancel();
+speechSynthesis.speak(speech);
 
 }
 
+/* ---------------- EMERGENCY BUTTON ---------------- */
 
-.user{
+let holdTimer;
 
-color:#00ffd0;
-margin-top:10px;
+if(emergencyBtn){
 
-}
+emergencyBtn.addEventListener("mousedown", startHold);
+emergencyBtn.addEventListener("touchstart", startHold);
 
-.bot{
-
-color:white;
-margin-top:10px;
-
-}
-
-
-/* INPUT */
-
-.messageInput{
-
-width:100%;
-box-sizing:border-box;
-
-padding:14px;
-
-border-radius:8px;
-border:none;
-
-margin-top:15px;
-
-font-size:16px;
+emergencyBtn.addEventListener("mouseup", cancelHold);
+emergencyBtn.addEventListener("touchend", cancelHold);
 
 }
 
+function startHold(){
 
-/* BUTTONS */
-.buttonRow button{
+let count = 3;
 
-flex:1;
+emergencyBtn.innerText = count;
 
-padding:16px;
+holdTimer = setInterval(function(){
 
-border:none;
+count--;
 
-border-radius:12px;
+if(count > 0){
 
-background:#1e9f4f;
+emergencyBtn.innerText = count;
 
-font-weight:bold;
+}else{
 
-font-size:18px;
-
-color:black;
-
-box-shadow:0 5px 15px rgba(0,0,0,0.25);
-}
-.buttonRow{
-display:flex;
-gap:10px;
-margin-top:10px;
-}
-
-#menuBtn{
-position:absolute;
-left:15px;
-font-size:26px;
-background:none;
-border:none;
-cursor:pointer;
-}
-
-
-
-.driverMinder{
-
-margin-top:20px;
-
-background:#ffd54f;
-
-padding:14px;
-
-border-radius:12px;
-
-font-weight:bold;
-
-text-align:center;
-
-box-shadow:0 4px 10px rgba(0,0,0,0.25);
-
-cursor:pointer;
-
-user-select:none;
+clearInterval(holdTimer);
+sendEmergency();
 
 }
 
-.driverMinder:active{
-transform:scale(0.96);
-}
-
-.footer{
-
-text-align:center;
-
-margin-top:15px;
-
-color:#00ffd0;
+},1000);
 
 }
 
+function cancelHold(){
 
+clearInterval(holdTimer);
 
+emergencyBtn.innerHTML = "🚨<br>HOLD<br>EMERGENCY";
+
+}
+
+function sendEmergency(){
+
+navigator.geolocation.getCurrentPosition(async function(pos){
+
+await fetch("/emergency",{
+method:"POST",
+headers:{ "Content-Type":"application/json" },
+body:JSON.stringify({
+lat:pos.coords.latitude,
+lon:pos.coords.longitude,
+driver:"Driver"
+})
+});
+
+alert("Emergency Alert Sent");
+
+});
+
+}
+
+/* ---------------- DRIVER MINDER ---------------- */
+
+let driverMinderActive = false;
+let inactivityTimer;
+let motionStarted = false;
+
+const INACTIVITY_LIMIT = 8 * 60 * 1000; // 8 minutes
+
+if(driverMinderBtn){
+driverMinderBtn.addEventListener("click", toggleDriverMinder);
+}
+
+function toggleDriverMinder(){
+
+driverMinderActive = !driverMinderActive;
+
+if(driverMinderActive){
+
+questionInput.blur();
+
+driverMinderBtn.innerText = "DRIVER MINDER ON";
+
+resetInactivityTimer();
+
+requestMotionPermission();
+
+}else{
+
+driverMinderBtn.innerText = "DRIVER MINDER OFF";
+
+clearTimeout(inactivityTimer);
+
+motionStarted = false;
+
+}
+
+}
+
+/* ---------------- MOTION PERMISSION ---------------- */
+
+async function requestMotionPermission(){
+
+if(typeof DeviceMotionEvent !== "undefined" &&
+typeof DeviceMotionEvent.requestPermission === "function"){
+
+try{
+
+const response = await DeviceMotionEvent.requestPermission();
+
+if(response === "granted"){
+startMotionMonitoring();
+}
+
+}catch(err){
+
+alert("Motion permission error");
+
+}
+
+}else{
+
+startMotionMonitoring();
+
+}
+
+}
+
+/* ---------------- MOTION MONITOR ---------------- */
+
+function startMotionMonitoring(){
+
+if(motionStarted) return;
+
+motionStarted = true;
+
+window.addEventListener("devicemotion", function(event){
+
+if(!driverMinderActive) return;
+
+const x = event.accelerationIncludingGravity.x || 0;
+const y = event.accelerationIncludingGravity.y || 0;
+const z = event.accelerationIncludingGravity.z || 0;
+
+const impact = Math.abs(x) + Math.abs(y) + Math.abs(z);
+
+/* IMPACT DETECTION */
+
+if(impact > 35){
+
+console.log("IMPACT DETECTED");
+
+driverDownAlert();
+
+}
+
+resetInactivityTimer();
+
+});
+
+}
+
+/* ---------------- INACTIVITY TIMER ---------------- */
+
+function resetInactivityTimer(){
+
+clearTimeout(inactivityTimer);
+
+inactivityTimer = setTimeout(function(){
+
+if(driverMinderActive){
+
+console.log("NO MOVEMENT DETECTED");
+
+driverDownAlert();
+
+}
+
+}, INACTIVITY_LIMIT);
+
+}
+
+/* ---------------- DRIVER DOWN ---------------- */
+
+function driverDownAlert(){
+
+driverMinderActive = false;
+
+alert("DRIVER DOWN DETECTED - Sending Alert");
+
+sendEmergency();
+
+}
+
+});
