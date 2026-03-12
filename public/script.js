@@ -2,28 +2,34 @@ document.addEventListener("DOMContentLoaded", function(){
 
 console.log("TARA controls active");
 
-/* ------------------ ELEMENTS ------------------ */
+/* ---------------- ELEMENTS ---------------- */
 
 const askBtn = document.getElementById("askBtn");
 const voiceBtn = document.getElementById("voiceBtn");
 const menuBtn = document.getElementById("menuBtn");
 const closeMenu = document.getElementById("closeMenu");
 const menu = document.getElementById("menu");
+
 const emergencyBtn = document.getElementById("emergencyBtn");
+
 const chatBox = document.getElementById("chatBox");
 const questionInput = document.getElementById("question");
 
-/* ------------------ VOICE TOGGLE ------------------ */
+const voiceToggle = document.getElementById("voiceToggle");
+
+const driverMinderBtn = document.getElementById("driverMinderBtn");
+
+/* ---------------- VOICE SETTINGS ---------------- */
 
 let voiceEnabled = true;
-
-const voiceToggle = document.getElementById("voiceToggle");
 
 if(voiceToggle){
 voiceToggle.addEventListener("change", function(){
 voiceEnabled = this.checked;
 });
 }
+
+/* Unlock speech for iOS */
 
 let iosVoiceUnlocked = false;
 
@@ -39,22 +45,18 @@ iosVoiceUnlocked = true;
 }
 
 });
-  
-/* ------------------ MENU ------------------ */
+
+/* ---------------- MENU ---------------- */
 
 if(menuBtn){
-menuBtn.onclick = () => {
-menu.classList.add("open");
-};
+menuBtn.onclick = () => menu.classList.add("open");
 }
 
 if(closeMenu){
-closeMenu.onclick = () => {
-menu.classList.remove("open");
-};
+closeMenu.onclick = () => menu.classList.remove("open");
 }
 
-/* ------------------ BUTTON EVENTS ------------------ */
+/* ---------------- BUTTON EVENTS ---------------- */
 
 if(askBtn){
 askBtn.addEventListener("click", sendQuestion);
@@ -64,29 +66,27 @@ if(voiceBtn){
 voiceBtn.addEventListener("click", startVoice);
 }
 
-/* ------------------ SEND QUESTION ------------------ */
+/* ---------------- SEND QUESTION ---------------- */
 
 async function sendQuestion(){
 
 const text = questionInput.value.trim();
 if(!text) return;
 
-chatBox.innerHTML += '<div class="user"><b>You:</b> ' + text + '</div>';
+chatBox.innerHTML += '<div class="user"><b>You:</b> '+text+'</div>';
 questionInput.value="";
 
 try{
 
 const res = await fetch("/ask",{
 method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
+headers:{ "Content-Type":"application/json" },
 body:JSON.stringify({question:text})
 });
 
 const data = await res.json();
 
-chatBox.innerHTML += '<div class="bot"><b>TARA:</b> ' + data.answer + '</div>';
+chatBox.innerHTML += '<div class="bot"><b>TARA:</b> '+data.answer+'</div>';
 
 chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -100,7 +100,7 @@ chatBox.innerHTML += '<div class="bot">Connection error</div>';
 
 }
 
-/* ------------------ VOICE INPUT ------------------ */
+/* ---------------- VOICE INPUT ---------------- */
 
 function startVoice(){
 
@@ -108,7 +108,7 @@ const SpeechRecognition =
 window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if(!SpeechRecognition){
-alert("Voice not supported on this device");
+alert("Voice not supported");
 return;
 }
 
@@ -117,34 +117,14 @@ const recognition = new SpeechRecognition();
 recognition.start();
 
 recognition.onresult = function(event){
+
 questionInput.value = event.results[0][0].transcript;
-};
-
-}
-
-/* ------------------ WAKE WORD ------------------ */
-
-if("webkitSpeechRecognition" in window){
-
-const wakeRec = new webkitSpeechRecognition();
-
-wakeRec.continuous = true;
-
-wakeRec.onresult = function(e){
-
-const t = e.results[e.results.length - 1][0].transcript.toLowerCase();
-
-if(t.includes("hey tara")){
-alert("TARA Listening");
-}
 
 };
 
-wakeRec.start();
-
 }
 
-/* ------------------ SPEAK RESPONSE ------------------ */
+/* ---------------- SPEAK RESPONSE ---------------- */
 
 function speakResponse(text){
 
@@ -161,7 +141,7 @@ speechSynthesis.speak(speech);
 
 }
 
-/* ------------------ EMERGENCY BUTTON ------------------ */
+/* ---------------- EMERGENCY BUTTON ---------------- */
 
 let holdTimer;
 
@@ -186,10 +166,14 @@ holdTimer = setInterval(function(){
 count--;
 
 if(count > 0){
+
 emergencyBtn.innerText = count;
+
 }else{
+
 clearInterval(holdTimer);
 sendEmergency();
+
 }
 
 },1000);
@@ -200,7 +184,7 @@ function cancelHold(){
 
 clearInterval(holdTimer);
 
-emergencyBtn.innerHTML = "🚨 HOLD EMERGENCY";
+emergencyBtn.innerHTML = "🚨<br>HOLD<br>EMERGENCY";
 
 }
 
@@ -210,12 +194,10 @@ navigator.geolocation.getCurrentPosition(async function(pos){
 
 await fetch("/emergency",{
 method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
+headers:{ "Content-Type":"application/json" },
 body:JSON.stringify({
-lat: pos.coords.latitude,
-lon: pos.coords.longitude,
+lat:pos.coords.latitude,
+lon:pos.coords.longitude,
 driver:"Driver"
 })
 });
@@ -225,15 +207,14 @@ alert("Emergency Alert Sent");
 });
 
 }
-/* ------------------ DRIVER MINDER ------------------ */
+
+/* ---------------- DRIVER MINDER ---------------- */
 
 let driverMinderActive = false;
 let inactivityTimer;
 let motionStarted = false;
 
 const INACTIVITY_LIMIT = 8 * 60 * 1000; // 8 minutes
-
-const driverMinderBtn = document.getElementById("driverMinderBtn");
 
 if(driverMinderBtn){
 driverMinderBtn.addEventListener("click", toggleDriverMinder);
@@ -265,7 +246,7 @@ motionStarted = false;
 
 }
 
-/* ------------------ MOTION PERMISSION ------------------ */
+/* ---------------- MOTION PERMISSION ---------------- */
 
 async function requestMotionPermission(){
 
@@ -278,8 +259,6 @@ const response = await DeviceMotionEvent.requestPermission();
 
 if(response === "granted"){
 startMotionMonitoring();
-}else{
-alert("Motion permission denied");
 }
 
 }catch(err){
@@ -296,7 +275,7 @@ startMotionMonitoring();
 
 }
 
-/* ------------------ START MOTION MONITORING ------------------ */
+/* ---------------- MOTION MONITOR ---------------- */
 
 function startMotionMonitoring(){
 
@@ -308,9 +287,9 @@ window.addEventListener("devicemotion", function(event){
 
 if(!driverMinderActive) return;
 
-const x = event.accelerationIncludingGravity.x;
-const y = event.accelerationIncludingGravity.y;
-const z = event.accelerationIncludingGravity.z;
+const x = event.accelerationIncludingGravity.x || 0;
+const y = event.accelerationIncludingGravity.y || 0;
+const z = event.accelerationIncludingGravity.z || 0;
 
 const impact = Math.abs(x) + Math.abs(y) + Math.abs(z);
 
@@ -330,7 +309,7 @@ resetInactivityTimer();
 
 }
 
-/* ------------------ INACTIVITY TIMER ------------------ */
+/* ---------------- INACTIVITY TIMER ---------------- */
 
 function resetInactivityTimer(){
 
@@ -350,7 +329,7 @@ driverDownAlert();
 
 }
 
-/* ------------------ DRIVER DOWN ALERT ------------------ */
+/* ---------------- DRIVER DOWN ---------------- */
 
 function driverDownAlert(){
 
@@ -361,3 +340,5 @@ alert("DRIVER DOWN DETECTED - Sending Alert");
 sendEmergency();
 
 }
+
+});
