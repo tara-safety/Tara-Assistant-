@@ -6,6 +6,7 @@ console.log("TARA Safety AI Active");
 
 const DRIVER_NAME = "Tow Operator";
 const COMPANY = "TARA Safety";
+
 const IMPACT_LIMIT = 35;
 const INACTIVITY_LIMIT = 8 * 60 * 1000;
 
@@ -30,6 +31,7 @@ const voiceToggle = document.getElementById("voiceToggle");
 let voiceEnabled = true;
 let driverMinderActive = false;
 let towModeActive = false;
+let wakeListening = false;
 
 let inactivityTimer;
 let countdownTimer;
@@ -49,16 +51,6 @@ alarmAudio = new Audio(
 
 alarmAudio.loop = true;
 
-}
-
-});
-
-/* ---------------- STOP IOS UNDO TYPING ---------------- */
-
-window.addEventListener("devicemotion", function(){
-
-if(document.activeElement){
-document.activeElement.blur();
 }
 
 });
@@ -124,22 +116,57 @@ chatBox.innerHTML+=`<div class="bot">Connection error</div>`;
 
 }
 
+/* ---------------- SPEAK RESPONSE ---------------- */
+
+function speakResponse(text){
+
+if(!voiceEnabled) return;
+
+function speakNow(){
+
+const speech=new SpeechSynthesisUtterance(text);
+
+speech.lang="en-US";
+speech.rate=1;
+speech.pitch=1;
+
+speechSynthesis.cancel();
+speechSynthesis.speak(speech);
+
+}
+
+if(speechSynthesis.getVoices().length===0){
+
+speechSynthesis.onvoiceschanged=speakNow;
+
+}else{
+
+speakNow();
+
+}
+
+}
+
 /* ---------------- VOICE INPUT ---------------- */
 
 function startVoice(){
 
-const SpeechRecognition =
+const SpeechRecognition=
 window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if(!SpeechRecognition){
 
 alert("Voice not supported");
-
 return;
 
 }
 
-const recognition = new SpeechRecognition();
+navigator.mediaDevices.getUserMedia({audio:true})
+.then(function(){
+
+const recognition=new SpeechRecognition();
+
+recognition.lang="en-US";
 
 recognition.start();
 
@@ -149,69 +176,43 @@ questionInput.value=e.results[0][0].transcript;
 
 };
 
-}
-
-/* ---------------- SPEAK RESPONSE ---------------- */
-
-function speakResponse(text){
-
-if(!voiceEnabled) return;
-
-const speech=new SpeechSynthesisUtterance(text);
-
-speech.rate=1;
-speech.pitch=1;
-
-speechSynthesis.cancel();
-speechSynthesis.speak(speech);
+});
 
 }
 
-/* ---------------- EMERGENCY HOLD BUTTON ---------------- */
+/* ---------------- WAKE WORD ---------------- */
 
-let holdTimer;
+function startWakeWord(){
 
-if(emergencyBtn){
+if(wakeListening) return;
 
-emergencyBtn.addEventListener("mousedown",startHold);
-emergencyBtn.addEventListener("touchstart",startHold);
+const SpeechRecognition=
+window.SpeechRecognition || window.webkitSpeechRecognition;
 
-emergencyBtn.addEventListener("mouseup",cancelHold);
-emergencyBtn.addEventListener("touchend",cancelHold);
+if(!SpeechRecognition) return;
 
-}
+wakeListening=true;
 
-function startHold(){
+const recognition=new SpeechRecognition();
 
-let count=3;
+recognition.continuous=true;
+recognition.interimResults=false;
 
-emergencyBtn.innerText=count;
+recognition.onresult=function(e){
 
-holdTimer=setInterval(function(){
+const text=e.results[e.results.length-1][0].transcript.toLowerCase();
 
-count--;
+if(text.includes("hey tara")){
 
-if(count>0){
+speakResponse("Yes driver");
 
-emergencyBtn.innerText=count;
-
-}else{
-
-clearInterval(holdTimer);
-
-triggerEmergency();
+startVoice();
 
 }
 
-},1000);
+};
 
-}
-
-function cancelHold(){
-
-clearInterval(holdTimer);
-
-emergencyBtn.innerHTML="🚨<br>HOLD<br>EMERGENCY";
+recognition.start();
 
 }
 
@@ -228,11 +229,15 @@ questionInput.blur();
 
 toggleDriverMinder(true);
 
+startWakeWord();
+
 alert("Tow Mode Activated");
 
 }else{
 
 toggleDriverMinder(false);
+
+wakeListening=false;
 
 alert("Tow Mode Disabled");
 
@@ -271,21 +276,13 @@ clearTimeout(inactivityTimer);
 async function requestMotionPermission(){
 
 if(typeof DeviceMotionEvent !== "undefined" &&
-typeof DeviceMotionEvent.requestPermission === "function"){
-
-try{
+typeof DeviceMotionEvent.requestPermission==="function"){
 
 const response=await DeviceMotionEvent.requestPermission();
 
 if(response==="granted"){
 
 startMotionMonitoring();
-
-}
-
-}catch(err){
-
-alert("Motion permission error");
 
 }
 
@@ -382,8 +379,6 @@ alert("Emergency Cancelled");
 countdownTimer=setInterval(function(){
 
 count--;
-
-console.log("Emergency in",count);
 
 if(count<=0){
 
