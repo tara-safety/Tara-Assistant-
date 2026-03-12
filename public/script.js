@@ -7,7 +7,7 @@ console.log("TARA System Booting");
 const DRIVER_NAME = "Tow Operator";
 const COMPANY = "TARA Safety";
 
-const IMPACT_LIMIT = 35;
+const IMPACT_LIMIT = 18;
 const INACTIVITY_LIMIT = 8 * 60 * 1000;
 
 /* ---------------- STATE ---------------- */
