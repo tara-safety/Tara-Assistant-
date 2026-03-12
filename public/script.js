@@ -285,7 +285,7 @@ driverMinderBtn.addEventListener("click", toggleDriverMinder);
 
 function toggleDriverMinder(){
 
-driverMinderActive = !driverMinderActive;
+driverMinderBtn.classList.toggle("active", driverMinderActive);
 
 if(driverMinderActive){
 
