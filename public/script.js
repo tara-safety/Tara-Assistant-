@@ -264,6 +264,8 @@ startMotionMonitoring();
 driverMinderBtn.innerText = "DRIVER MINDER OFF";
 
 clearTimeout(inactivityTimer);
+
+motionStarted = false;
 }
 
 }
