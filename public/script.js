@@ -232,8 +232,6 @@ let lastMotionTime = Date.now();
 
 const driverMinderBtn = document.getElementById("driverMinderBtn");
 
-let driverMinderActive = false;
-
 if(driverMinderBtn){
 
 driverMinderBtn.addEventListener("click", toggleDriverMinder);
