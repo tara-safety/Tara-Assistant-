@@ -370,6 +370,10 @@ user-select:none;
 
 }
 
+.driverMinder:active{
+transform:scale(0.96);
+}
+
 .footer{
 
 text-align:center;
