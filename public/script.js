@@ -42,7 +42,6 @@ const questionInput = document.getElementById("question");
 const chatBox = document.getElementById("chatBox");
 
 /* ---------------- MENU ---------------- */
-/* ---------------- MENU ---------------- */
 
 if(menuBtn && menu){
 
@@ -76,6 +75,7 @@ menu.classList.remove("open");
 document.addEventListener("click", async function(){
 
 if(systemUnlocked) return;
+
 systemUnlocked = true;
 
 console.log("Unlocking permissions");
@@ -355,7 +355,7 @@ console.log("Motion permission error:", err);
 }
 
 }
-/* ---------------- MOTION ---------------- */
+
 
 /* ---------------- MOTION ---------------- */
 
@@ -413,7 +413,6 @@ startEmergencyCountdown();
 
 }
 
-/* ---------------- EMERGENCY BUTTON ---------------- */
 
 /* ---------------- EMERGENCY BUTTON HOLD ---------------- */
 
