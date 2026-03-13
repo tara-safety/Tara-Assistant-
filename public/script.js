@@ -563,16 +563,16 @@ try{
 
 console.log("Sending emergency alert");
 
-const res = await fetch("/emergency",{
+const res = await fetch(https://tara-assistant-dwhg.onrender.com/emergency",{
 method:"POST",
 headers:{ "Content-Type":"application/json" },
 body:JSON.stringify({
 
-message:`🚨 TARA EMERGENCY ALERT
-Driver: ${DRIVER_NAME}
-Company: ${COMPANY}
-Time: ${new Date().toLocaleString()}
-Location: https://maps.google.com/?q=${lat},${lon}`
+driver:DRIVER_NAME,
+company:COMPANY,
+time:new Date().toISOString(),
+lat:lat,
+lon:lon
 
 })
 });
@@ -594,8 +594,6 @@ emergencyActive=false;
 chatBox.innerHTML += "<div>⚠️ Alert failed</div>";
 
 if(retry < 3){
-
-chatBox.innerHTML += "<div>🔁 Retrying emergency...</div>";
 
 setTimeout(()=>{
 sendEmergency(lat,lon,retry+1);
