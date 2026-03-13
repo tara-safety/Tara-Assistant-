@@ -16,7 +16,8 @@ let voiceEnabled = true;
 let driverMinderActive = false;
 let towModeActive = false;
 let motionStarted = false;
-
+let emergencyActive = false;
+  
 let inactivityTimer = null;
 let holdTimer = null;
 let alarmAudio = null;
