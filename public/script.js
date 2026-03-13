@@ -490,6 +490,16 @@ console.log("Alarm blocked by iOS");
 
 }
 
+function stopAlarm(){
+
+if(alarmAudio){
+
+alarmAudio.pause();
+alarmAudio.currentTime = 0;
+
+}
+
+}
 /* ---------------- SEND EMERGENCY ---------------- */
 
 function triggerEmergency(){
