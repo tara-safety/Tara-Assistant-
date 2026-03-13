@@ -42,14 +42,34 @@ const questionInput = document.getElementById("question");
 const chatBox = document.getElementById("chatBox");
 
 /* ---------------- MENU ---------------- */
+/* ---------------- MENU ---------------- */
 
 if(menuBtn && menu){
 
-menuBtn.addEventListener("click", function(){
+menuBtn.addEventListener("click", function(e){
+
+e.stopPropagation();
+
 menu.classList.toggle("open");
+
 });
 
 }
+
+/* close menu if user taps outside */
+
+document.addEventListener("click", function(e){
+
+if(menu.classList.contains("open") &&
+!menu.contains(e.target) &&
+e.target !== menuBtn){
+
+menu.classList.remove("open");
+
+}
+
+});
+
 
 /* ---------------- PERMISSION UNLOCK ---------------- */
 
