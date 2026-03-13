@@ -388,6 +388,8 @@ startEmergencyCountdown();
 
 /* ---------------- EMERGENCY BUTTON ---------------- */
 
+/* ---------------- EMERGENCY BUTTON HOLD ---------------- */
+
 if(emergencyBtn){
 
 emergencyBtn.addEventListener("mousedown", startHold);
@@ -410,7 +412,7 @@ if(count <= 0){
 
 clearInterval(holdTimer);
 
-triggerEmergency();
+startEmergencyCountdown();
 
 }
 
@@ -424,7 +426,7 @@ clearInterval(holdTimer);
 
 }
 
-/* ---------------- EMERGENCY ---------------- */
+/* ---------------- EMERGENCY COUNTDOWN ---------------- */
 
 function startEmergencyCountdown(){
 
@@ -440,7 +442,7 @@ let count = 30;
 
 const cancelBtn = document.createElement("button");
 
-cancelBtn.innerText="Cancel Emergency";
+cancelBtn.innerText = "Cancel Emergency";
 
 cancelBtn.style.position="fixed";
 cancelBtn.style.bottom="120px";
@@ -449,19 +451,11 @@ cancelBtn.style.transform="translateX(-50%)";
 
 document.body.appendChild(cancelBtn);
 
-cancelBtn.onclick=function(){
-
-clearInterval(timer);
-stopAlarm();
-cancelBtn.remove();
-
-};
-
 const timer = setInterval(function(){
 
 count--;
 
-if(count<=0){
+if(count <= 0){
 
 clearInterval(timer);
 cancelBtn.remove();
@@ -471,6 +465,21 @@ triggerEmergency();
 }
 
 },1000);
+
+cancelBtn.onclick=function(){
+
+clearInterval(timer);
+
+stopAlarm();
+
+cancelBtn.remove();
+
+chatBox.innerHTML += "<div>Emergency cancelled</div>";
+
+emergencyRunning=false;
+emergencyActive=false;
+
+};
 
 }
 
@@ -500,7 +509,8 @@ alarmAudio.currentTime = 0;
 }
 
 }
-/* ---------------- SEND EMERGENCY ---------------- */
+
+/* ---------------- TRIGGER EMERGENCY ---------------- */
 
 function triggerEmergency(){
 
@@ -510,11 +520,16 @@ emergencyActive = true;
 
 navigator.geolocation.getCurrentPosition(function(pos){
 
-sendEmergency(pos.coords.latitude,pos.coords.longitude);
+sendEmergency(
+pos.coords.latitude,
+pos.coords.longitude
+);
 
 });
 
 }
+
+/* ---------------- SEND EMERGENCY ---------------- */
 
 async function sendEmergency(lat,lon,retry=0){
 
@@ -542,6 +557,10 @@ stopAlarm();
 
 emergencyRunning=false;
 
+setTimeout(()=>{
+emergencyActive=false;
+},20000);
+
 }catch{
 
 chatBox.innerHTML += "<div>⚠️ Alert failed</div>";
@@ -560,34 +579,16 @@ sendEmergency(lat,lon,retry+1);
 
 chatBox.innerHTML += "<div>❌ Emergency failed after retries</div>";
 
+stopAlarm();
+
 emergencyRunning=false;
-
-}
-
-}
-
-}
-
-chatBox.innerHTML += "<div>🚨 Emergency Alert Sent</div>";
-
-alert("Emergency Alert Sent");
-
-setTimeout(()=>{
-emergencyActive=false;
-},20000);
-
-}catch{
-
-chatBox.innerHTML += "<div>⚠️ Emergency Send Failed</div>";
-
-alert("Emergency Send Failed");
-
 emergencyActive=false;
 
 }
 
 }
 
+}
 /* ---------------- FOOTER ---------------- */
 
 const footer=document.createElement("div");
