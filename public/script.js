@@ -467,20 +467,15 @@ triggerEmergency();
 
 function playAlarm(){
 
-if(alarmAudio){
-alarmAudio.play().catch(()=>{});
-}
+if(!alarmAudio) return;
 
-}
-
-function stopAlarm(){
-
-if(alarmAudio){
-
-alarmAudio.pause();
 alarmAudio.currentTime = 0;
 
-}
+alarmAudio.play().catch(()=>{
+
+console.log("Alarm blocked by iOS");
+
+});
 
 }
 
