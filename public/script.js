@@ -22,6 +22,8 @@ let inactivityTimer = null;
 let holdTimer = null;
 let alarmAudio = null;
 let systemUnlocked = false;
+let lastImpactTime = 0;
+const IMPACT_COOLDOWN = 8000;
 
 /* ---------------- ELEMENTS ---------------- */
 
