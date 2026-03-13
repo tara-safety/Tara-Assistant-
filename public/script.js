@@ -518,11 +518,21 @@ lon:lon
 })
 });
 
+chatBox.innerHTML += "<div>🚨 Emergency Alert Sent</div>";
+
 alert("Emergency Alert Sent");
+
+setTimeout(()=>{
+emergencyActive=false;
+},20000);
 
 }catch{
 
+chatBox.innerHTML += "<div>⚠️ Emergency Send Failed</div>";
+
 alert("Emergency Send Failed");
+
+emergencyActive=false;
 
 }
 
