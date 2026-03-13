@@ -557,13 +557,15 @@ pos.coords.longitude
 
 /* ---------------- SEND EMERGENCY ---------------- */
 
+/* ---------------- SEND EMERGENCY ---------------- */
+
 async function sendEmergency(lat,lon,retry=0){
 
 try{
 
 console.log("Sending emergency alert");
 
-const res = await fetch(https://tara-assistant-dwhg.onrender.com/emergency",{
+const res = await fetch("https://tara-assistant-dwhg.onrender.com/emergency",{
 method:"POST",
 headers:{ "Content-Type":"application/json" },
 body:JSON.stringify({
@@ -583,19 +585,20 @@ chatBox.innerHTML += "<div>🚨 Emergency Alert Sent</div>";
 
 stopAlarm();
 
-emergencyRunning=false;
+emergencyRunning = false;
+emergencyActive = false;
 
-setTimeout(()=>{
-emergencyActive=false;
-},20000);
+}catch(error){
 
-}catch{
+console.log("Emergency error:", error);
 
 chatBox.innerHTML += "<div>⚠️ Alert failed</div>";
 
 if(retry < 3){
 
-setTimeout(()=>{
+chatBox.innerHTML += "<div>🔁 Retrying...</div>";
+
+setTimeout(function(){
 sendEmergency(lat,lon,retry+1);
 },5000);
 
@@ -604,8 +607,9 @@ sendEmergency(lat,lon,retry+1);
 chatBox.innerHTML += "<div>❌ Emergency failed after retries</div>";
 
 stopAlarm();
-emergencyRunning=false;
-emergencyActive=false;
+
+emergencyRunning = false;
+emergencyActive = false;
 
 }
 
