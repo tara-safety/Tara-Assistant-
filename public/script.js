@@ -17,6 +17,7 @@ let driverMinderActive = false;
 let towModeActive = false;
 let motionStarted = false;
 let emergencyActive = false;
+let emergencyRunning = false;
   
 let inactivityTimer = null;
 let holdTimer = null;
