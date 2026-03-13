@@ -488,6 +488,10 @@ alarmAudio.currentTime = 0;
 
 function triggerEmergency(){
 
+if(emergencyActive) return;
+
+emergencyActive = true;
+
 navigator.geolocation.getCurrentPosition(function(pos){
 
 sendEmergency(pos.coords.latitude,pos.coords.longitude);
