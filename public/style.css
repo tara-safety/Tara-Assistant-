@@ -170,11 +170,6 @@ margin-bottom:10px;
 
 .emergencyBtn{
 
-position:fixed;
-bottom:90px;
-left:50%;
-transform:translateX(-50%);
-
 width:140px;
 height:140px;
 
@@ -187,7 +182,11 @@ color:white;
 font-weight:bold;
 font-size:18px;
 
-z-index:2000;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+text-align:center;
 
 box-shadow:0 10px 25px rgba(0,0,0,0.35);
 
