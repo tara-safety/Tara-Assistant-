@@ -423,9 +423,9 @@ clearInterval(holdTimer);
 
 function startEmergencyCountdown(){
 
-let count = 30;
-
 playAlarm();
+  
+let count = 30;
 
 const cancelBtn = document.createElement("button");
 
