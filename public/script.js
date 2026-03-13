@@ -561,6 +561,8 @@ async function sendEmergency(lat,lon,retry=0){
 
 try{
 
+console.log("Sending emergency alert");
+  
 const res = await fetch("/emergency",{
 method:"POST",
 headers:{ "Content-Type":"application/json" },
