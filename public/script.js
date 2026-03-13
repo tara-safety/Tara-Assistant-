@@ -357,13 +357,15 @@ Math.abs(acc.z||0);
 
 if(impact > IMPACT_LIMIT){
 
+const now = Date.now();
+
+if(now - lastImpactTime > IMPACT_COOLDOWN){
+
+lastImpactTime = now;
+
 startEmergencyCountdown();
 
 }
-
-resetInactivityTimer();
-
-});
 
 }
 
