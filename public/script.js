@@ -562,17 +562,17 @@ async function sendEmergency(lat,lon,retry=0){
 try{
 
 console.log("Sending emergency alert");
-  
+
 const res = await fetch("/emergency",{
 method:"POST",
 headers:{ "Content-Type":"application/json" },
 body:JSON.stringify({
 
-driver:DRIVER_NAME,
-company:COMPANY,
-time:new Date().toISOString(),
-lat:lat,
-lon:lon
+message:`🚨 TARA EMERGENCY ALERT
+Driver: ${DRIVER_NAME}
+Company: ${COMPANY}
+Time: ${new Date().toLocaleString()}
+Location: https://maps.google.com/?q=${lat},${lon}`
 
 })
 });
@@ -598,9 +598,7 @@ if(retry < 3){
 chatBox.innerHTML += "<div>🔁 Retrying emergency...</div>";
 
 setTimeout(()=>{
-
 sendEmergency(lat,lon,retry+1);
-
 },5000);
 
 }else{
@@ -608,7 +606,6 @@ sendEmergency(lat,lon,retry+1);
 chatBox.innerHTML += "<div>❌ Emergency failed after retries</div>";
 
 stopAlarm();
-
 emergencyRunning=false;
 emergencyActive=false;
 
