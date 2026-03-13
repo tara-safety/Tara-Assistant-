@@ -428,6 +428,10 @@ clearInterval(holdTimer);
 
 function startEmergencyCountdown(){
 
+if(emergencyRunning) return;
+
+emergencyRunning = true;
+
 playAlarm();
 
 chatBox.innerHTML += "<div>🚨 Emergency countdown started</div>";
