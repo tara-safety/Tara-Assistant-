@@ -284,6 +284,8 @@ driverMinderBtn.innerText = "Driver Minder ON";
 
 chatBox.innerHTML += "<div>🟢 Driver Minder Activated</div>";
 
+requestMotionPermission();   // <-- ADD THIS LINE
+
 resetInactivityTimer();
 startMotionMonitoring();
 
@@ -301,6 +303,34 @@ clearTimeout(inactivityTimer);
 
 }
 
+/* ---------------- MOTION PERMISSION (iOS) ---------------- */
+
+async function requestMotionPermission(){
+
+if(typeof DeviceMotionEvent !== "undefined" &&
+typeof DeviceMotionEvent.requestPermission === "function"){
+
+try{
+
+const response = await DeviceMotionEvent.requestPermission();
+
+console.log("Motion permission:", response);
+
+if(response !== "granted"){
+
+alert("Motion permission is required for Driver Minder");
+
+}
+
+}catch(err){
+
+console.log("Motion permission error:", err);
+
+}
+
+}
+
+}
 /* ---------------- MOTION ---------------- */
 
 function startMotionMonitoring(){
