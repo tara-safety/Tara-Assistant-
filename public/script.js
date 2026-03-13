@@ -337,6 +337,8 @@ console.log("Motion permission error:", err);
 }
 /* ---------------- MOTION ---------------- */
 
+/* ---------------- MOTION ---------------- */
+
 function startMotionMonitoring(){
 
 if(motionStarted) return;
@@ -370,6 +372,11 @@ startEmergencyCountdown();
 
 }
 
+resetInactivityTimer();
+
+});
+
+}
 /* ---------------- INACTIVITY ---------------- */
 
 function resetInactivityTimer(){
