@@ -170,6 +170,29 @@ margin-bottom:10px;
 
 .emergencyBtn{
 
+position:fixed;
+bottom:90px;
+left:50%;
+transform:translateX(-50%);
+
+width:140px;
+height:140px;
+
+border-radius:25px;
+border:none;
+
+background:red;
+color:white;
+
+font-weight:bold;
+font-size:18px;
+
+z-index:2000;
+
+}
+
+.emergencyBtn{
+
 width:140px;
 height:140px;
 
