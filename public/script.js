@@ -516,11 +516,11 @@ sendEmergency(pos.coords.latitude,pos.coords.longitude);
 
 }
 
-async function sendEmergency(lat,lon){
+async function sendEmergency(lat,lon,retry=0){
 
 try{
 
-await fetch("/emergency",{
+const res = await fetch("/emergency",{
 method:"POST",
 headers:{ "Content-Type":"application/json" },
 body:JSON.stringify({
@@ -533,6 +533,40 @@ lon:lon
 
 })
 });
+
+if(!res.ok) throw new Error("server error");
+
+chatBox.innerHTML += "<div>🚨 Emergency Alert Sent</div>";
+
+stopAlarm();
+
+emergencyRunning=false;
+
+}catch{
+
+chatBox.innerHTML += "<div>⚠️ Alert failed</div>";
+
+if(retry < 3){
+
+chatBox.innerHTML += "<div>🔁 Retrying emergency...</div>";
+
+setTimeout(()=>{
+
+sendEmergency(lat,lon,retry+1);
+
+},5000);
+
+}else{
+
+chatBox.innerHTML += "<div>❌ Emergency failed after retries</div>";
+
+emergencyRunning=false;
+
+}
+
+}
+
+}
 
 chatBox.innerHTML += "<div>🚨 Emergency Alert Sent</div>";
 
