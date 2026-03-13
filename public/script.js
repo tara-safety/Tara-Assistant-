@@ -424,7 +424,9 @@ clearInterval(holdTimer);
 function startEmergencyCountdown(){
 
 playAlarm();
-  
+
+chatBox.innerHTML += "<div>🚨 Emergency countdown started</div>";
+
 let count = 30;
 
 const cancelBtn = document.createElement("button");
