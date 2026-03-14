@@ -91,7 +91,7 @@ app.post("/ask", async (req, res) => {
   try {
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [
         {
           role: "system",
@@ -127,7 +127,7 @@ app.post("/ask", async (req, res) => {
 
 app.post("/emergency", async (req, res) => {
 
-  const { lat, lon, driver } = req.body;
+  const { lat, lon, driver = "Unknown Driver" } = req.body;
 
   if (!lat || !lon || !driver) {
     return res.status(400).json({
@@ -164,23 +164,30 @@ Immediate response required.`;
       from: process.env.TWILIO_PHONE_NUMBER
     });
 
+    
     /* SAVE ALERT */
+  /* SAVE ALERT */
 
-    const { error } = await supabase
-      .from("alerts")
-      .insert([
-        {
-          driver,
-          latitude: lat,
-          longitude: lon,
-          alert_type: "emergency",
-          map_link: mapLink
-        }
-      ]);
+if (supabase) {
 
-    if (error) {
-      console.error("Supabase error:", error);
-    }
+  const { error } = await supabase
+    .from("alerts")
+    .insert([
+      {
+        driver,
+        latitude: lat,
+        longitude: lon,
+        alert_type: "emergency",
+        map_link: mapLink
+      }
+    ]);
+
+  if (error) {
+    console.error("Supabase error:", error);
+  }
+
+}
+
 
     res.json({
       status: "Emergency alert sent",
