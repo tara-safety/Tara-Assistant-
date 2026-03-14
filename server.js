@@ -76,7 +76,6 @@ try{
 
 const completion = await openai.chat.completions.create({
 model: "gpt-5-mini",
-voice: "sage",
 messages: [
 {
 role: "system",
