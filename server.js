@@ -70,54 +70,37 @@ try {
 
 app.post("/ask", async (req, res) => {
 
-  const question = req.body.question || "";
+const question = req.body.question || "";
 
-  function normalize(text) {
-    return text.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
-  }
+try{
 
-  const normalizedQuestion = normalize(question);
+const completion = await openai.chat.completions.create({
+model: "gpt-5-mini",
+messages: [
+{
+role: "system",
+content: "You are TARA, a calm safety officer AI for the towing industry. Provide clear and safe towing guidance."
+},
+{
+role: "user",
+content: question
+}
+]
+});
 
-  const match = knowledge.find(entry =>
-    entry.keywords.some(keyword =>
-      normalizedQuestion.includes(normalize(keyword))
-    )
-  );
+const answer = completion.choices[0].message.content;
 
-  if (match) {
-    return res.json({ answer: match.answer });
-  }
+res.json({ answer });
 
-  try {
+}catch(err){
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-5-mini",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are TARA, a professional towing and roadside safety assistant. Only answer towing or roadside related questions. If unrelated say you are restricted to towing assistance."
-        },
-        {
-          role: "user",
-          content: question
-        }
-      ]
-    });
+console.log("OpenAI error:", err);
 
-    res.json({
-      answer: completion.choices[0].message.content
-    });
+res.json({
+answer:"TARA could not connect to AI right now."
+});
 
-  } catch (err) {
-
-    console.error("AI error:", err);
-
-    res.status(500).json({
-      error: "AI request failed"
-    });
-
-  }
+}
 
 });
 
