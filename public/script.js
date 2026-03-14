@@ -142,17 +142,31 @@ chatBox.innerHTML += `<div>Connection error</div>`;
 
 /* ---------------- SPEECH ---------------- */
 
-function speak(text){
+async function handleUserMessage(message, voiceEnabled) {
+  // Always generate text first
+  const response = await openai.chat.completions.create({
+    model: "gpt-5-mini",
+    messages: [
+      { role: "system", content: "You are a towing assistant." },
+      { role: "user", content: message }
+    ]
+  });
 
-if(!voiceEnabled) return;
+  const textAnswer = response.choices[0].message.content;
 
-const speech = new SpeechSynthesisUtterance(text);
+  // Only call TTS if voice toggle is ON
+  if (voiceEnabled) {
+    const audioResponse = await openai.audio.speech.create({
+      model: "gpt-5o-mini-tts",
+      voice: "sage",
+      input: textAnswer
+    });
 
-speech.lang="en-CA";
+    const audioBuffer = Buffer.from(await audioResponse.arrayBuffer());
+    // Play audioBuffer in your app
+  }
 
-speechSynthesis.cancel();
-speechSynthesis.speak(speech);
-
+  return textAnswer; // Always display text
 }
 
 /* ---------------- VOICE INPUT ---------------- */
