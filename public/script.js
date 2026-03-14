@@ -148,7 +148,7 @@ if(!voiceEnabled) return;
 
 const speech = new SpeechSynthesisUtterance(text);
 
-speech.lang="en-US";
+speech.lang="en-CA";
 
 speechSynthesis.cancel();
 speechSynthesis.speak(speech);
@@ -156,12 +156,10 @@ speechSynthesis.speak(speech);
 }
 
 /* ---------------- VOICE INPUT ---------------- */
+let recognition;
+let listeningForCommand = false;
 
-if(voiceBtn){
-voiceBtn.addEventListener("click", startVoice);
-}
-
-function startVoice(){
+function startVoiceSystem(){
 
 const SpeechRecognition =
 window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -171,54 +169,53 @@ alert("Voice not supported");
 return;
 }
 
-const recognition = new SpeechRecognition();
-recognition.lang="en-US";
+recognition = new SpeechRecognition();
+
+recognition.continuous = true;
+recognition.interimResults = false;
+recognition.lang = "en-US";
 
 recognition.start();
 
-recognition.onresult=function(e){
-
-const speech = e.results[0][0].transcript;
-
-questionInput.value = speech;
-
-sendQuestion();
-
-};
-
-}
-
-/* ---------------- WAKE WORD ---------------- */
-
-function startWakeWord(){
-
-const SpeechRecognition =
-window.SpeechRecognition || window.webkitSpeechRecognition;
-
-if(!SpeechRecognition) return;
-
-const recognition = new SpeechRecognition();
-
-recognition.continuous = true;
-
-recognition.onresult=function(e){
+recognition.onresult = function(e){
 
 const text =
 e.results[e.results.length-1][0].transcript.toLowerCase();
 
+console.log("Heard:", text);
+
+if(!listeningForCommand){
+
 if(text.includes("hey tara")){
+
+listeningForCommand = true;
 
 speak("Yes driver");
 
-startVoice();
+return;
+
+}
+
+}
+
+else{
+
+questionInput.value = text;
+
+sendQuestion();
+
+listeningForCommand = false;
 
 }
 
 };
 
+recognition.onerror=function(){
 recognition.start();
+};
 
 }
+
 
 /* ---------------- TOW MODE ---------------- */
 
