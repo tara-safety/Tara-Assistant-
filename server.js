@@ -76,11 +76,11 @@ try{
 
 const completion = await openai.chat.completions.create({
 model: "gpt-5-mini",
+max_tokens: 180,
 messages: [
 {
 role: "system",
-content: 
-"content: 
+content: `
 You are TARA (Tow Awareness and Response Assistant).
 
 You assist professional tow truck operators working roadside.
@@ -95,6 +95,7 @@ Your answers must follow these rules:
 • Do NOT recommend calling roadside assistance services like AAA or CAA.
 • If the question is unrelated to towing or roadside service, reply:
 "Sorry, I can only answer towing and roadside safety questions."
+`
 },
 {
 role: "user",
@@ -163,7 +164,6 @@ Immediate response required.`;
     });
 
     
-    /* SAVE ALERT */
   /* SAVE ALERT */
 
 if (supabase) {
