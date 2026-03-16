@@ -104,6 +104,7 @@ alarmAudio.loop = true;
 
 });
 
+
 /* ---------------- ASK TARA ---------------- */
 
 if(askBtn){
@@ -115,10 +116,11 @@ async function sendQuestion(){
 const text = questionInput.value.trim();
 if(!text) return;
 
+/* show user message */
+
 chatBox.innerHTML += `<div style="margin-bottom:12px;"><b>You:</b> ${text}</div>`;
 questionInput.value="";
-}
-  
+
 /* TARA thinking indicator */
 
 const thinking = document.createElement("div");
@@ -126,6 +128,8 @@ thinking.innerHTML = "<i>TARA is analyzing...</i>";
 thinking.style.marginBottom = "12px";
 
 chatBox.appendChild(thinking);
+
+chatBox.scrollTop = chatBox.scrollHeight;
 
 try{
 
@@ -139,10 +143,9 @@ if(!res.ok){
 throw new Error("Server response failed");
 }
 
-
 const data = await res.json();
 
-/* remove thinking message */
+/* remove thinking */
 
 thinking.remove();
 
@@ -158,7 +161,13 @@ speak(data.answer);
 
 console.error("Ask error:", err);
 
-chatBox.innerHTML += `<div>TARA connection issue</div>`;
+/* remove thinking if error */
+
+thinking.remove();
+
+chatBox.innerHTML += `<div style="margin-bottom:18px;">⚠️ TARA connection issue</div>`;
+
+}
 
 }
 
