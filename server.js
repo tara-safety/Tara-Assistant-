@@ -88,7 +88,7 @@ Rules:
 • Maximum 5 sentences.
 • Only answer towing or roadside service questions.
 • Never recommend calling AAA or CAA.
-• If vehicle make/model is missing give general safe procedures.
+• If details are missing, provide general safe towing procedures.
 • If unrelated say: Sorry, I can only answer towing and roadside safety questions.`
         },
         {
