@@ -98,11 +98,12 @@ Rules:
       ]
     });
 
-    const answer =
+   console.log("AI RAW:", completion);
+   const answer =
 completion.choices?.[0]?.message?.content ||
 "TARA could not generate a response.";
-
-    res.json({ answer });
+   
+     res.json({ answer });
 
   } catch (err) {
 
