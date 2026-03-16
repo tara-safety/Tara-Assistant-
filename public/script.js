@@ -147,12 +147,6 @@ throw new Error("Server returned error");
 
 const data = await res.json();
 
-if(!data || !data.answer){
-throw new Error("Invalid response");
-}
-
-const data = await res.json();
-
 /* remove thinking */
 
 thinking.remove();
