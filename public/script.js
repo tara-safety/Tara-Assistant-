@@ -150,13 +150,9 @@ speak(data.answer);
 
 }catch(err){
 
-thinking.remove();
+console.error("Ask error:", err);
 
-console.log("Ask error:", err);
-
-chatBox.innerHTML += `<div style="margin-bottom:18px;">⚠️ TARA connection issue</div>`;
-
-}
+chatBox.innerHTML += `<div>TARA connection issue</div>`;
 
 }
 
