@@ -134,6 +134,10 @@ headers:{ "Content-Type":"application/json" },
 body:JSON.stringify({question:text})
 });
 
+if(!res.ok){
+throw new Error("Server response failed");
+}
+
 const data = await res.json();
 
 /* remove thinking message */
