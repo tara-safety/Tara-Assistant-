@@ -117,7 +117,8 @@ if(!text) return;
 
 chatBox.innerHTML += `<div style="margin-bottom:12px;"><b>You:</b> ${text}</div>`;
 questionInput.value="";
-
+}
+  
 /* TARA thinking indicator */
 
 const thinking = document.createElement("div");
