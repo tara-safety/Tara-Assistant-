@@ -115,8 +115,16 @@ async function sendQuestion(){
 const text = questionInput.value.trim();
 if(!text) return;
 
-chatBox.innerHTML += `<div><b>You:</b> ${text}</div>`;
+chatBox.innerHTML += `<div style="margin-bottom:12px;"><b>You:</b> ${text}</div>`;
 questionInput.value="";
+
+/* TARA thinking indicator */
+
+const thinking = document.createElement("div");
+thinking.innerHTML = "<i>TARA is analyzing...</i>";
+thinking.style.marginBottom = "12px";
+
+chatBox.appendChild(thinking);
 
 try{
 
@@ -128,13 +136,25 @@ body:JSON.stringify({question:text})
 
 const data = await res.json();
 
-chatBox.innerHTML += `<div><b>TARA:</b> ${data.answer}</div>`;
+/* remove thinking message */
+
+thinking.remove();
+
+/* show answer */
+
+chatBox.innerHTML += `<div style="margin-bottom:18px;"><b>TARA:</b> ${data.answer}</div>`;
+
+chatBox.scrollTop = chatBox.scrollHeight;
 
 speak(data.answer);
 
-}catch{
+}catch(err){
 
-chatBox.innerHTML += `<div>Connection error</div>`;
+thinking.remove();
+
+console.log("Ask error:", err);
+
+chatBox.innerHTML += `<div style="margin-bottom:18px;">⚠️ TARA connection issue</div>`;
 
 }
 
