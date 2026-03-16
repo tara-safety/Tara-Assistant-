@@ -59,7 +59,7 @@ menu.classList.toggle("open");
 
 document.addEventListener("click", function(e){
 
-if(menu.classList.contains("open") &&
+if(menu && menu.classList.contains("open") &&
 !menu.contains(e.target) &&
 e.target !== menuBtn){
 
@@ -243,7 +243,7 @@ towModeActive = !towModeActive;
 
 if(towModeActive){
 
-startWakeWord();
+startVoiceSystem();
 chatBox.innerHTML += "<div>🚚 Tow Mode Activated</div>";
 
 }else{
