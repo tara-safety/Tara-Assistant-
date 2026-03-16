@@ -107,8 +107,6 @@ alarmAudio.loop = true;
 });
 
 
-/* ---------------- ASK TARA ---------------- */
-
 if(askBtn){
 askBtn.addEventListener("click", sendQuestion);
 }
@@ -159,13 +157,15 @@ chatBox.scrollTop = chatBox.scrollHeight;
 
 speak(data.answer);
 
-catch(err){
+} catch(err){
 
 console.error("Ask error:", err);
 
 chatBox.innerHTML += `<div style="color:red;">
 TARA Error: ${err.message}
 </div>`;
+
+}
 
 }
 
