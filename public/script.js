@@ -159,17 +159,13 @@ chatBox.scrollTop = chatBox.scrollHeight;
 
 speak(data.answer);
 
-}catch(err){
+catch(err){
 
 console.error("Ask error:", err);
 
-/* remove thinking if error */
-
-thinking.remove();
-
-chatBox.innerHTML += `<div style="margin-bottom:18px;">⚠️ TARA connection issue</div>`;
-
-}
+chatBox.innerHTML += `<div style="color:red;">
+TARA Error: ${err.message}
+</div>`;
 
 }
 
