@@ -96,7 +96,8 @@ Your answers must follow these rules:
 • If the question is unrelated to towing or roadside service, reply:
 "Sorry, I can only answer towing and roadside safety questions."
 `
-},
+}
+
 {
 role: "user",
 content: question
