@@ -98,7 +98,9 @@ Rules:
       ]
     });
 
-    const answer = completion.choices[0].message.content;
+    const answer =
+completion.choices?.[0]?.message?.content ||
+"TARA could not generate a response.";
 
     res.json({ answer });
 
