@@ -171,35 +171,6 @@ chatBox.innerHTML += `<div style="margin-bottom:18px;">⚠️ TARA connection is
 
 }
 
-/* ---------------- SPEECH ---------------- */
-
-async function handleUserMessage(message, voiceEnabled) {
-  // Always generate text first
-  const response = await openai.chat.completions.create({
-    model: "gpt-5-mini",
-    messages: [
-      { role: "system", content: "You are a towing assistant." },
-      { role: "user", content: message }
-    ]
-  });
-
-  const textAnswer = response.choices[0].message.content;
-
-  // Only call TTS if voice toggle is ON
-  if (voiceEnabled) {
-    const audioResponse = await openai.audio.speech.create({
-      model: "gpt-5o-mini-tts",
-      voice: "sage",
-      input: textAnswer
-    });
-
-    const audioBuffer = Buffer.from(await audioResponse.arrayBuffer());
-    // Play audioBuffer in your app
-  }
-
-  return textAnswer; // Always display text
-}
-
 /* ---------------- VOICE INPUT ---------------- */
 let recognition;
 let listeningForCommand = false;
