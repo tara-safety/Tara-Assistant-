@@ -59,7 +59,9 @@ menu.classList.toggle("open");
 
 document.addEventListener("click", function(e){
 
-if(menu && menu.classList.contains("open") &&
+if(!menu) return;
+
+if(menu.classList.contains("open") &&
 !menu.contains(e.target) &&
 e.target !== menuBtn){
 
