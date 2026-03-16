@@ -69,17 +69,13 @@ try {
 
 app.post("/ask", async (req, res) => {
 
-  const question = req.body.question || "";
-
-  try {
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-5-mini",
-      max_completion_tokens: 180,
-      messages: [
-        {
-          role: "system",
-          content: `You are TARA (Tow Awareness and Response Assistant).
+  const completion = await openai.chat.completions.create({
+  model: "gpt-5-mini",
+  max_completion_tokens: 180,
+  messages: [
+    {
+      role: "system",
+      content: `You are TARA (Tow Awareness and Response Assistant).
 
 You assist professional tow truck operators working roadside.
 
@@ -91,13 +87,13 @@ Rules:
 • If a vehicle make/model is missing, give general safe procedures.
 • If the question is unrelated say:
 "Sorry, I can only answer towing and roadside safety questions."`
-        },
-        {
-          role: "user",
-          content: question
-        }
-      ]
-    });
+    },
+    {
+      role: "user",
+      content: question
+    }
+  ]
+});
 
     const answer = completion.choices[0].message.content;
 
