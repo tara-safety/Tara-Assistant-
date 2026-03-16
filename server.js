@@ -98,7 +98,7 @@ Rules:
       ]
     });
 
-    const answer = response.choices[0].message.content;
+    const answer = completion.choices[0].message.content;
 
     res.json({ answer });
 
@@ -113,7 +113,6 @@ Rules:
   }
 
 });
-
 /* ------------------------
    EMERGENCY ALERT
 -------------------------*/
