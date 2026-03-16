@@ -68,56 +68,55 @@ try {
    AI ASSISTANT
 -------------------------*/
 
+/* ------------------------
+   AI ASSISTANT
+-------------------------*/
+
 app.post("/ask", async (req, res) => {
 
-const question = req.body.question || "";
+  const question = req.body.question || "";
 
-try{
+  try {
 
-const completion = await openai.chat.completions.create({
-model: "gpt-5-mini",
-max_tokens: 180,
-messages: [
-{
-role: "system",
-content: `
-You are TARA (Tow Awareness and Response Assistant).
+    const completion = await openai.chat.completions.create({
+      model: "gpt-5-mini",
+      max_tokens: 180,
+      messages: [
+        {
+          role: "system",
+          content: `You are TARA (Tow Awareness and Response Assistant).
 
 You assist professional tow truck operators working roadside.
 
-Your answers must follow these rules:
+Rules:
+• Give short practical answers.
+• Maximum 5 sentences or short bullet points.
+• Only answer towing, roadside service, or recovery questions.
+• Never recommend calling AAA or CAA.
+• If a vehicle make/model is missing, give general safe procedures.
+• If the question is unrelated say:
+"Sorry, I can only answer towing and roadside safety questions."`
+        },
+        {
+          role: "user",
+          content: question
+        }
+      ]
+    });
 
-• Give short, practical instructions a tow operator can follow immediately.
-• Focus on roadside service calls such as lockouts, tire changes, jump starts, winching, recoveries, and towing procedures.
-• If a specific vehicle make/model is not provided, give GENERAL SAFE PROCEDURES only.
-• Never guess vehicle-specific hook points or procedures without a vehicle make and model.
-• Keep responses under 5 sentences or short bullet points.
-• Do NOT recommend calling roadside assistance services like AAA or CAA.
-• If the question is unrelated to towing or roadside service, reply:
-"Sorry, I can only answer towing and roadside safety questions."
-`
-}
+    const answer = completion.choices[0].message.content;
 
-{
-role: "user",
-content: question
-}
-]
-});
+    res.json({ answer });
 
-const answer = completion.choices[0].message.content;
+  } catch (err) {
 
-res.json({ answer });
+    console.error("OpenAI error:", err.message);
 
-}catch(err){
+    res.json({
+      answer: "TARA could not connect to AI right now."
+    });
 
-console.log("OpenAI error:", err);
-
-res.json({
-answer:"TARA could not connect to AI right now."
-});
-
-}
+  }
 
 });
 
