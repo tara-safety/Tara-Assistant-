@@ -155,7 +155,7 @@ chatBox.innerHTML += `<div style="margin-bottom:18px;"><b>TARA:</b> ${data.answe
 
 chatBox.scrollTop = chatBox.scrollHeight;
 
-speak(data.answer);
+// speak(data.answer);
 
 } catch(err){
 
