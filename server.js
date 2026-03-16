@@ -69,31 +69,34 @@ try {
 
 app.post("/ask", async (req, res) => {
 
-  const completion = await openai.chat.completions.create({
-  model: "gpt-5-mini",
-  max_completion_tokens: 180,
-  messages: [
-    {
-      role: "system",
-      content: `You are TARA (Tow Awareness and Response Assistant).
+  const question = req.body.question || "";
+
+  try {
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-5-mini",
+      max_completion_tokens: 180,
+      messages: [
+        {
+          role: "system",
+          content: `You are TARA (Tow Awareness and Response Assistant).
 
 You assist professional tow truck operators working roadside.
 
 Rules:
 • Give short practical answers.
-• Maximum 5 sentences or short bullet points.
-• Only answer towing, roadside service, or recovery questions.
+• Maximum 5 sentences.
+• Only answer towing or roadside service questions.
 • Never recommend calling AAA or CAA.
-• If a vehicle make/model is missing, give general safe procedures.
-• If the question is unrelated say:
-"Sorry, I can only answer towing and roadside safety questions."`
-    },
-    {
-      role: "user",
-      content: question
-    }
-  ]
-});
+• If vehicle make/model is missing give general safe procedures.
+• If unrelated say: Sorry, I can only answer towing and roadside safety questions.`
+        },
+        {
+          role: "user",
+          content: question
+        }
+      ]
+    });
 
     const answer = completion.choices[0].message.content;
 
