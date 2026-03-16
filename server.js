@@ -75,7 +75,8 @@ app.post("/ask", async (req, res) => {
 
     const completion = await openai.chat.completions.create({
       model: "gpt-5-mini",
-      max_completion_tokens: 400,
+      reasoning_effort: "low",
+      max_completion_tokens: 800,
       messages: [
         {
           role: "system",
