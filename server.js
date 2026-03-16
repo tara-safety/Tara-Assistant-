@@ -89,6 +89,7 @@ Rules:
 • Only answer towing or roadside service questions.
 • Never recommend calling AAA or CAA.
 • If details are missing, provide general safe towing procedures.
+• When possible include quick step-by-step instructions.
 • If unrelated say: Sorry, I can only answer towing and roadside safety questions.`
         },
         {
