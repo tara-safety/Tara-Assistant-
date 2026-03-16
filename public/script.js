@@ -137,6 +137,7 @@ body:JSON.stringify({question:text})
 if(!res.ok){
 throw new Error("Server response failed");
 }
+}
 
 const data = await res.json();
 
