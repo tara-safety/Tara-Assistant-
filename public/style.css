@@ -246,7 +246,7 @@ transform:translateX(0);
   bottom: 20px;
   z-index: 9999;
 
-  display: block;
+  display: none;
 
   min-width: 92px;
   height: 52px;
