@@ -160,11 +160,14 @@ box-sizing:border-box;
 transform:translateX(0);
 }
 
-/* EMERGENCY */
+/* ============================= */
+/* 🚨 EMERGENCY BUTTON SYSTEM */
+/* ============================= */
+
 .emergencyWrap{
   position: fixed;
-  right: 16px;
-  bottom: 150px;
+  right: 12px;
+  bottom: 220px; /* keeps it above SEND/TALK */
   z-index: 9998;
 
   display: flex;
@@ -175,17 +178,17 @@ transform:translateX(0);
 }
 
 .emergencyBtn{
-  width: 140px;
-  height: 140px;
+  width: 125px;
+  height: 125px;
 
-  border-radius: 25px;
+  border-radius: 24px;
   border: none;
 
   background: linear-gradient(145deg, #ff1a1a, #cc0000);
   color: white;
 
   font-weight: bold;
-  font-size: 18px;
+  font-size: 16px;
 
   display: flex;
   flex-direction: column;
@@ -193,7 +196,7 @@ transform:translateX(0);
   justify-content: center;
   text-align: center;
 
-  box-shadow: 0 0 25px rgba(255,0,0,0.6);
+  box-shadow: 0 0 22px rgba(255,0,0,0.6);
   animation: safetyPulse 2s infinite;
 
   user-select: none;
@@ -201,28 +204,57 @@ transform:translateX(0);
   -webkit-touch-callout: none;
   touch-action: manipulation;
 
-  opacity: 0.92;
+  opacity: 0.95;
 }
 
-.emergencyBtn:hover{
-  opacity: 1;
+/* icon */
+.emgIcon{
+  font-size: 24px;
+  margin-bottom: 4px;
 }
 
+/* text lines */
+.emgLine{
+  line-height: 1;
+}
+
+/* press effect */
+button{
+  transition: all 0.15s ease;
+}
+
+button:active{
+  transform: scale(0.95);
+}
+
+/* stronger pulse on hold */
 .emergencyBtn:active{
   animation: alertPulse 1s infinite;
-  transform: scale(0.96);
 }
 
-.emgIcon{
-  font-size: 28px;
-  line-height: 1;
-  margin-bottom: 6px;
+/* animations */
+@keyframes alertPulse{
+  0%{
+    transform: scale(1);
+    box-shadow: 0 0 14px rgba(255,0,0,0.65);
+  }
+  50%{
+    transform: scale(1.08);
+    box-shadow: 0 0 30px rgba(255,0,0,0.95);
+  }
+  100%{
+    transform: scale(1);
+    box-shadow: 0 0 14px rgba(255,0,0,0.65);
+  }
 }
 
-.emgLine{
-  line-height: 1.05;
+@keyframes safetyPulse{
+  0%{ box-shadow: 0 0 10px rgba(255,0,0,0.45); }
+  50%{ box-shadow: 0 0 28px rgba(255,0,0,0.85); }
+  100%{ box-shadow: 0 0 10px rgba(255,0,0,0.45); }
 }
 
+/* instruction text */
 .holdText{
   text-align: center;
   font-size: 15px;
@@ -232,48 +264,9 @@ transform:translateX(0);
   font-weight: bold;
 }
 
-button{
-  transition: all 0.15s ease;
-}
-
-button:active{
-  transform: scale(0.95);
-}
-
-@keyframes alertPulse{
-  0%{
-    transform: scale(1);
-    box-shadow: 0 0 14px rgba(255,0,0,0.65);
-  }
-
-  50%{
-    transform: scale(1.08);
-    box-shadow: 0 0 30px rgba(255,0,0,0.95);
-  }
-
-  100%{
-    transform: scale(1);
-    box-shadow: 0 0 14px rgba(255,0,0,0.65);
-  }
-}
-
-@keyframes safetyPulse{
-  0%{
-    box-shadow: 0 0 10px rgba(255,0,0,0.45);
-  }
-
-  50%{
-    box-shadow: 0 0 28px rgba(255,0,0,0.85);
-  }
-
-  100%{
-    box-shadow: 0 0 10px rgba(255,0,0,0.45);
-  }
-}
-
-/* keeps content from being hidden behind floating emergency button */
+/* prevent UI overlap */
 body{
-  padding-bottom: 220px;
+  padding-bottom: 260px;
 }
 
 /* CHAT */
