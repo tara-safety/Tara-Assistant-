@@ -63,12 +63,26 @@ export function startEmergencyCountdown(state, dom) {
   let count = EMERGENCY_COUNTDOWN;
 
   const cancelBtn = document.createElement("button");
-  cancelBtn.innerText = "Cancel Emergency";
-  cancelBtn.style.position = "fixed";
-  cancelBtn.style.bottom = "120px";
-  cancelBtn.style.left = "50%";
-  cancelBtn.style.transform = "translateX(-50%)";
-  cancelBtn.style.zIndex = "9999";
+cancelBtn.innerText = "CANCEL EMERGENCY";
+cancelBtn.style.position = "fixed";
+cancelBtn.style.bottom = "120px";
+cancelBtn.style.left = "50%";
+cancelBtn.style.transform = "translateX(-50%)";
+cancelBtn.style.zIndex = "9999";
+
+cancelBtn.style.background = "#c62828";
+cancelBtn.style.color = "#ffffff";
+cancelBtn.style.border = "none";
+cancelBtn.style.borderRadius = "14px";
+cancelBtn.style.padding = "18px 28px";
+cancelBtn.style.fontSize = "20px";
+cancelBtn.style.fontWeight = "bold";
+cancelBtn.style.boxShadow = "0 6px 18px rgba(0,0,0,0.35)";
+cancelBtn.style.minWidth = "260px";
+cancelBtn.style.minHeight = "70px";
+cancelBtn.style.textAlign = "center";
+cancelBtn.style.cursor = "pointer";
+cancelBtn.style.border = "3px solid #ffffff";
 
   document.body.appendChild(cancelBtn);
 
