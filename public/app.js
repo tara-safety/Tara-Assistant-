@@ -64,7 +64,7 @@ const emergencyMiniBtn = document.getElementById("emergencyMiniBtn");
 function toggleMiniEmergency() {
   if (!emergencyMiniBtn) return;
 
-  if (window.scrollY > 250) {
+  if (window.scrollY > 50) {
     emergencyMiniBtn.classList.add("show");
   } else {
     emergencyMiniBtn.classList.remove("show");
