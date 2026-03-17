@@ -168,14 +168,15 @@ transform:translateX(0);
   position: fixed;
   left: 0;
   right: 0;
+
   bottom: 110px;
+
   z-index: 9998;
 
   display: flex;
-  justify-content: flex-end;
-  pointer-events: none;
+  justify-content: center; /* 👈 CENTER IT */
 
-  padding: 0 14px calc(env(safe-area-inset-bottom, 0px) + 14px) 14px;
+  pointer-events: none;
 }
 
 .dockInner{
