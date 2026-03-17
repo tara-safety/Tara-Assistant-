@@ -58,6 +58,23 @@ document.addEventListener("DOMContentLoaded", function () {
     startEmergencyCountdown(state, dom)
   );
 
+  const emergencySection = document.querySelector(".emergencySection");
+const emergencyMiniBtn = document.getElementById("emergencyMiniBtn");
+
+function toggleMiniEmergency() {
+  if (!emergencyMiniBtn) return;
+
+  if (window.scrollY > 250) {
+    emergencyMiniBtn.classList.add("show");
+  } else {
+    emergencyMiniBtn.classList.remove("show");
+  }
+}
+
+window.addEventListener("scroll", toggleMiniEmergency);
+window.addEventListener("resize", toggleMiniEmergency);
+toggleMiniEmergency();
+  
   async function sendQuestion() {
     const text = dom.questionInput.value.trim();
     if (!text) return;
