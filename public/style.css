@@ -230,7 +230,9 @@ transform:translateX(0);
   -webkit-touch-callout: none;
   touch-action: manipulation;
 }
-
+.emergencyBtn{
+  margin: 0 auto;
+}
 .emgIcon{
   font-size: 24px;
   margin-bottom: 6px;
