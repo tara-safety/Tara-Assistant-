@@ -36,6 +36,26 @@ export function setupEmergencyButton(state, dom, startEmergencyCountdown) {
   dom.emergencyBtn.addEventListener("touchend", () => cancelHold(state));
 }
 
+export function setupEmergencyButton(state, dom, startEmergencyCountdown) {
+  const buttons = [
+    document.getElementById("emergencyBtn"),
+    document.getElementById("emergencyMiniBtn")
+  ].filter(Boolean);
+
+  buttons.forEach((btn) => {
+    btn.addEventListener("mousedown", () =>
+      startHold(state, startEmergencyCountdown)
+    );
+    btn.addEventListener("touchstart", () =>
+      startHold(state, startEmergencyCountdown)
+    );
+
+    btn.addEventListener("mouseup", () => cancelHold(state));
+    btn.addEventListener("mouseleave", () => cancelHold(state));
+    btn.addEventListener("touchend", () => cancelHold(state));
+  });
+}
+
 function startHold(state, startEmergencyCountdown) {
   let count = 3;
 
