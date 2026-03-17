@@ -163,8 +163,8 @@ transform:translateX(0);
 /* EMERGENCY */
 .emergencyWrap{
   position: fixed;
-  right: 18px;
-  bottom: 95px;
+  right: 16px;
+  bottom: 150px;
   z-index: 9998;
 
   display: flex;
@@ -181,7 +181,7 @@ transform:translateX(0);
   border-radius: 25px;
   border: none;
 
-  background: red;
+  background: linear-gradient(145deg, #ff1a1a, #cc0000);
   color: white;
 
   font-weight: bold;
@@ -193,14 +193,43 @@ transform:translateX(0);
   justify-content: center;
   text-align: center;
 
-  box-shadow: 0 10px 25px rgba(0,0,0,0.35);
-
-  animation: safetyPulse 2.5s infinite;
+  box-shadow: 0 0 25px rgba(255,0,0,0.6);
+  animation: safetyPulse 2s infinite;
 
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   touch-action: manipulation;
+
+  opacity: 0.92;
+}
+
+.emergencyBtn:hover{
+  opacity: 1;
+}
+
+.emergencyBtn:active{
+  animation: alertPulse 1s infinite;
+  transform: scale(0.96);
+}
+
+.emgIcon{
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.emgLine{
+  line-height: 1.05;
+}
+
+.holdText{
+  text-align: center;
+  font-size: 15px;
+  margin-top: 10px;
+  margin-bottom: 12px;
+  color: #ff6b6b;
+  font-weight: bold;
 }
 
 button{
@@ -211,49 +240,40 @@ button:active{
   transform: scale(0.95);
 }
 
-.emergencyBtn:active{
-  animation: alertPulse 1s infinite;
-}
-
 @keyframes alertPulse{
   0%{
     transform: scale(1);
-    box-shadow: 0 0 10px red;
+    box-shadow: 0 0 14px rgba(255,0,0,0.65);
   }
 
   50%{
     transform: scale(1.08);
-    box-shadow: 0 0 25px red;
+    box-shadow: 0 0 30px rgba(255,0,0,0.95);
   }
 
   100%{
     transform: scale(1);
-    box-shadow: 0 0 10px red;
+    box-shadow: 0 0 14px rgba(255,0,0,0.65);
   }
 }
 
 @keyframes safetyPulse{
-  0%{ box-shadow: 0 0 8px red; }
-  50%{ box-shadow: 0 0 25px red; }
-  100%{ box-shadow: 0 0 8px red; }
+  0%{
+    box-shadow: 0 0 10px rgba(255,0,0,0.45);
+  }
+
+  50%{
+    box-shadow: 0 0 28px rgba(255,0,0,0.85);
+  }
+
+  100%{
+    box-shadow: 0 0 10px rgba(255,0,0,0.45);
+  }
 }
 
-.emgText{
-  position: absolute;
-  font-weight: bold;
-  z-index: 2;
-}
-
-.holdText{
-  text-align: center;
-  font-size: 16px;
-  margin-top: 10px;
-  color: #ffbbbb;
-}
-
-/* keeps page content from hiding behind floating button */
+/* keeps content from being hidden behind floating emergency button */
 body{
-  padding-bottom: 180px;
+  padding-bottom: 220px;
 }
 
 /* CHAT */
