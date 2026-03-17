@@ -62,14 +62,13 @@ document.addEventListener("DOMContentLoaded", function () {
   const emergencyMiniBtn = document.getElementById("emergencyMiniBtn");
 
 function toggleMiniEmergency() {
-  if (!emergencyMiniBtn) {
-    console.log("Mini emergency button not found");
-    return;
-  }
+  if (!emergencySection || !emergencyMiniBtn) return;
 
-  console.log("scrollY =", window.scrollY);
+  const rect = emergencySection.getBoundingClientRect();
 
-  if (window.scrollY > 50) {
+  console.log("section bottom:", rect.bottom);
+
+  if (rect.bottom < 80) {
     emergencyMiniBtn.classList.add("show");
     console.log("Mini button shown");
   } else {
