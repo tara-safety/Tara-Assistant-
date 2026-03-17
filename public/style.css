@@ -292,11 +292,6 @@ transform:translateX(0);
   }
 }
 
-/* create room so app content never hides behind dock */
-body{
-  padding-bottom: 190px;
-}
-
 /* CHAT */
 
 .chatBox{
