@@ -59,15 +59,22 @@ document.addEventListener("DOMContentLoaded", function () {
   );
 
   const emergencySection = document.querySelector(".emergencySection");
-const emergencyMiniBtn = document.getElementById("emergencyMiniBtn");
+  const emergencyMiniBtn = document.getElementById("emergencyMiniBtn");
 
 function toggleMiniEmergency() {
-  if (!emergencyMiniBtn) return;
+  if (!emergencyMiniBtn) {
+    console.log("Mini emergency button not found");
+    return;
+  }
+
+  console.log("scrollY =", window.scrollY);
 
   if (window.scrollY > 50) {
     emergencyMiniBtn.classList.add("show");
+    console.log("Mini button shown");
   } else {
     emergencyMiniBtn.classList.remove("show");
+    console.log("Mini button hidden");
   }
 }
 
