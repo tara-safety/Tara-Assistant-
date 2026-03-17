@@ -61,26 +61,23 @@ document.addEventListener("DOMContentLoaded", function () {
   const emergencySection = document.querySelector(".emergencySection");
   const emergencyMiniBtn = document.getElementById("emergencyMiniBtn");
 
-function toggleMiniEmergency() {
-  if (!emergencySection || !emergencyMiniBtn) return;
+  function toggleMiniEmergency() {
+    if (!emergencySection || !emergencyMiniBtn) return;
 
-  const rect = emergencySection.getBoundingClientRect();
+    const rect = emergencySection.getBoundingClientRect();
+    console.log("Emergency section:", rect.top, rect.bottom);
 
-  console.log("section bottom:", rect.bottom);
-
-  if (rect.bottom < 120) {
-    emergencyMiniBtn.classList.add("show");
-    console.log("Mini button shown");
-  } else {
-    emergencyMiniBtn.classList.remove("show");
-    console.log("Mini button hidden");
+    if (rect.bottom < 120) {
+      emergencyMiniBtn.classList.add("show");
+    } else {
+      emergencyMiniBtn.classList.remove("show");
+    }
   }
-}
 
-window.addEventListener("scroll", toggleMiniEmergency);
-window.addEventListener("resize", toggleMiniEmergency);
-toggleMiniEmergency();
-  
+  window.addEventListener("scroll", toggleMiniEmergency);
+  window.addEventListener("resize", toggleMiniEmergency);
+  toggleMiniEmergency();
+
   async function sendQuestion() {
     const text = dom.questionInput.value.trim();
     if (!text) return;
@@ -107,7 +104,10 @@ toggleMiniEmergency();
     } catch (err) {
       console.error("Ask error:", err);
       thinking.remove();
-      addStatus(dom.chatBox, `<span style="color:red;">TARA Error: ${err.message}</span>`);
+      addStatus(
+        dom.chatBox,
+        `<span style="color:red;">TARA Error: ${err.message}</span>`
+      );
     }
   }
 });
