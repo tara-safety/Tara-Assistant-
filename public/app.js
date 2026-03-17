@@ -68,7 +68,7 @@ function toggleMiniEmergency() {
 
   console.log("section bottom:", rect.bottom);
 
-  if (rect.bottom < 80) {
+  if (rect.bottom < 120) {
     emergencyMiniBtn.classList.add("show");
     console.log("Mini button shown");
   } else {
