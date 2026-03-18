@@ -27,7 +27,13 @@ export const state = {
   contextMode: "idle",
   watchId: null,
   lastMotionLevel: 0,
+  motionActivityScore: 0,
   lastMovementTime: 0,
-  // new walking/activity scoring
-  motionActivityScore: 0
+
+  // High-Risk Mode
+  highRiskMode: false,
+  sirenAudioContext: null,
+  sirenOscillator: null,
+  sirenGain: null,
+  sirenInterval: null
 };
