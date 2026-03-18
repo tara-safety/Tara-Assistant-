@@ -5,6 +5,15 @@ import {
 } from "./config.js";
 import { addStatus } from "./ui.js";
 
+const EMERGENCY_QUEUE_KEY = "tara_emergency_queue_v1";
+const RETRY_INTERVAL_MS = 10000;
+
+let retryIntervalStarted = false;
+
+/* ============================= */
+/* ALARM */
+/* ============================= */
+
 export function playAlarm(state) {
   if (!state.alarmAudio) return;
 
@@ -69,7 +78,6 @@ function startHold(state, startEmergencyCountdown) {
 
   let count = 3;
 
-  /* start alarm immediately while holding */
   playAlarm(state);
 
   state.holdTimer = setInterval(function () {
@@ -89,7 +97,6 @@ function cancelHold(state) {
     state.holdTimer = null;
   }
 
-  /* stop alarm if user released before countdown started */
   if (!state.emergencyRunning) {
     stopAlarm(state);
   }
@@ -103,10 +110,7 @@ export function startEmergencyCountdown(state, dom) {
   if (state.emergencyRunning) return;
 
   state.emergencyRunning = true;
-
-  /* keep alarm going into countdown */
   playAlarm(state);
-
   addStatus(dom.chatBox, "🚨 Emergency countdown started");
 
   let count = EMERGENCY_COUNTDOWN;
@@ -119,16 +123,13 @@ export function startEmergencyCountdown(state, dom) {
   cancelBtn.style.left = "50%";
   cancelBtn.style.transform = "translateX(-50%)";
   cancelBtn.style.zIndex = "9999";
-
   cancelBtn.style.background = "#c62828";
   cancelBtn.style.color = "#ffffff";
   cancelBtn.style.border = "3px solid #ffffff";
   cancelBtn.style.borderRadius = "16px";
-
   cancelBtn.style.padding = "20px 30px";
   cancelBtn.style.fontSize = "22px";
   cancelBtn.style.fontWeight = "bold";
-
   cancelBtn.style.boxShadow = "0 8px 22px rgba(0,0,0,0.4)";
   cancelBtn.style.minWidth = "280px";
   cancelBtn.style.minHeight = "78px";
@@ -167,13 +168,13 @@ export function triggerEmergency(state, dom) {
 
   if (!navigator.geolocation) {
     addStatus(dom.chatBox, "⚠️ Geolocation not supported");
-    sendEmergency(state, dom, null, null);
+    queueAndSendEmergency(state, dom, null, null);
     return;
   }
 
   navigator.geolocation.getCurrentPosition(
     function (pos) {
-      sendEmergency(
+      queueAndSendEmergency(
         state,
         dom,
         pos.coords.latitude,
@@ -181,63 +182,143 @@ export function triggerEmergency(state, dom) {
       );
     },
     function () {
-      addStatus(
-        dom.chatBox,
-        "⚠️ Location unavailable, sending without GPS"
-      );
-      sendEmergency(state, dom, null, null);
+      addStatus(dom.chatBox, "⚠️ Location unavailable, sending without GPS");
+      queueAndSendEmergency(state, dom, null, null);
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
   );
 }
 
 /* ============================= */
-/* SEND EMERGENCY */
+/* QUEUE + SEND */
 /* ============================= */
 
-export async function sendEmergency(state, dom, lat, lon, retry = 0) {
-  try {
-    console.log("Sending emergency alert");
+function makeEmergencyPayload(lat, lon) {
+  return {
+    id: "emg_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
+    driver: DRIVER_NAME,
+    company: COMPANY,
+    time: new Date().toISOString(),
+    lat,
+    lon,
+    status: "pending"
+  };
+}
 
+function readEmergencyQueue() {
+  try {
+    const raw = localStorage.getItem(EMERGENCY_QUEUE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.log("Queue read failed:", err);
+    return [];
+  }
+}
+
+function writeEmergencyQueue(queue) {
+  try {
+    localStorage.setItem(EMERGENCY_QUEUE_KEY, JSON.stringify(queue));
+  } catch (err) {
+    console.log("Queue write failed:", err);
+  }
+}
+
+function addToEmergencyQueue(payload) {
+  const queue = readEmergencyQueue();
+  queue.push(payload);
+  writeEmergencyQueue(queue);
+}
+
+function removeFromEmergencyQueue(id) {
+  const queue = readEmergencyQueue().filter((item) => item.id !== id);
+  writeEmergencyQueue(queue);
+}
+
+export async function queueAndSendEmergency(state, dom, lat, lon) {
+  const payload = makeEmergencyPayload(lat, lon);
+
+  addToEmergencyQueue(payload);
+  addStatus(dom.chatBox, "📦 Emergency saved for fail-safe delivery");
+
+  const sent = await sendQueuedPayload(payload);
+
+  if (sent) {
+    removeFromEmergencyQueue(payload.id);
+    addStatus(dom.chatBox, "🚨 Emergency Alert Sent");
+  } else {
+    addStatus(dom.chatBox, "⚠️ Alert not delivered yet. Retry queue active.");
+  }
+
+  stopAlarm(state);
+  state.emergencyRunning = false;
+  state.emergencyActive = false;
+}
+
+async function sendQueuedPayload(payload) {
+  try {
     const res = await fetch(
       "https://tara-assistant-dwhg.onrender.com/emergency",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          driver: DRIVER_NAME,
-          company: COMPANY,
-          time: new Date().toISOString(),
-          lat,
-          lon
+          driver: payload.driver,
+          company: payload.company,
+          time: payload.time,
+          lat: payload.lat,
+          lon: payload.lon
         })
       }
     );
 
-    if (!res.ok) throw new Error("server error");
+    if (!res.ok) {
+      throw new Error("server error");
+    }
 
-    addStatus(dom.chatBox, "🚨 Emergency Alert Sent");
-
-    stopAlarm(state);
-    state.emergencyRunning = false;
-    state.emergencyActive = false;
+    return true;
   } catch (error) {
-    console.log("Emergency error:", error);
+    console.log("Queued emergency send failed:", error);
+    return false;
+  }
+}
 
-    addStatus(dom.chatBox, "⚠️ Alert failed");
+/* ============================= */
+/* FAIL-SAFE RETRY SYSTEM */
+/* ============================= */
 
-    if (retry < 3) {
-      addStatus(dom.chatBox, "🔁 Retrying...");
+export function setupEmergencyFailSafe(dom) {
+  if (retryIntervalStarted) return;
+  retryIntervalStarted = true;
 
-      setTimeout(function () {
-        sendEmergency(state, dom, lat, lon, retry + 1);
-      }, 5000);
-    } else {
-      addStatus(dom.chatBox, "❌ Emergency failed after retries");
+  async function processEmergencyQueue() {
+    const queue = readEmergencyQueue();
+    if (!queue.length) return;
 
-      stopAlarm(state);
-      state.emergencyRunning = false;
-      state.emergencyActive = false;
+    for (const payload of queue) {
+      const sent = await sendQueuedPayload(payload);
+
+      if (sent) {
+        removeFromEmergencyQueue(payload.id);
+        if (dom && dom.chatBox) {
+          addStatus(dom.chatBox, "✅ Queued emergency delivered");
+        }
+      }
     }
   }
+
+  window.addEventListener("online", function () {
+    console.log("Connection restored. Retrying queued emergencies.");
+    processEmergencyQueue();
+  });
+
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") {
+      processEmergencyQueue();
+    }
+  });
+
+  setInterval(processEmergencyQueue, RETRY_INTERVAL_MS);
+  processEmergencyQueue();
 }
