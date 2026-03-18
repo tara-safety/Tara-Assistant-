@@ -1,7 +1,8 @@
 import { addStatus } from "./ui.js";
 
 const DRIVING_SPEED_MPS = 2.8; // ~10 km/h
-const WORKING_MOTION_THRESHOLD = 8;
+const WORKING_MOTION_THRESHOLD = 4.5;
+const IDLE_MOTION_THRESHOLD = 2.5;
 
 export function setupContextAwareness(state, dom) {
   startSpeedWatch(state, dom);
@@ -20,7 +21,6 @@ function startSpeedWatch(state, dom) {
     function (pos) {
       const speed = pos.coords.speed;
 
-      // speed may be null on some devices
       if (speed !== null && speed !== undefined) {
         if (speed > DRIVING_SPEED_MPS) {
           setContextMode(state, dom, "driving");
@@ -41,20 +41,23 @@ function startSpeedWatch(state, dom) {
 
 function startContextHeartbeat(state, dom) {
   setInterval(function () {
-    // if currently driving and motion has dropped, allow fallback out of driving
-    if (state.contextMode === "driving" && state.lastMotionLevel < WORKING_MOTION_THRESHOLD) {
-      setContextMode(state, dom, "idle");
+    // driving stays priority if speed put it there recently
+    if (state.contextMode === "driving") {
+      if (state.lastMotionLevel < IDLE_MOTION_THRESHOLD) {
+        setContextMode(state, dom, "idle");
+      }
       return;
     }
 
-    if (state.contextMode !== "driving") {
-      if (state.lastMotionLevel >= WORKING_MOTION_THRESHOLD) {
-        setContextMode(state, dom, "working");
-      } else {
-        setContextMode(state, dom, "idle");
-      }
+    // easier working detection for walking / loading movement
+    if (state.lastMotionLevel >= WORKING_MOTION_THRESHOLD) {
+      setContextMode(state, dom, "working");
+    } else if (state.lastMotionLevel >= IDLE_MOTION_THRESHOLD) {
+      setContextMode(state, dom, "working");
+    } else {
+      setContextMode(state, dom, "idle");
     }
-  }, 3000);
+  }, 2000);
 }
 
 export function updateMotionContext(state, motionLevel) {
