@@ -16,5 +16,9 @@ export const state = {
   warningRunning: false,
   warningTimeout: null,
 
-  wakeLock: null
+  wakeLock: null,
+
+  // driver warning motion validation
+  warningStartedAt: 0,
+  warningClearHits: 0
 };
