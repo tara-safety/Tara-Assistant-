@@ -16,10 +16,88 @@ const RETRY_INTERVAL_MS = 10000;
 let retryIntervalStarted = false;
 
 /* ============================= */
+/* HIGH-RISK SIREN */
+/* ============================= */
+
+async function startHighRiskSiren(state) {
+  try {
+    if (!state.sirenAudioContext) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return false;
+      state.sirenAudioContext = new AudioCtx();
+    }
+
+    if (state.sirenAudioContext.state === "suspended") {
+      await state.sirenAudioContext.resume();
+    }
+
+    if (state.sirenOscillator) return true;
+
+    const ctx = state.sirenAudioContext;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(740, ctx.currentTime);
+
+    gain.gain.setValueAtTime(0.06, ctx.currentTime);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start();
+
+    let high = false;
+    state.sirenInterval = setInterval(function () {
+      if (!state.sirenOscillator) return;
+      high = !high;
+      try {
+        osc.frequency.setValueAtTime(high ? 1040 : 740, ctx.currentTime);
+      } catch (e) {}
+    }, 220);
+
+    state.sirenOscillator = osc;
+    state.sirenGain = gain;
+
+    return true;
+  } catch (err) {
+    console.log("High-risk siren failed:", err);
+    return false;
+  }
+}
+
+function stopHighRiskSiren(state) {
+  try {
+    if (state.sirenInterval) {
+      clearInterval(state.sirenInterval);
+      state.sirenInterval = null;
+    }
+
+    if (state.sirenOscillator) {
+      state.sirenOscillator.stop();
+      state.sirenOscillator.disconnect();
+      state.sirenOscillator = null;
+    }
+
+    if (state.sirenGain) {
+      state.sirenGain.disconnect();
+      state.sirenGain = null;
+    }
+  } catch (err) {
+    console.log("High-risk siren stop failed:", err);
+  }
+}
+
+/* ============================= */
 /* ALARM */
 /* ============================= */
 
 export function playAlarm(state) {
+  if (state.highRiskMode) {
+    startHighRiskSiren(state);
+    return;
+  }
+
   if (!state.alarmAudio) return;
 
   state.alarmAudio.currentTime = 0;
@@ -29,6 +107,8 @@ export function playAlarm(state) {
 }
 
 export function stopAlarm(state) {
+  stopHighRiskSiren(state);
+
   if (!state.alarmAudio) return;
 
   state.alarmAudio.pause();
@@ -117,7 +197,12 @@ export function startEmergencyCountdown(state, dom) {
   state.emergencyRunning = true;
   playAlarm(state);
   addStatus(dom.chatBox, "🚨 Emergency countdown started");
-  forceSpeak("Emergency countdown started. Say cancel emergency to stop.");
+
+  if (state.highRiskMode) {
+    forceSpeak("High-risk emergency countdown started. Say cancel emergency now.");
+  } else {
+    forceSpeak("Emergency countdown started. Say cancel emergency to stop.");
+  }
 
   let count = EMERGENCY_COUNTDOWN;
 
