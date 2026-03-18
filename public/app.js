@@ -34,12 +34,28 @@ document.addEventListener("DOMContentLoaded", function () {
   setupSystemUnlock(state);
   addFooter();
 
+  setupEmergencyFailSafe(dom);
+  setupContextAwareness(state, dom);
+
+  if (dom.highRiskBtn) {
+    dom.highRiskBtn.addEventListener("click", function () {
+      state.highRiskMode = !state.highRiskMode;
+
+      if (state.highRiskMode) {
+        dom.highRiskBtn.innerText = "HIGH-RISK MODE ON";
+        dom.highRiskBtn.classList.add("active");
+        addStatus(dom.chatBox, "🚧 High-Risk Mode Activated");
+      } else {
+        dom.highRiskBtn.innerText = "HIGH-RISK MODE OFF";
+        dom.highRiskBtn.classList.remove("active");
+        addStatus(dom.chatBox, "✅ High-Risk Mode Disabled");
+      }
+    });
+  }
+
   const voiceToggle = document.getElementById("voiceToggle");
   const voiceBtn = document.getElementById("voiceBtn");
   const emergencyMiniBtn = document.getElementById("emergencyMiniBtn");
-
-  setupEmergencyFailSafe(dom);
-  setupContextAwareness(state, dom);
 
   if (voiceToggle) {
     state.voiceEnabled = voiceToggle.checked;
