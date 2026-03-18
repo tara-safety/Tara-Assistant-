@@ -20,7 +20,8 @@ import { openCamera } from "./camera.js";
 import { setupDriverMinder } from "./motion.js";
 import {
   setupEmergencyButton,
-  startEmergencyCountdown
+  startEmergencyCountdown,
+  setupEmergencyFailSafe
 } from "./emergency.js";
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -36,7 +37,9 @@ document.addEventListener("DOMContentLoaded", function () {
   const voiceBtn = document.getElementById("voiceBtn");
   const emergencyMiniBtn = document.getElementById("emergencyMiniBtn");
 
-  // set initial voice state from checkbox
+  // start fail-safe retry system
+  setupEmergencyFailSafe(dom);
+
   if (voiceToggle) {
     state.voiceEnabled = voiceToggle.checked;
 
@@ -90,7 +93,6 @@ document.addEventListener("DOMContentLoaded", function () {
     startEmergencyCountdown(state, dom);
   });
 
-  // MINI SOS CONTROL
   function toggleMiniSOS() {
     if (!emergencyMiniBtn) return;
 
@@ -128,8 +130,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const data = await res.json();
       thinking.remove();
       addTaraMessage(dom.chatBox, data.answer);
-
-      // speak only if voice is enabled
       speak(data.answer, state);
     } catch (err) {
       console.error("Ask error:", err);
