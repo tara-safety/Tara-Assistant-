@@ -10,10 +10,9 @@ import {
   releaseWakeLock,
   restoreWakeLockIfNeeded
 } from "./wakelock.js";
+import { forceSpeak, stopSpeaking } from "./voice.js";
 
 const WARNING_TIME = 15000; // 15 seconds
-
-// New safety values
 const WARNING_CLEAR_DELAY = 3000; // wait 3 seconds before allowing clear
 const WARNING_CLEAR_THRESHOLD = 12; // real movement only
 const WARNING_CLEAR_HITS_REQUIRED = 3; // need repeated motion to clear
@@ -69,7 +68,6 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
       Math.abs(acc.y || 0) +
       Math.abs(acc.z || 0);
 
-    // Start warning on big impact
     if (impact > IMPACT_LIMIT) {
       const now = Date.now();
 
@@ -79,8 +77,6 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
       }
     }
 
-    // Safer clearing logic during warning:
-    // do NOT clear from one tiny movement/noise reading
     if (state.warningRunning) {
       const now = Date.now();
       const enoughTimePassed =
@@ -124,6 +120,8 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
       ? "⚠️ Driver Minder warning: impact detected. Emergency check started."
       : "⚠️ Driver Minder warning: no movement detected. Emergency check started."
   );
+
+  forceSpeak("Driver check required. Press I am safe to cancel.");
 
   const warningBox = document.createElement("div");
   warningBox.id = "driverWarningBox";
@@ -171,6 +169,18 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
     addStatus(dom.chatBox, "✅ Driver confirmed safe.");
   };
 
+  setTimeout(function () {
+    if (state.warningRunning) {
+      forceSpeak("Respond now or emergency will start.");
+    }
+  }, 5000);
+
+  setTimeout(function () {
+    if (state.warningRunning) {
+      forceSpeak("Final warning.");
+    }
+  }, 10000);
+
   state.warningTimeout = setTimeout(function () {
     clearDriverWarning(state);
     startEmergencyCountdown();
@@ -186,6 +196,8 @@ function clearDriverWarning(state) {
     clearTimeout(state.warningTimeout);
     state.warningTimeout = null;
   }
+
+  stopSpeaking();
 
   const warningBox = document.getElementById("driverWarningBox");
   const safeBtn = document.getElementById("driverSafeBtn");
