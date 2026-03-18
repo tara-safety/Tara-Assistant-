@@ -16,6 +16,10 @@ import {
   startSafetyVoiceListener,
   stopSafetyVoiceListener
 } from "./voice.js";
+import {
+  updateMotionContext,
+  shouldPauseInactivityForDriving
+} from "./context.js";
 
 const WARNING_TIME = 15000;
 const WARNING_CLEAR_DELAY = 3000;
@@ -73,6 +77,8 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
       Math.abs(acc.y || 0) +
       Math.abs(acc.z || 0);
 
+    updateMotionContext(state, impact);
+
     if (impact > IMPACT_LIMIT) {
       const now = Date.now();
 
@@ -106,9 +112,16 @@ export function resetInactivityTimer(state, dom, startEmergencyCountdown) {
   clearTimeout(state.inactivityTimer);
 
   state.inactivityTimer = setTimeout(function () {
-    if (state.driverMinderActive) {
-      startDriverWarning(state, dom, startEmergencyCountdown, "inactivity");
+    if (!state.driverMinderActive) return;
+
+    // Stage 5: pause inactivity escalation while driving
+    if (shouldPauseInactivityForDriving(state)) {
+      addStatus(dom.chatBox, "🟢 Driving detected. Inactivity check paused.");
+      resetInactivityTimer(state, dom, startEmergencyCountdown);
+      return;
     }
+
+    startDriverWarning(state, dom, startEmergencyCountdown, "inactivity");
   }, INACTIVITY_LIMIT);
 }
 
