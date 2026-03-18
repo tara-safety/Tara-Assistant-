@@ -58,6 +58,23 @@ document.addEventListener("DOMContentLoaded", function () {
     startEmergencyCountdown(state, dom);
   });
 
+  // MINI SOS CONTROL
+  const emergencyMiniBtn = document.getElementById("emergencyMiniBtn");
+
+  function toggleMiniSOS() {
+    if (!emergencyMiniBtn) return;
+
+    if (window.scrollY > 60) {
+      emergencyMiniBtn.classList.add("show");
+    } else {
+      emergencyMiniBtn.classList.remove("show");
+    }
+  }
+
+  window.addEventListener("scroll", toggleMiniSOS);
+  window.addEventListener("resize", toggleMiniSOS);
+  toggleMiniSOS();
+
   async function sendQuestion() {
     const text = dom.questionInput.value.trim();
     if (!text) return;
