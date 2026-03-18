@@ -13,7 +13,8 @@ export const state = {
   alarmAudio: null,
   recognition: null,
 
-  // new warning phase state
   warningRunning: false,
-  warningTimeout: null
+  warningTimeout: null,
+
+  wakeLock: null
 };
