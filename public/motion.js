@@ -72,12 +72,15 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
     const acc = e.accelerationIncludingGravity;
     if (!acc) return;
 
-    const impact =
-      Math.abs(acc.x || 0) +
-      Math.abs(acc.y || 0) +
-      Math.abs(acc.z || 0);
+    const x = Math.abs(acc.x || 0);
+    const y = Math.abs(acc.y || 0);
+    const z = Math.abs(acc.z || 0);
 
-    updateMotionContext(state, impact);
+    const impact = x + y + z;
+
+    // softer movement signal for walking / working detection
+    const motionLevel = (x * 0.8) + (y * 0.8) + (z * 0.5);
+    updateMotionContext(state, motionLevel);
 
     if (impact > IMPACT_LIMIT) {
       const now = Date.now();
@@ -114,7 +117,6 @@ export function resetInactivityTimer(state, dom, startEmergencyCountdown) {
   state.inactivityTimer = setTimeout(function () {
     if (!state.driverMinderActive) return;
 
-    // Stage 5: pause inactivity escalation while driving
     if (shouldPauseInactivityForDriving(state)) {
       addStatus(dom.chatBox, "🟢 Driving detected. Inactivity check paused.");
       resetInactivityTimer(state, dom, startEmergencyCountdown);
