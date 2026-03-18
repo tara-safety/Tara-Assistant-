@@ -22,7 +22,7 @@ export function stopAlarm(state) {
 }
 
 /* ============================= */
-/* EMERGENCY BUTTON SETUP (UPDATED) */
+/* EMERGENCY BUTTON SETUP */
 /* ============================= */
 
 export function setupEmergencyButton(state, dom, startEmergencyCountdown) {
@@ -51,6 +51,10 @@ export function setupEmergencyButton(state, dom, startEmergencyCountdown) {
     btn.addEventListener("touchend", function () {
       cancelHold(state);
     });
+
+    btn.addEventListener("touchcancel", function () {
+      cancelHold(state);
+    });
   });
 }
 
@@ -59,20 +63,36 @@ export function setupEmergencyButton(state, dom, startEmergencyCountdown) {
 /* ============================= */
 
 function startHold(state, startEmergencyCountdown) {
+  if (state.holdTimer) {
+    clearInterval(state.holdTimer);
+  }
+
   let count = 3;
+
+  /* start alarm immediately while holding */
+  playAlarm(state);
 
   state.holdTimer = setInterval(function () {
     count--;
 
     if (count <= 0) {
       clearInterval(state.holdTimer);
+      state.holdTimer = null;
       startEmergencyCountdown();
     }
   }, 1000);
 }
 
 function cancelHold(state) {
-  clearInterval(state.holdTimer);
+  if (state.holdTimer) {
+    clearInterval(state.holdTimer);
+    state.holdTimer = null;
+  }
+
+  /* stop alarm if user released before countdown started */
+  if (!state.emergencyRunning) {
+    stopAlarm(state);
+  }
 }
 
 /* ============================= */
@@ -83,7 +103,10 @@ export function startEmergencyCountdown(state, dom) {
   if (state.emergencyRunning) return;
 
   state.emergencyRunning = true;
+
+  /* keep alarm going into countdown */
   playAlarm(state);
+
   addStatus(dom.chatBox, "🚨 Emergency countdown started");
 
   let count = EMERGENCY_COUNTDOWN;
