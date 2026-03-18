@@ -10,7 +10,7 @@ export function playAlarm(state) {
 
   state.alarmAudio.currentTime = 0;
   state.alarmAudio.play().catch(() => {
-    console.log("Alarm blocked by iOS");
+    console.log("Alarm blocked by iPhone");
   });
 }
 
@@ -24,35 +24,24 @@ export function stopAlarm(state) {
 export function setupEmergencyButton(state, dom, startEmergencyCountdown) {
   if (!dom.emergencyBtn) return;
 
-  dom.emergencyBtn.addEventListener("mousedown", () =>
-    startHold(state, startEmergencyCountdown)
-  );
-  dom.emergencyBtn.addEventListener("touchstart", () =>
-    startHold(state, startEmergencyCountdown)
-  );
+  dom.emergencyBtn.addEventListener("mousedown", function () {
+    startHold(state, startEmergencyCountdown);
+  });
 
-  dom.emergencyBtn.addEventListener("mouseup", () => cancelHold(state));
-  dom.emergencyBtn.addEventListener("mouseleave", () => cancelHold(state));
-  dom.emergencyBtn.addEventListener("touchend", () => cancelHold(state));
-}
+  dom.emergencyBtn.addEventListener("touchstart", function () {
+    startHold(state, startEmergencyCountdown);
+  });
 
-export function setupEmergencyButton(state, dom, startEmergencyCountdown) {
-  const buttons = [
-    document.getElementById("emergencyBtn"),
-    document.getElementById("emergencyMiniBtn")
-  ].filter(Boolean);
+  dom.emergencyBtn.addEventListener("mouseup", function () {
+    cancelHold(state);
+  });
 
-  buttons.forEach((btn) => {
-    btn.addEventListener("mousedown", () =>
-      startHold(state, startEmergencyCountdown)
-    );
-    btn.addEventListener("touchstart", () =>
-      startHold(state, startEmergencyCountdown)
-    );
+  dom.emergencyBtn.addEventListener("mouseleave", function () {
+    cancelHold(state);
+  });
 
-    btn.addEventListener("mouseup", () => cancelHold(state));
-    btn.addEventListener("mouseleave", () => cancelHold(state));
-    btn.addEventListener("touchend", () => cancelHold(state));
+  dom.emergencyBtn.addEventListener("touchend", function () {
+    cancelHold(state);
   });
 }
 
@@ -83,31 +72,29 @@ export function startEmergencyCountdown(state, dom) {
   let count = EMERGENCY_COUNTDOWN;
 
   const cancelBtn = document.createElement("button");
-cancelBtn.innerText = "CANCEL EMERGENCY";
-cancelBtn.style.position = "fixed";
-cancelBtn.style.bottom = "120px";
-cancelBtn.style.left = "50%";
-cancelBtn.style.transform = "translateX(-50%)";
-cancelBtn.style.zIndex = "9999";
-
-cancelBtn.style.background = "#c62828";
-cancelBtn.style.color = "#ffffff";
-cancelBtn.style.border = "none";
-cancelBtn.style.borderRadius = "14px";
-cancelBtn.style.padding = "18px 28px";
-cancelBtn.style.fontSize = "20px";
-cancelBtn.style.fontWeight = "bold";
-cancelBtn.style.boxShadow = "0 6px 18px rgba(0,0,0,0.35)";
-cancelBtn.style.minWidth = "260px";
-cancelBtn.style.minHeight = "70px";
-cancelBtn.style.textAlign = "center";
-cancelBtn.style.cursor = "pointer";
-cancelBtn.style.border = "3px solid #ffffff";
+  cancelBtn.innerText = "CANCEL EMERGENCY";
+  cancelBtn.style.position = "fixed";
+  cancelBtn.style.bottom = "120px";
+  cancelBtn.style.left = "50%";
+  cancelBtn.style.transform = "translateX(-50%)";
+  cancelBtn.style.zIndex = "9999";
+  cancelBtn.style.background = "#c62828";
+  cancelBtn.style.color = "#ffffff";
+  cancelBtn.style.border = "3px solid #ffffff";
+  cancelBtn.style.borderRadius = "16px";
+  cancelBtn.style.padding = "20px 30px";
+  cancelBtn.style.fontSize = "22px";
+  cancelBtn.style.fontWeight = "bold";
+  cancelBtn.style.boxShadow = "0 8px 22px rgba(0,0,0,0.4)";
+  cancelBtn.style.minWidth = "280px";
+  cancelBtn.style.minHeight = "78px";
+  cancelBtn.style.textAlign = "center";
 
   document.body.appendChild(cancelBtn);
 
   const timer = setInterval(function () {
     count--;
+
     if (count <= 0) {
       clearInterval(timer);
       cancelBtn.remove();
@@ -138,12 +125,7 @@ export function triggerEmergency(state, dom) {
 
   navigator.geolocation.getCurrentPosition(
     function (pos) {
-      sendEmergency(
-        state,
-        dom,
-        pos.coords.latitude,
-        pos.coords.longitude
-      );
+      sendEmergency(state, dom, pos.coords.latitude, pos.coords.longitude);
     },
     function () {
       addStatus(dom.chatBox, "⚠️ Location unavailable, sending without GPS");
