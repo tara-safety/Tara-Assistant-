@@ -5,6 +5,11 @@ import {
 } from "./config.js";
 import { addStatus } from "./ui.js";
 import { requestMotionPermission } from "./permissions.js";
+import {
+  requestWakeLock,
+  releaseWakeLock,
+  restoreWakeLockIfNeeded
+} from "./wakelock.js";
 
 const WARNING_TIME = 15000; // 15 seconds
 
@@ -19,6 +24,14 @@ export function setupDriverMinder(state, dom, startEmergencyCountdown) {
       addStatus(dom.chatBox, "🟢 Driver Minder Activated");
 
       await requestMotionPermission();
+
+      const wakeLockOn = await requestWakeLock(state);
+      if (wakeLockOn) {
+        addStatus(dom.chatBox, "📱 Screen stay-awake enabled");
+      } else {
+        addStatus(dom.chatBox, "⚠️ Stay-awake not available on this device");
+      }
+
       resetInactivityTimer(state, dom, startEmergencyCountdown);
       startMotionMonitoring(state, dom, startEmergencyCountdown);
     } else {
@@ -27,7 +40,12 @@ export function setupDriverMinder(state, dom, startEmergencyCountdown) {
 
       clearTimeout(state.inactivityTimer);
       clearDriverWarning(state);
+      releaseWakeLock(state);
     }
+  });
+
+  document.addEventListener("visibilitychange", function () {
+    restoreWakeLockIfNeeded(state);
   });
 }
 
@@ -55,7 +73,6 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
       }
     }
 
-    // if driver moves again during warning, cancel it
     if (state.warningRunning && impact > 3) {
       clearDriverWarning(state);
       addStatus(dom.chatBox, "✅ Driver activity detected. Warning cleared.");
