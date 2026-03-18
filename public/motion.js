@@ -10,12 +10,17 @@ import {
   releaseWakeLock,
   restoreWakeLockIfNeeded
 } from "./wakelock.js";
-import { forceSpeak, stopSpeaking } from "./voice.js";
+import {
+  forceSpeak,
+  stopSpeaking,
+  startSafetyVoiceListener,
+  stopSafetyVoiceListener
+} from "./voice.js";
 
-const WARNING_TIME = 15000; // 15 seconds
-const WARNING_CLEAR_DELAY = 3000; // wait 3 seconds before allowing clear
-const WARNING_CLEAR_THRESHOLD = 12; // real movement only
-const WARNING_CLEAR_HITS_REQUIRED = 3; // need repeated motion to clear
+const WARNING_TIME = 15000;
+const WARNING_CLEAR_DELAY = 3000;
+const WARNING_CLEAR_THRESHOLD = 12;
+const WARNING_CLEAR_HITS_REQUIRED = 3;
 
 export function setupDriverMinder(state, dom, startEmergencyCountdown) {
   if (!dom.driverMinderBtn) return;
@@ -121,7 +126,7 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
       : "⚠️ Driver Minder warning: no movement detected. Emergency check started."
   );
 
-  forceSpeak("Driver check required. Press I am safe to cancel.");
+  forceSpeak("Driver check required. Press I am safe or say I am safe to cancel.");
 
   const warningBox = document.createElement("div");
   warningBox.id = "driverWarningBox";
@@ -163,11 +168,19 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
   document.body.appendChild(warningBox);
   document.body.appendChild(safeBtn);
 
-  safeBtn.onclick = function () {
+  function confirmSafe() {
     clearDriverWarning(state);
     resetInactivityTimer(state, dom, startEmergencyCountdown);
     addStatus(dom.chatBox, "✅ Driver confirmed safe.");
+  }
+
+  safeBtn.onclick = function () {
+    confirmSafe();
   };
+
+  startSafetyVoiceListener(state, function () {
+    confirmSafe();
+  });
 
   setTimeout(function () {
     if (state.warningRunning) {
@@ -177,7 +190,7 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
 
   setTimeout(function () {
     if (state.warningRunning) {
-      forceSpeak("Final warning.");
+      forceSpeak("Final warning. Say I am safe to cancel.");
     }
   }, 10000);
 
@@ -198,6 +211,7 @@ function clearDriverWarning(state) {
   }
 
   stopSpeaking();
+  stopSafetyVoiceListener(state);
 
   const warningBox = document.getElementById("driverWarningBox");
   const safeBtn = document.getElementById("driverSafeBtn");
