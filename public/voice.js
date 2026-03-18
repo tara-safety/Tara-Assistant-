@@ -1,11 +1,27 @@
-import { addStatus } from "./ui.js";
-
-export function speak(text) {
+export function speak(text, state) {
   if (!text) return;
+  if (!state.voiceEnabled) return;
 
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  speechSynthesis.speak(utterance);
+  try {
+    speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 1;
+    utterance.pitch = 1;
+
+    speechSynthesis.speak(utterance);
+  } catch (err) {
+    console.log("Speech output failed:", err);
+  }
+}
+
+export function stopSpeaking() {
+  try {
+    speechSynthesis.cancel();
+  } catch (err) {
+    console.log("Stop speaking failed:", err);
+  }
 }
 
 export function startVoiceSystem(state, dom, sendQuestion) {
@@ -13,7 +29,7 @@ export function startVoiceSystem(state, dom, sendQuestion) {
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
   if (!SpeechRecognition) {
-    alert("Voice not supported");
+    alert("Voice recognition is not supported on this device.");
     return;
   }
 
@@ -37,7 +53,7 @@ export function startVoiceSystem(state, dom, sendQuestion) {
     if (!state.listeningForCommand) {
       if (text.includes("hey tara")) {
         state.listeningForCommand = true;
-        speak("Yes driver");
+        speak("Yes driver", state);
       }
       return;
     }
@@ -49,9 +65,6 @@ export function startVoiceSystem(state, dom, sendQuestion) {
 
   recognition.onerror = function (err) {
     console.log("Voice error:", err);
-    try {
-      recognition.start();
-    } catch (e) {}
   };
 
   recognition.onend = function () {
@@ -64,17 +77,50 @@ export function startVoiceSystem(state, dom, sendQuestion) {
 
   try {
     recognition.start();
-    addStatus(dom.chatBox, "🎤 Voice system started");
-  } catch (e) {
-    console.log("Recognition start failed", e);
+    console.log("Tow mode voice started");
+  } catch (err) {
+    console.log("Recognition start failed:", err);
   }
 }
 
-export function stopVoiceSystem(state, dom) {
+export function stopVoiceSystem(state) {
   if (state.recognition) {
     try {
       state.recognition.stop();
     } catch (e) {}
   }
-  addStatus(dom.chatBox, "🎤 Voice system stopped");
+
+  state.listeningForCommand = false;
+}
+
+export function startSingleVoiceInput(dom, sendQuestion) {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Voice recognition is not supported on this device.");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = "en-US";
+
+  recognition.onresult = function (e) {
+    const text = e.results[0][0].transcript;
+    console.log("Single voice heard:", text);
+    dom.questionInput.value = text;
+    sendQuestion();
+  };
+
+  recognition.onerror = function (err) {
+    console.log("Single voice error:", err);
+  };
+
+  try {
+    recognition.start();
+  } catch (err) {
+    console.log("Single voice start failed:", err);
+  }
 }
