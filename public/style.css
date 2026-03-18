@@ -243,6 +243,17 @@ textarea{
   animation:alertPulse 1s infinite;
 }
 
+.motionDebug{
+  text-align:center;
+  font-weight:bold;
+  font-size:14px;
+  padding:8px 12px;
+  border-radius:10px;
+  background:rgba(0,0,0,0.18);
+  color:#ffffff;
+  box-shadow:0 4px 10px rgba(0,0,0,0.18);
+}
+
 /* CHAT */
 
 .chatBox{
