@@ -59,7 +59,6 @@ function startContextHeartbeat(state, dom) {
 export function updateMotionContext(state, motionLevel) {
   state.lastMotionLevel = motionLevel;
 
-  // Much easier score build for walking
   if (motionLevel >= 2.2) {
     state.motionActivityScore = Math.min(state.motionActivityScore + 3, 20);
   } else if (motionLevel >= 1.2) {
@@ -73,7 +72,6 @@ export function setContextMode(state, dom, mode) {
   if (state.contextMode === mode) return;
 
   state.contextMode = mode;
-
   updateContextBadge(dom, mode);
 
   if (mode === "driving") {
@@ -110,4 +108,20 @@ function updateMotionDebug(dom, state) {
 
 export function shouldPauseInactivityForDriving(state) {
   return state.contextMode === "driving";
+}
+
+export function getContextInactivityLimit(state) {
+  if (state.contextMode === "working") {
+    return 120000; // 2 minutes while actively working
+  }
+
+  if (state.contextMode === "idle") {
+    return 8 * 60 * 1000; // 8 minutes normal idle
+  }
+
+  if (state.contextMode === "driving") {
+    return null; // paused while driving
+  }
+
+  return 8 * 60 * 1000;
 }
