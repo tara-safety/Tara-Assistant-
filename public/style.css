@@ -207,7 +207,7 @@ textarea{
   bottom:84px;
   z-index:99999;
 
-  display:block;
+  display:none;
 
   min-width:96px;
   height:54px;
