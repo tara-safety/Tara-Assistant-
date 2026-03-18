@@ -1,6 +1,5 @@
 import {
   IMPACT_LIMIT,
-  INACTIVITY_LIMIT,
   IMPACT_COOLDOWN
 } from "./config.js";
 import { addStatus } from "./ui.js";
@@ -18,7 +17,8 @@ import {
 } from "./voice.js";
 import {
   updateMotionContext,
-  shouldPauseInactivityForDriving
+  shouldPauseInactivityForDriving,
+  getContextInactivityLimit
 } from "./context.js";
 
 const WARNING_TIME = 15000;
@@ -77,9 +77,8 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
     const z = Math.abs(acc.z || 0);
 
     const impact = x + y + z;
-
-    // softer movement signal for walking / working detection
     const motionLevel = (x * 0.35) + (y * 0.35) + (z * 0.2);
+
     updateMotionContext(state, motionLevel);
 
     if (impact > IMPACT_LIMIT) {
@@ -114,17 +113,33 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
 export function resetInactivityTimer(state, dom, startEmergencyCountdown) {
   clearTimeout(state.inactivityTimer);
 
+  if (!state.driverMinderActive) return;
+
+  if (shouldPauseInactivityForDriving(state)) {
+    state.inactivityTimer = setTimeout(function () {
+      if (state.driverMinderActive) {
+        addStatus(dom.chatBox, "🟢 Driving detected. Inactivity check paused.");
+        resetInactivityTimer(state, dom, startEmergencyCountdown);
+      }
+    }, 30000);
+
+    return;
+  }
+
+  const limit = getContextInactivityLimit(state);
+
+  if (!limit) return;
+
   state.inactivityTimer = setTimeout(function () {
     if (!state.driverMinderActive) return;
 
     if (shouldPauseInactivityForDriving(state)) {
-      addStatus(dom.chatBox, "🟢 Driving detected. Inactivity check paused.");
       resetInactivityTimer(state, dom, startEmergencyCountdown);
       return;
     }
 
     startDriverWarning(state, dom, startEmergencyCountdown, "inactivity");
-  }, INACTIVITY_LIMIT);
+  }, limit);
 }
 
 function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
