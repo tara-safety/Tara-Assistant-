@@ -1,6 +1,6 @@
 export function speak(text, state) {
   if (!text) return;
-  if (!state.voiceEnabled) return;
+  if (state && state.voiceEnabled === false) return;
 
   try {
     speechSynthesis.cancel();
@@ -13,6 +13,23 @@ export function speak(text, state) {
     speechSynthesis.speak(utterance);
   } catch (err) {
     console.log("Speech output failed:", err);
+  }
+}
+
+export function forceSpeak(text) {
+  if (!text) return;
+
+  try {
+    speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 1;
+    utterance.pitch = 1;
+
+    speechSynthesis.speak(utterance);
+  } catch (err) {
+    console.log("Forced speech output failed:", err);
   }
 }
 
