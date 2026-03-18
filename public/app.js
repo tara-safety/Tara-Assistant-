@@ -18,6 +18,7 @@ import {
 } from "./voice.js";
 import { openCamera } from "./camera.js";
 import { setupDriverMinder } from "./motion.js";
+import { setupContextAwareness } from "./context.js";
 import {
   setupEmergencyButton,
   startEmergencyCountdown,
@@ -37,8 +38,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const voiceBtn = document.getElementById("voiceBtn");
   const emergencyMiniBtn = document.getElementById("emergencyMiniBtn");
 
-  // start fail-safe retry system
   setupEmergencyFailSafe(dom);
+  setupContextAwareness(state, dom);
 
   if (voiceToggle) {
     state.voiceEnabled = voiceToggle.checked;
