@@ -27,7 +27,7 @@ export const state = {
   contextMode: "idle",
   watchId: null,
   lastMotionLevel: 0,
-
+  lastMovementTime: 0,
   // new walking/activity scoring
   motionActivityScore: 0
 };
