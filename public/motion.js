@@ -17,11 +17,13 @@ import {
 } from "./voice.js";
 import {
   updateMotionContext,
-  shouldPauseInactivityForDriving,
-  getContextInactivityLimit
+  shouldPauseInactivityForDriving
 } from "./context.js";
+import { playAlarm, stopAlarm } from "./emergency.js";
 
-const WARNING_TIME = 15000;
+const NORMAL_WARNING_TIME = 15000;
+const HIGH_RISK_WARNING_TIME = 8000;
+
 const WARNING_CLEAR_DELAY = 3000;
 const WARNING_CLEAR_THRESHOLD = 12;
 const WARNING_CLEAR_HITS_REQUIRED = 3;
@@ -142,6 +144,29 @@ export function resetInactivityTimer(state, dom, startEmergencyCountdown) {
   }, limit);
 }
 
+function getContextInactivityLimit(state) {
+  if (state.contextMode === "driving") {
+    return null;
+  }
+
+  if (state.highRiskMode) {
+    if (state.contextMode === "working") {
+      return 25000; // 25 sec in roadside danger
+    }
+    return 60000; // 1 min if high-risk but idle
+  }
+
+  if (state.contextMode === "working") {
+    return 120000; // 2 min normal working
+  }
+
+  return 8 * 60 * 1000; // 8 min normal idle
+}
+
+function getWarningTime(state) {
+  return state.highRiskMode ? HIGH_RISK_WARNING_TIME : NORMAL_WARNING_TIME;
+}
+
 function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
   if (state.warningRunning || state.emergencyRunning) return;
 
@@ -156,7 +181,12 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
       : "⚠️ Driver Minder warning: no movement detected. Emergency check started."
   );
 
-  forceSpeak("Driver check required. Press I am safe or say I am safe to cancel.");
+  if (state.highRiskMode) {
+    playAlarm(state);
+    forceSpeak("Danger detected. Respond now. Press I am safe or say I am safe.");
+  } else {
+    forceSpeak("Driver check required. Press I am safe or say I am safe to cancel.");
+  }
 
   const warningBox = document.createElement("div");
   warningBox.id = "driverWarningBox";
@@ -165,7 +195,7 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
   warningBox.style.left = "50%";
   warningBox.style.transform = "translateX(-50%)";
   warningBox.style.zIndex = "9999";
-  warningBox.style.background = "rgba(0,0,0,0.88)";
+  warningBox.style.background = state.highRiskMode ? "rgba(120,0,0,0.92)" : "rgba(0,0,0,0.88)";
   warningBox.style.color = "#ffffff";
   warningBox.style.padding = "18px 20px";
   warningBox.style.borderRadius = "16px";
@@ -174,7 +204,9 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
   warningBox.style.textAlign = "center";
   warningBox.style.minWidth = "280px";
   warningBox.style.boxShadow = "0 8px 24px rgba(0,0,0,0.35)";
-  warningBox.innerText = "⚠️ Driver Check Required";
+  warningBox.innerText = state.highRiskMode
+    ? "🚧 HIGH-RISK DRIVER CHECK"
+    : "⚠️ Driver Check Required";
 
   const safeBtn = document.createElement("button");
   safeBtn.id = "driverSafeBtn";
@@ -214,20 +246,18 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
 
   setTimeout(function () {
     if (state.warningRunning) {
-      forceSpeak("Respond now or emergency will start.");
+      if (state.highRiskMode) {
+        forceSpeak("High-risk danger continues. Respond now.");
+      } else {
+        forceSpeak("Respond now or emergency will start.");
+      }
     }
-  }, 5000);
-
-  setTimeout(function () {
-    if (state.warningRunning) {
-      forceSpeak("Final warning. Say I am safe to cancel.");
-    }
-  }, 10000);
+  }, 4000);
 
   state.warningTimeout = setTimeout(function () {
     clearDriverWarning(state);
     startEmergencyCountdown();
-  }, WARNING_TIME);
+  }, getWarningTime(state));
 }
 
 function clearDriverWarning(state) {
@@ -242,6 +272,10 @@ function clearDriverWarning(state) {
 
   stopSpeaking();
   stopSafetyVoiceListener(state);
+
+  if (!state.emergencyRunning) {
+    stopAlarm(state);
+  }
 
   const warningBox = document.getElementById("driverWarningBox");
   const safeBtn = document.getElementById("driverSafeBtn");
