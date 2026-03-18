@@ -39,9 +39,16 @@ function startSpeedWatch(state, dom) {
 function startContextHeartbeat(state, dom) {
   setInterval(function () {
     if (state.contextMode === "driving") {
-      if (state.motionActivityScore <= IDLE_SCORE_THRESHOLD) {
-        setContextMode(state, dom, "idle");
-      }
+      const now = Date.now();
+const timeSinceMove = now - state.lastMovementTime;
+
+// require 6 seconds of no movement before going idle
+if (
+  state.motionActivityScore <= IDLE_SCORE_THRESHOLD &&
+  timeSinceMove > 6000
+) {
+  setContextMode(state, dom, "idle");
+}
       updateMotionDebug(dom, state);
       return;
     }
