@@ -50,33 +50,13 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  setupDriverMinder(state, dom, () =>
-    startEmergencyCountdown(state, dom)
-  );
+  setupDriverMinder(state, dom, function () {
+    startEmergencyCountdown(state, dom);
+  });
 
-  setupEmergencyButton(state, dom, () =>
-    startEmergencyCountdown(state, dom)
-  );
-
-  const emergencySection = document.querySelector(".emergencySection");
-  const emergencyMiniBtn = document.getElementById("emergencyMiniBtn");
-
-  function toggleMiniEmergency() {
-    if (!emergencySection || !emergencyMiniBtn) return;
-
-    const rect = emergencySection.getBoundingClientRect();
-    console.log("Emergency section:", rect.top, rect.bottom);
-
-    if (rect.bottom < 120) {
-      emergencyMiniBtn.classList.add("show");
-    } else {
-      emergencyMiniBtn.classList.remove("show");
-    }
-  }
-
-  window.addEventListener("scroll", toggleMiniEmergency);
-  window.addEventListener("resize", toggleMiniEmergency);
-  toggleMiniEmergency();
+  setupEmergencyButton(state, dom, function () {
+    startEmergencyCountdown(state, dom);
+  });
 
   async function sendQuestion() {
     const text = dom.questionInput.value.trim();
