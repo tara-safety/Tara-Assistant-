@@ -13,6 +13,11 @@ import {
 
 const WARNING_TIME = 15000; // 15 seconds
 
+// New safety values
+const WARNING_CLEAR_DELAY = 3000; // wait 3 seconds before allowing clear
+const WARNING_CLEAR_THRESHOLD = 12; // real movement only
+const WARNING_CLEAR_HITS_REQUIRED = 3; // need repeated motion to clear
+
 export function setupDriverMinder(state, dom, startEmergencyCountdown) {
   if (!dom.driverMinderBtn) return;
 
@@ -64,6 +69,7 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
       Math.abs(acc.y || 0) +
       Math.abs(acc.z || 0);
 
+    // Start warning on big impact
     if (impact > IMPACT_LIMIT) {
       const now = Date.now();
 
@@ -73,9 +79,22 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
       }
     }
 
-    if (state.warningRunning && impact > 3) {
-      clearDriverWarning(state);
-      addStatus(dom.chatBox, "✅ Driver activity detected. Warning cleared.");
+    // Safer clearing logic during warning:
+    // do NOT clear from one tiny movement/noise reading
+    if (state.warningRunning) {
+      const now = Date.now();
+      const enoughTimePassed =
+        now - state.warningStartedAt > WARNING_CLEAR_DELAY;
+
+      if (enoughTimePassed && impact > WARNING_CLEAR_THRESHOLD) {
+        state.warningClearHits += 1;
+      }
+
+      if (state.warningClearHits >= WARNING_CLEAR_HITS_REQUIRED) {
+        clearDriverWarning(state);
+        resetInactivityTimer(state, dom, startEmergencyCountdown);
+        addStatus(dom.chatBox, "✅ Driver activity confirmed. Warning cleared.");
+      }
     }
 
     resetInactivityTimer(state, dom, startEmergencyCountdown);
@@ -96,6 +115,8 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
   if (state.warningRunning || state.emergencyRunning) return;
 
   state.warningRunning = true;
+  state.warningStartedAt = Date.now();
+  state.warningClearHits = 0;
 
   addStatus(
     dom.chatBox,
@@ -158,6 +179,8 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
 
 function clearDriverWarning(state) {
   state.warningRunning = false;
+  state.warningStartedAt = 0;
+  state.warningClearHits = 0;
 
   if (state.warningTimeout) {
     clearTimeout(state.warningTimeout);
