@@ -9,7 +9,13 @@ import {
   setupMenu
 } from "./ui.js";
 import { setupSystemUnlock } from "./permissions.js";
-import { startVoiceSystem, stopVoiceSystem } from "./voice.js";
+import {
+  speak,
+  stopSpeaking,
+  startVoiceSystem,
+  stopVoiceSystem,
+  startSingleVoiceInput
+} from "./voice.js";
 import { openCamera } from "./camera.js";
 import { setupDriverMinder } from "./motion.js";
 import {
@@ -26,8 +32,34 @@ document.addEventListener("DOMContentLoaded", function () {
   setupSystemUnlock(state);
   addFooter();
 
+  const voiceToggle = document.getElementById("voiceToggle");
+  const voiceBtn = document.getElementById("voiceBtn");
+  const emergencyMiniBtn = document.getElementById("emergencyMiniBtn");
+
+  // set initial voice state from checkbox
+  if (voiceToggle) {
+    state.voiceEnabled = voiceToggle.checked;
+
+    voiceToggle.addEventListener("change", function () {
+      state.voiceEnabled = voiceToggle.checked;
+
+      if (!state.voiceEnabled) {
+        stopSpeaking();
+        addStatus(dom.chatBox, "🔇 Voice Response Off");
+      } else {
+        addStatus(dom.chatBox, "🔊 Voice Response On");
+      }
+    });
+  }
+
   if (dom.askBtn) {
     dom.askBtn.addEventListener("click", sendQuestion);
+  }
+
+  if (voiceBtn) {
+    voiceBtn.addEventListener("click", function () {
+      startSingleVoiceInput(dom, sendQuestion);
+    });
   }
 
   if (dom.towModeBtn) {
@@ -38,7 +70,7 @@ document.addEventListener("DOMContentLoaded", function () {
         startVoiceSystem(state, dom, sendQuestion);
         addStatus(dom.chatBox, "🚚 Tow Mode Activated");
       } else {
-        stopVoiceSystem(state, dom);
+        stopVoiceSystem(state);
         addStatus(dom.chatBox, "🚚 Tow Mode Disabled");
       }
     });
@@ -59,8 +91,6 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // MINI SOS CONTROL
-  const emergencyMiniBtn = document.getElementById("emergencyMiniBtn");
-
   function toggleMiniSOS() {
     if (!emergencyMiniBtn) return;
 
@@ -98,6 +128,9 @@ document.addEventListener("DOMContentLoaded", function () {
       const data = await res.json();
       thinking.remove();
       addTaraMessage(dom.chatBox, data.answer);
+
+      // speak only if voice is enabled
+      speak(data.answer, state);
     } catch (err) {
       console.error("Ask error:", err);
       thinking.remove();
