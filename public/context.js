@@ -59,10 +59,14 @@ function startContextHeartbeat(state, dom) {
 export function updateMotionContext(state, motionLevel) {
   state.lastMotionLevel = motionLevel;
 
+  const now = Date.now();
+
   if (motionLevel >= 2.2) {
     state.motionActivityScore = Math.min(state.motionActivityScore + 3, 20);
+    state.lastMovementTime = now;
   } else if (motionLevel >= 1.2) {
     state.motionActivityScore = Math.min(state.motionActivityScore + 1, 20);
+    state.lastMovementTime = now;
   } else {
     state.motionActivityScore = Math.max(state.motionActivityScore - 1, 0);
   }
