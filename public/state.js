@@ -24,8 +24,10 @@ export const state = {
   safetyRecognition: null,
   safetyVoiceActive: false,
 
-  // Stage 5
-  contextMode: "idle", // idle | working | driving
+  contextMode: "idle",
   watchId: null,
-  lastMotionLevel: 0
+  lastMotionLevel: 0,
+
+  // new walking/activity scoring
+  motionActivityScore: 0
 };
