@@ -4,6 +4,11 @@ import {
   EMERGENCY_COUNTDOWN
 } from "./config.js";
 import { addStatus } from "./ui.js";
+import {
+  startSafetyVoiceListener,
+  stopSafetyVoiceListener,
+  forceSpeak
+} from "./voice.js";
 
 const EMERGENCY_QUEUE_KEY = "tara_emergency_queue_v1";
 const RETRY_INTERVAL_MS = 10000;
@@ -112,6 +117,7 @@ export function startEmergencyCountdown(state, dom) {
   state.emergencyRunning = true;
   playAlarm(state);
   addStatus(dom.chatBox, "🚨 Emergency countdown started");
+  forceSpeak("Emergency countdown started. Say cancel emergency to stop.");
 
   let count = EMERGENCY_COUNTDOWN;
 
@@ -137,24 +143,42 @@ export function startEmergencyCountdown(state, dom) {
 
   document.body.appendChild(cancelBtn);
 
-  const timer = setInterval(function () {
-    count--;
-
-    if (count <= 0) {
-      clearInterval(timer);
-      cancelBtn.remove();
-      triggerEmergency(state, dom);
-    }
-  }, 1000);
-
-  cancelBtn.onclick = function () {
+  function cancelEmergencyCountdown() {
     clearInterval(timer);
     stopAlarm(state);
+    stopSafetyVoiceListener(state);
     cancelBtn.remove();
     addStatus(dom.chatBox, "Emergency cancelled");
     state.emergencyRunning = false;
     state.emergencyActive = false;
+  }
+
+  cancelBtn.onclick = function () {
+    cancelEmergencyCountdown();
   };
+
+  startSafetyVoiceListener(state, function () {
+    cancelEmergencyCountdown();
+  });
+
+  const timer = setInterval(function () {
+    count--;
+
+    if (count === 20) {
+      forceSpeak("Emergency in twenty seconds. Say cancel emergency to stop.");
+    }
+
+    if (count === 10) {
+      forceSpeak("Emergency in ten seconds. Say cancel emergency to stop.");
+    }
+
+    if (count <= 0) {
+      clearInterval(timer);
+      stopSafetyVoiceListener(state);
+      cancelBtn.remove();
+      triggerEmergency(state, dom);
+    }
+  }, 1000);
 }
 
 /* ============================= */
