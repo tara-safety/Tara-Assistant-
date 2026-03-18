@@ -18,7 +18,9 @@ export const state = {
 
   wakeLock: null,
 
-  // driver warning motion validation
   warningStartedAt: 0,
-  warningClearHits: 0
+  warningClearHits: 0,
+
+  safetyRecognition: null,
+  safetyVoiceActive: false
 };
