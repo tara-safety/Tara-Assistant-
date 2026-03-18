@@ -79,7 +79,7 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
     const impact = x + y + z;
 
     // softer movement signal for walking / working detection
-    const motionLevel = (x * 0.8) + (y * 0.8) + (z * 0.5);
+    const motionLevel = (x * 0.35) + (y * 0.35) + (z * 0.2);
     updateMotionContext(state, motionLevel);
 
     if (impact > IMPACT_LIMIT) {
