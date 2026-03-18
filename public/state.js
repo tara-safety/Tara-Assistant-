@@ -11,5 +11,9 @@ export const state = {
   inactivityTimer: null,
   holdTimer: null,
   alarmAudio: null,
-  recognition: null
+  recognition: null,
+
+  // new warning phase state
+  warningRunning: false,
+  warningTimeout: null
 };
