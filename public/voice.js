@@ -141,3 +141,78 @@ export function startSingleVoiceInput(dom, sendQuestion) {
     console.log("Single voice start failed:", err);
   }
 }
+
+function isSafePhrase(text) {
+  const value = text.toLowerCase().trim();
+
+  return (
+    value.includes("i'm safe") ||
+    value.includes("im safe") ||
+    value.includes("i am safe") ||
+    value.includes("i'm okay") ||
+    value.includes("im okay") ||
+    value.includes("i am okay") ||
+    value.includes("cancel emergency") ||
+    value === "cancel"
+  );
+}
+
+export function startSafetyVoiceListener(state, onSafeConfirm) {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    console.log("Safety voice recognition is not supported on this device.");
+    return;
+  }
+
+  stopSafetyVoiceListener(state);
+
+  const recognition = new SpeechRecognition();
+  state.safetyRecognition = recognition;
+  state.safetyVoiceActive = true;
+
+  recognition.continuous = true;
+  recognition.interimResults = false;
+  recognition.lang = "en-US";
+
+  recognition.onresult = function (e) {
+    const text = e.results[e.results.length - 1][0].transcript.toLowerCase();
+    console.log("Safety voice heard:", text);
+
+    if (isSafePhrase(text)) {
+      onSafeConfirm();
+    }
+  };
+
+  recognition.onerror = function (err) {
+    console.log("Safety voice error:", err);
+  };
+
+  recognition.onend = function () {
+    if (state.safetyVoiceActive) {
+      try {
+        recognition.start();
+      } catch (e) {}
+    }
+  };
+
+  try {
+    recognition.start();
+    console.log("Safety voice listener started");
+  } catch (err) {
+    console.log("Safety voice listener start failed:", err);
+  }
+}
+
+export function stopSafetyVoiceListener(state) {
+  state.safetyVoiceActive = false;
+
+  if (state.safetyRecognition) {
+    try {
+      state.safetyRecognition.stop();
+    } catch (e) {}
+  }
+
+  state.safetyRecognition = null;
+}
