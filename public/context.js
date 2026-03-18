@@ -1,8 +1,8 @@
 import { addStatus } from "./ui.js";
 
 const DRIVING_SPEED_MPS = 2.8; // ~10 km/h
-const WORKING_SCORE_THRESHOLD = 18;
-const IDLE_SCORE_THRESHOLD = 6;
+const WORKING_SCORE_THRESHOLD = 8;
+const IDLE_SCORE_THRESHOLD = 2;
 
 export function setupContextAwareness(state, dom) {
   startSpeedWatch(state, dom);
@@ -38,12 +38,11 @@ function startSpeedWatch(state, dom) {
 
 function startContextHeartbeat(state, dom) {
   setInterval(function () {
-    // Driving has priority if speed says driving
     if (state.contextMode === "driving") {
-      // only drop out of driving if movement score is low for a while
       if (state.motionActivityScore <= IDLE_SCORE_THRESHOLD) {
         setContextMode(state, dom, "idle");
       }
+      updateMotionDebug(dom, state);
       return;
     }
 
@@ -52,20 +51,21 @@ function startContextHeartbeat(state, dom) {
     } else if (state.motionActivityScore <= IDLE_SCORE_THRESHOLD) {
       setContextMode(state, dom, "idle");
     }
-  }, 2000);
+
+    updateMotionDebug(dom, state);
+  }, 1000);
 }
 
 export function updateMotionContext(state, motionLevel) {
   state.lastMotionLevel = motionLevel;
 
-  // walking / repeated motion raises score
-  if (motionLevel >= 4) {
-    state.motionActivityScore = Math.min(state.motionActivityScore + 4, 40);
-  } else if (motionLevel >= 2.5) {
-    state.motionActivityScore = Math.min(state.motionActivityScore + 2, 40);
+  // Much easier score build for walking
+  if (motionLevel >= 2.2) {
+    state.motionActivityScore = Math.min(state.motionActivityScore + 3, 20);
+  } else if (motionLevel >= 1.2) {
+    state.motionActivityScore = Math.min(state.motionActivityScore + 1, 20);
   } else {
-    // stillness drains score
-    state.motionActivityScore = Math.max(state.motionActivityScore - 2, 0);
+    state.motionActivityScore = Math.max(state.motionActivityScore - 1, 0);
   }
 }
 
@@ -73,6 +73,7 @@ export function setContextMode(state, dom, mode) {
   if (state.contextMode === mode) return;
 
   state.contextMode = mode;
+
   updateContextBadge(dom, mode);
 
   if (mode === "driving") {
@@ -95,6 +96,16 @@ export function updateContextBadge(dom, mode) {
   } else {
     badge.innerText = "⚪ IDLE";
   }
+}
+
+function updateMotionDebug(dom, state) {
+  const debug = document.getElementById("motionDebug");
+  if (!debug) return;
+
+  debug.innerText =
+    `Motion: ${state.lastMotionLevel.toFixed(2)} | ` +
+    `Score: ${state.motionActivityScore} | ` +
+    `Mode: ${state.contextMode.toUpperCase()}`;
 }
 
 export function shouldPauseInactivityForDriving(state) {
