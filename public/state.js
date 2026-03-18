@@ -22,5 +22,10 @@ export const state = {
   warningClearHits: 0,
 
   safetyRecognition: null,
-  safetyVoiceActive: false
+  safetyVoiceActive: false,
+
+  // Stage 5
+  contextMode: "idle", // idle | working | driving
+  watchId: null,
+  lastMotionLevel: 0
 };
