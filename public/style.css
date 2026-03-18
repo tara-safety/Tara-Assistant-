@@ -307,6 +307,17 @@ button:active{
   transform:scale(0.95);
 }
 
+.contextBadge{
+  text-align:center;
+  font-weight:bold;
+  font-size:15px;
+  padding:10px 14px;
+  border-radius:12px;
+  background:rgba(255,255,255,0.18);
+  color:#ffffff;
+  box-shadow:0 4px 10px rgba(0,0,0,0.18);
+}
+
 /* DRIVER MINDER */
 
 #driverMinderBtn.active{
