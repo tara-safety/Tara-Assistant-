@@ -40,7 +40,7 @@ async function startHighRiskSiren(state) {
     osc.type = "sawtooth";
     osc.frequency.setValueAtTime(740, ctx.currentTime);
 
-    gain.gain.setValueAtTime(0.06, ctx.currentTime);
+    gain.gain.setValueAtTime(0.16, ctx.currentTime);
 
     osc.connect(gain);
     gain.connect(ctx.destination);
