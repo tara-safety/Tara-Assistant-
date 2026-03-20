@@ -20,6 +20,7 @@
     "twilio": "^4.0.0"
   }
 }
+
 app.post("/knowledge/bulk", async (req, res) => {
   const { entries } = req.body;
 
