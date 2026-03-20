@@ -195,7 +195,7 @@ app.post("/ask", async (req, res) => {
       max_completion_tokens: 400,
      
 
-Rules:messages: [
+messages: [
   {
     role: "system",
     content: `You are TARA (Tow Awareness and Response Assistant).
