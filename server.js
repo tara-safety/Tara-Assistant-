@@ -241,12 +241,12 @@ ${knowledgeContext}`
   } catch (err) {
     console.error("OpenAI / ask route error:", err);
 
-    return res.json({
-      answer: "TARA could not connect to AI right now.",
-      sourcesUsed: 0
-    });
-  }
-});
+   if (!res.headersSent) {
+  return res.json({
+    answer: answer.trim(),
+    sourcesUsed: matches.length
+  });
+}
 
 /* ------------------------
    ADD SINGLE KNOWLEDGE ENTRY
