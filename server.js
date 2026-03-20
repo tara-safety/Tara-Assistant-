@@ -226,7 +226,9 @@ ${knowledgeContext}`
 
     console.log("Completion response:", JSON.stringify(completion, null, 2));
 
-    let answer = extractAnswerFromCompletion(completion);
+    let answer = extractAnswerFromCompletion(completion)
+  .replace(/\n\s+/g, "\n")
+  .trim(); 
 
     if (!answer) {
       answer = matches.length
