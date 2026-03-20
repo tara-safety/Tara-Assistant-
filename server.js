@@ -277,6 +277,12 @@ app.post("/knowledge", async (req, res) => {
   }
 });
 
+const { data, error } = await supabase.rpc("match_knowledge_base", {
+  query_embedding: queryEmbedding,
+  match_count: matchCount,
+  match_threshold: 0.75
+});
+
 /* ------------------------
    BACKFILL EMBEDDINGS
 -------------------------*/
