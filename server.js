@@ -334,6 +334,59 @@ app.post("/backfill-embeddings", async (req, res) => {
   }
 });
 
+app.post("/knowledge/bulk", async (req, res) => {
+  const { entries } = req.body;
+
+  if (!supabase) {
+    return res.status(500).json({ error: "Supabase not configured" });
+  }
+
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return res.status(400).json({ error: "Entries array is required" });
+  }
+
+  try {
+    const rowsToInsert = [];
+
+    for (const entry of entries) {
+      const content = entry.content?.trim();
+      const metadata = entry.metadata || {};
+
+      if (!content) continue;
+
+      const embedding = await getEmbedding(content);
+
+      rowsToInsert.push({
+        content,
+        metadata,
+        embedding
+      });
+    }
+
+    if (rowsToInsert.length === 0) {
+      return res.status(400).json({ error: "No valid entries to insert" });
+    }
+
+    const { data, error } = await supabase
+      .from("knowledge_base")
+      .insert(rowsToInsert)
+      .select();
+
+    if (error) {
+      console.error("Bulk insert error:", error);
+      return res.status(500).json({ error: "Bulk insert failed" });
+    }
+
+    res.json({
+      status: "Bulk knowledge saved",
+      inserted: data.length
+    });
+  } catch (err) {
+    console.error("Bulk knowledge route error:", err.message);
+    res.status(500).json({ error: "Failed to process bulk knowledge" });
+  }
+});
+
 /* ------------------------
    EMERGENCY ALERT
 -------------------------*/
