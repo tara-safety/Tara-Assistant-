@@ -81,7 +81,7 @@ async function searchKnowledgeBase(question, matchCount = 3) {
     const { data, error } = await supabase.rpc("match_knowledge_base", {
       query_embedding: queryEmbedding,
       match_count: matchCount,
-      match_threshold: 0.75
+      match_threshold: 0.45
     });
 
     if (error) {
