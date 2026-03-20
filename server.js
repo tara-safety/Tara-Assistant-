@@ -1,7 +1,6 @@
 import express from "express";
 import OpenAI from "openai";
 import twilio from "twilio";
-import fs from "fs";
 import cors from "cors";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
@@ -12,7 +11,7 @@ dotenv.config();
 
 /* ------------------------
    APP SETUP
--------------------------*/
+------------------------- */
 
 const app = express();
 app.use(cors());
@@ -25,7 +24,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 /* ------------------------
    CLIENT SETUP
--------------------------*/
+------------------------- */
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -43,25 +42,50 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
-  console.log("✅ Supabase connected");
+  console.log("Supabase connected");
 } else {
-  console.warn("⚠️ Supabase environment variables missing");
+  console.warn("Supabase environment variables missing");
 }
 
 /* ------------------------
    HELPERS
--------------------------*/
+------------------------- */
 
 function isTowingQuestion(question) {
   const q = question.toLowerCase();
 
   const keywords = [
-    "tow","towing","recovery","winch","flatbed","wheel lift",
-    "strap","chain","roadside","ditch","rollover","highway",
-    "battery","jump","lockout","flat tire","ev","vehicle"
+    "tow",
+    "towing",
+    "recovery",
+    "winch",
+    "flatbed",
+    "wheel lift",
+    "wheel-lift",
+    "strap",
+    "chain",
+    "hook",
+    "roadside",
+    "ditch",
+    "rollover",
+    "highway",
+    "traffic",
+    "pylons",
+    "cones",
+    "battery",
+    "jump start",
+    "jump-start",
+    "lockout",
+    "flat tire",
+    "spare tire",
+    "ev",
+    "electric vehicle",
+    "tow truck",
+    "carrier",
+    "vehicle"
   ];
 
-  return keywords.some(word => q.includes(word));
+  return keywords.some((word) => q.includes(word));
 }
 
 async function getEmbedding(text) {
@@ -69,18 +93,19 @@ async function getEmbedding(text) {
     model: "text-embedding-3-small",
     input: text
   });
+
   return response.data[0].embedding;
 }
 
 async function searchKnowledgeBase(question, matchCount = 3) {
   if (!supabase) {
-    console.log("No Supabase client");
+    console.log("Supabase not configured for search");
     return [];
   }
 
   try {
     const queryEmbedding = await getEmbedding(question);
-    console.log("Embedding created, length:", queryEmbedding.length);
+    console.log("Embedding created:", queryEmbedding.length);
 
     const { data, error } = await supabase.rpc("match_knowledge_base", {
       query_embedding: queryEmbedding,
@@ -102,53 +127,94 @@ async function searchKnowledgeBase(question, matchCount = 3) {
 }
 
 function formatKnowledgeContext(matches) {
-  if (!matches.length) return "No relevant knowledge found.";
+  if (!matches || matches.length === 0) {
+    return "No relevant knowledge found.";
+  }
 
-  return matches.map((m, i) =>
-    `Source ${i + 1}: ${m.content}`
-  ).join("\n");
+  return matches
+    .map((item, index) => {
+      const metadata = item.metadata ? JSON.stringify(item.metadata) : "{}";
+      return `Source ${index + 1}:
+Content: ${item.content}
+Metadata: ${metadata}`;
+    })
+    .join("\n\n");
+}
+
+function extractAnswerFromCompletion(completion) {
+  const msg = completion?.choices?.[0]?.message;
+  if (!msg) return "";
+
+  if (typeof msg.content === "string") {
+    return msg.content.trim();
+  }
+
+  if (Array.isArray(msg.content)) {
+    return msg.content
+      .map((part) => {
+        if (typeof part === "string") return part;
+        if (part?.type === "text" && typeof part.text === "string") return part.text;
+        if (typeof part?.content === "string") return part.content;
+        return "";
+      })
+      .join(" ")
+      .trim();
+  }
+
+  return "";
 }
 
 /* ------------------------
-   AI ROUTE
--------------------------*/
+   AI ASSISTANT
+------------------------- */
 
 app.post("/ask", async (req, res) => {
-
   const question = (req.body.question || "").trim();
 
   if (!question) {
-    return res.json({ answer: "Please enter a question." });
+    return res.json({
+      answer: "Please enter a towing or roadside safety question.",
+      sourcesUsed: 0
+    });
   }
 
   if (!isTowingQuestion(question)) {
     return res.json({
-      answer: "Sorry, I can only answer towing and roadside safety questions."
+      answer: "Sorry, I can only answer towing and roadside safety questions.",
+      sourcesUsed: 0
     });
   }
 
   try {
-    const matches = await searchKnowledgeBase(question);
-    const context = formatKnowledgeContext(matches);
+    const matches = await searchKnowledgeBase(question, 3);
+    const knowledgeContext = formatKnowledgeContext(matches);
 
     const completion = await openai.chat.completions.create({
       model: "gpt-5-mini",
-      max_completion_tokens: 500,
+      reasoning_effort: "low",
+      max_completion_tokens: 400,
       messages: [
         {
           role: "system",
-          content: `You are TARA, a professional towing safety assistant.
+          content: `You are TARA (Tow Awareness and Response Assistant).
+
+You assist professional tow truck operators working roadside.
 
 Rules:
-- Max 5 sentences
-- Be practical
-- Give step-by-step when possible
-- Use knowledge base first
-- No AAA/CAA references`
+- Give short practical answers.
+- Maximum 5 sentences.
+- Only answer towing or roadside service questions.
+- Never recommend calling AAA or CAA.
+- If details are missing, provide general safe towing procedures.
+- When possible include quick step-by-step instructions.
+- Use the supplied knowledge base context first when it is relevant.
+- If unrelated say exactly: Sorry, I can only answer towing and roadside safety questions.`
         },
         {
           role: "system",
-          content: `Knowledge:\n${context}`
+          content: `Knowledge base context:
+
+${knowledgeContext}`
         },
         {
           role: "user",
@@ -157,170 +223,294 @@ Rules:
       ]
     });
 
-   const answer =
-  completion.choices?.[0]?.message?.content?.trim() ||
-  "TARA could not generate a response right now.";
-    res.json({
+    console.log("Completion response:", JSON.stringify(completion, null, 2));
+
+    let answer = extractAnswerFromCompletion(completion);
+
+    if (!answer) {
+      answer = matches.length
+        ? `TARA found ${matches.length} matching safety sources, but the AI response came back empty. Top match: ${matches[0].content}`
+        : "TARA could not generate a response right now.";
+    }
+
+    return res.json({
       answer,
       sourcesUsed: matches.length
     });
-
   } catch (err) {
-    console.error(err);
-    res.json({ answer: "AI error occurred." });
-  }
+    console.error("OpenAI / ask route error:", err);
 
+    return res.json({
+      answer: "TARA could not connect to AI right now.",
+      sourcesUsed: 0
+    });
+  }
 });
 
 /* ------------------------
-   ADD KNOWLEDGE
--------------------------*/
+   ADD SINGLE KNOWLEDGE ENTRY
+------------------------- */
 
 app.post("/knowledge", async (req, res) => {
-
   const { content, metadata = {} } = req.body;
 
   if (!supabase) {
-    return res.status(500).json({ error: "No Supabase" });
+    return res.status(500).json({ error: "Supabase not configured" });
+  }
+
+  if (!content || !content.trim()) {
+    return res.status(400).json({ error: "Content is required" });
   }
 
   try {
-    const embedding = await getEmbedding(content);
+    const embedding = await getEmbedding(content.trim());
 
-    await supabase.from("knowledge_base").insert([
-      { content, metadata, embedding }
-    ]);
+    const { data, error } = await supabase
+      .from("knowledge_base")
+      .insert([
+        {
+          content: content.trim(),
+          metadata,
+          embedding
+        }
+      ])
+      .select();
 
-    res.json({ status: "Saved" });
+    if (error) {
+      console.error("Knowledge insert error:", error);
+      return res.status(500).json({ error: "Failed to save knowledge" });
+    }
 
+    return res.json({
+      status: "Knowledge saved",
+      data
+    });
   } catch (err) {
-    res.status(500).json({ error: "Failed" });
+    console.error("Knowledge route error:", err.message);
+    return res.status(500).json({ error: "Failed to create embedding" });
   }
-
 });
 
 /* ------------------------
-   BULK KNOWLEDGE
--------------------------*/
+   BULK KNOWLEDGE UPLOAD
+------------------------- */
 
 app.post("/knowledge/bulk", async (req, res) => {
-
   const { entries } = req.body;
 
-  if (!Array.isArray(entries)) {
-    return res.status(400).json({ error: "Invalid entries" });
+  if (!supabase) {
+    return res.status(500).json({ error: "Supabase not configured" });
+  }
+
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return res.status(400).json({ error: "Entries array is required" });
   }
 
   try {
-    const rows = [];
+    const rowsToInsert = [];
 
-    for (const e of entries) {
-      const embedding = await getEmbedding(e.content);
+    for (const entry of entries) {
+      const content = entry?.content?.trim();
+      const metadata = entry?.metadata || {};
 
-      rows.push({
-        content: e.content,
-        metadata: e.metadata || {},
+      if (!content) continue;
+
+      const embedding = await getEmbedding(content);
+
+      rowsToInsert.push({
+        content,
+        metadata,
         embedding
       });
     }
 
-    await supabase.from("knowledge_base").insert(rows);
+    if (rowsToInsert.length === 0) {
+      return res.status(400).json({ error: "No valid entries to insert" });
+    }
 
-    res.json({ status: "Bulk saved", count: rows.length });
+    const { data, error } = await supabase
+      .from("knowledge_base")
+      .insert(rowsToInsert)
+      .select();
 
+    if (error) {
+      console.error("Bulk insert error:", error);
+      return res.status(500).json({ error: "Bulk insert failed" });
+    }
+
+    return res.json({
+      status: "Bulk knowledge saved",
+      inserted: data.length
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Bulk failed" });
+    console.error("Bulk knowledge route error:", err.message);
+    return res.status(500).json({ error: "Failed to process bulk knowledge" });
   }
-
 });
 
 /* ------------------------
-   BACKFILL
--------------------------*/
+   BACKFILL EMBEDDINGS
+------------------------- */
 
 app.post("/backfill-embeddings", async (req, res) => {
-
-  const { data: rows } = await supabase
-    .from("knowledge_base")
-    .select("id, content, embedding");
-
-  let updated = 0;
-
-  for (const row of rows) {
-    if (row.embedding) continue;
-
-    const embedding = await getEmbedding(row.content);
-
-    await supabase
-      .from("knowledge_base")
-      .update({ embedding })
-      .eq("id", row.id);
-
-    updated++;
+  if (!supabase) {
+    return res.status(500).json({ error: "Supabase not configured" });
   }
 
-  res.json({ updated });
+  try {
+    const { data: rows, error } = await supabase
+      .from("knowledge_base")
+      .select("id, content, embedding");
 
+    if (error) {
+      console.error("Read error:", error);
+      return res.status(500).json({ error: "Failed to read knowledge base" });
+    }
+
+    let updated = 0;
+
+    for (const row of rows) {
+      if (row.embedding) continue;
+      if (!row.content) continue;
+
+      const embedding = await getEmbedding(row.content);
+
+      const { error: updateError } = await supabase
+        .from("knowledge_base")
+        .update({ embedding })
+        .eq("id", row.id);
+
+      if (updateError) {
+        console.error(`Failed on row ${row.id}:`, updateError);
+        continue;
+      }
+
+      updated++;
+      console.log(`Embedded row ${row.id}`);
+    }
+
+    return res.json({
+      status: "Backfill complete",
+      updated
+    });
+  } catch (err) {
+    console.error("Backfill error:", err.message);
+    return res.status(500).json({ error: "Backfill failed" });
+  }
 });
 
 /* ------------------------
-   EMERGENCY
--------------------------*/
+   EMERGENCY ALERT
+------------------------- */
 
 app.post("/emergency", async (req, res) => {
+  const { lat, lon, driver = "Unknown Driver" } = req.body;
 
-  const { lat, lon, driver = "Driver" } = req.body;
+  if (!lat || !lon || !driver) {
+    return res.status(400).json({
+      error: "Missing emergency data"
+    });
+  }
 
-  const link = `https://maps.google.com/?q=${lat},${lon}`;
+  const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
+
+  const message = `${driver} has sent an EMERGENCY ALERT.
+
+Location:
+${mapLink}
+
+Immediate response required.`;
 
   try {
-
     await twilioClient.messages.create({
-      body: `EMERGENCY from ${driver}\n${link}`,
+      body: message,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: process.env.ALERT_PHONE_NUMBER
     });
 
-    await supabase.from("alerts").insert([
-      {
-        driver,
-        latitude: lat,
-        longitude: lon,
-        alert_type: "emergency",
-        map_link: link
+    await twilioClient.calls.create({
+      twiml: `<Response><Say voice="alice">Emergency alert from ${driver}. GPS location sent by text.</Say></Response>`,
+      to: process.env.ALERT_PHONE_NUMBER,
+      from: process.env.TWILIO_PHONE_NUMBER
+    });
+
+    if (supabase) {
+      const { error } = await supabase.from("alerts").insert([
+        {
+          driver,
+          latitude: lat,
+          longitude: lon,
+          alert_type: "emergency",
+          map_link: mapLink
+        }
+      ]);
+
+      if (error) {
+        console.error("Supabase alert insert error:", error);
       }
-    ]);
+    }
 
-    res.json({ status: "sent" });
-
+    return res.json({
+      status: "Emergency alert sent",
+      location: mapLink
+    });
   } catch (err) {
-    res.status(500).json({ error: "failed" });
-  }
+    console.error("Emergency error:", err);
 
+    return res.status(500).json({
+      error: "Emergency system failed"
+    });
+  }
 });
 
 /* ------------------------
-   GET ALERTS
--------------------------*/
+   DASHBOARD ALERTS
+------------------------- */
 
 app.get("/alerts", async (req, res) => {
+  try {
+    if (!supabase) {
+      return res.status(500).json({
+        error: "Supabase not configured"
+      });
+    }
 
-  const { data } = await supabase
-    .from("alerts")
-    .select("*")
-    .order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("alerts")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  res.json(data);
+    if (error) {
+      console.error("Alerts read error:", error);
+      return res.status(500).json({
+        error: "Database error"
+      });
+    }
 
+    return res.json(data);
+  } catch (err) {
+    console.error("Alerts route error:", err);
+
+    return res.status(500).json({
+      error: "Server error"
+    });
+  }
+});
+
+/* ------------------------
+   HEALTH CHECK
+------------------------- */
+
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
 /* ------------------------
    START SERVER
--------------------------*/
+------------------------- */
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 TARA running on port ${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`TARA server running on port ${PORT}`);
 });
