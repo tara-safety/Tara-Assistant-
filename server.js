@@ -73,10 +73,14 @@ async function getEmbedding(text) {
 }
 
 async function searchKnowledgeBase(question, matchCount = 3) {
-  if (!supabase) return [];
+  if (!supabase) {
+    console.log("No Supabase client");
+    return [];
+  }
 
   try {
     const queryEmbedding = await getEmbedding(question);
+    console.log("Embedding created, length:", queryEmbedding.length);
 
     const { data, error } = await supabase.rpc("match_knowledge_base", {
       query_embedding: queryEmbedding,
@@ -85,13 +89,14 @@ async function searchKnowledgeBase(question, matchCount = 3) {
     });
 
     if (error) {
-      console.error("❌ Knowledge search error:", error);
+      console.error("Knowledge search error:", error);
       return [];
     }
 
+    console.log("Knowledge matches:", data);
     return data || [];
   } catch (err) {
-    console.error("❌ Embedding/search failure:", err.message);
+    console.error("Embedding/search failure:", err.message);
     return [];
   }
 }
