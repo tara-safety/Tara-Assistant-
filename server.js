@@ -105,7 +105,6 @@ async function searchKnowledgeBase(question, matchCount = 3) {
 
   try {
     const queryEmbedding = await getEmbedding(question);
-    console.log("Embedding created:", queryEmbedding.length);
 
     const { data, error } = await supabase.rpc("match_knowledge_base", {
       query_embedding: queryEmbedding,
@@ -118,7 +117,6 @@ async function searchKnowledgeBase(question, matchCount = 3) {
       return [];
     }
 
-    console.log("Knowledge matches:", data);
     return data || [];
   } catch (err) {
     console.error("Embedding/search failure:", err.message);
@@ -171,6 +169,13 @@ function extractAnswerFromCompletion(completion) {
 app.post("/ask", async (req, res) => {
   const question = (req.body.question || "").trim();
 
+  if (!question) {
+    return res.json({
+      answer: "Please enter a towing or roadside safety question.",
+      sourcesUsed: 0
+    });
+  }
+
   if (!isTowingQuestion(question)) {
     return res.json({
       answer: "Sorry, I can only answer towing and roadside safety questions.",
@@ -186,12 +191,10 @@ app.post("/ask", async (req, res) => {
       model: "gpt-5-mini",
       reasoning_effort: "low",
       max_completion_tokens: 400,
-     
-
-messages: [
-  {
-    role: "system",
-    content: `You are TARA (Tow Awareness and Response Assistant).
+      messages: [
+        {
+          role: "system",
+          content: `You are TARA (Tow Awareness and Response Assistant).
 
 You assist professional tow truck operators in real-world roadside situations.
 
@@ -210,7 +213,7 @@ Rules:
 - Do not mention source files unless specifically asked
 - If the question is unrelated, say exactly: Sorry, I can only answer towing and roadside safety questions.
 - Always end with: Follow company policy and local regulations.`
-  },
+        },
         {
           role: "system",
           content: `Knowledge base context:
@@ -224,11 +227,9 @@ ${knowledgeContext}`
       ]
     });
 
-    console.log("Completion response:", JSON.stringify(completion, null, 2));
-
     let answer = extractAnswerFromCompletion(completion)
-  .replace(/\n\s+/g, "\n")
-  .trim(); 
+      .replace(/\n\s+/g, "\n")
+      .trim();
 
     if (!answer) {
       answer = matches.length
@@ -236,19 +237,21 @@ ${knowledgeContext}`
         : "TARA could not generate a response right now.";
     }
 
-    return res.json({
-      answer,
-      sourcesUsed: matches.length
-    });
+    if (!res.headersSent) {
+      return res.json({
+        answer,
+        sourcesUsed: matches.length
+      });
+    }
   } catch (err) {
     console.error("OpenAI / ask route error:", err);
 
-   if (!res.headersSent) {
-  return res.json({
-    answer: answer.trim(),
-    sourcesUsed: matches.length
-  });
-}
+    return res.json({
+      answer: "TARA could not connect to AI right now.",
+      sourcesUsed: 0
+    });
+  }
+});
 
 /* ------------------------
    ADD SINGLE KNOWLEDGE ENTRY
