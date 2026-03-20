@@ -152,10 +152,9 @@ Rules:
       ]
     });
 
-    const answer =
-      completion.choices?.[0]?.message?.content ||
-      "No response generated.";
-
+   const answer =
+  completion.choices?.[0]?.message?.content?.trim() ||
+  "TARA could not generate a response right now.";
     res.json({
       answer,
       sourcesUsed: matches.length
