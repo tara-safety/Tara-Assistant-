@@ -171,13 +171,6 @@ function extractAnswerFromCompletion(completion) {
 app.post("/ask", async (req, res) => {
   const question = (req.body.question || "").trim();
 
-  if (!question) {
-    return res.json({
-      answer: "Please enter a towing or roadside safety question.",
-      sourcesUsed: 0
-    });
-  }
-
   if (!isTowingQuestion(question)) {
     return res.json({
       answer: "Sorry, I can only answer towing and roadside safety questions.",
