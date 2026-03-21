@@ -165,7 +165,10 @@
           <span>${formatStatus(status)}</span>
         `;
 
-        row.onclick = () => focusDriver(driver.driver, driver.latitude, driver.longitude);
+        row.onclick = () => {
+  focusDriver(driver.driver, driver.latitude, driver.longitude);
+  renderDriverDetails(driver);
+};
 
         list.appendChild(row);
       });
