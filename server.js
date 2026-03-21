@@ -517,6 +517,59 @@ app.get("/health", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
+/* ------------------------
+   LIVE DRIVER LOCATIONS
+------------------------- */
+
+app.get("/driver-locations", async (req, res) => {
+  try {
+    if (!supabase) {
+      return res.status(500).json({
+        error: "Supabase not configured"
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("alerts")
+      .select("driver, latitude, longitude, alert_type, created_at")
+      .not("latitude", "is", null)
+      .not("longitude", "is", null)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Driver locations read error:", error);
+      return res.status(500).json({
+        error: "Database error"
+      });
+    }
+
+    const latestByDriver = [];
+    const seenDrivers = new Set();
+
+    for (const row of data) {
+      const driverName = row.driver || "Unknown Driver";
+
+      if (seenDrivers.has(driverName)) continue;
+      seenDrivers.add(driverName);
+
+      latestByDriver.push({
+        driver: driverName,
+        latitude: Number(row.latitude),
+        longitude: Number(row.longitude),
+        alert_type: row.alert_type || "status",
+        created_at: row.created_at
+      });
+    }
+
+    return res.json(latestByDriver);
+  } catch (err) {
+    console.error("Driver locations route error:", err);
+    return res.status(500).json({
+      error: "Server error"
+    });
+  }
+});
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`TARA server running on port ${PORT}`);
 });
