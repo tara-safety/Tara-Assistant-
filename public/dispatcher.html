@@ -223,6 +223,30 @@
     setInterval(loadData, 15000);
 
   </script>
+function renderDriverDetails(driver) {
+  const box = document.getElementById("driverDetails");
 
+  if (!driver) {
+    box.innerHTML = "<p>Select a driver from the list to view details.</p>";
+    return;
+  }
+
+  box.innerHTML = `
+    <h3>${driver.driver || "Unknown Driver"}</h3>
+
+    <span class="detail-label">Status</span>
+    <div class="detail-value">${formatStatus(driver.alert_type || "status")}</div>
+
+    <span class="detail-label">Latitude</span>
+    <div class="detail-value">${driver.latitude ?? "Unknown"}</div>
+
+    <span class="detail-label">Longitude</span>
+    <div class="detail-value">${driver.longitude ?? "Unknown"}</div>
+
+    <span class="detail-label">Last Update</span>
+    <div class="detail-value">${formatTime(driver.created_at)}</div>
+  `;
+}
+  
 </body>
 </html>
