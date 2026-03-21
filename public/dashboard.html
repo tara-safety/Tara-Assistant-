@@ -6,6 +6,7 @@
   <title>TARA Dashboard</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+  
 <body class="tara-dashboard-page">
   <div class="dashboard-shell">
     <header class="dashboard-header">
@@ -113,5 +114,39 @@
       </p>
     </footer>
   </div>
+  <script>
+  const askBtn = document.getElementById("askTaraBtn");
+  const questionInput = document.getElementById("taraQuestion");
+  const responseBox = document.getElementById("taraResponse");
+
+  askBtn.addEventListener("click", async () => {
+    const question = questionInput.value.trim();
+
+    if (!question) {
+      responseBox.innerHTML = "<p>Please enter a question.</p>";
+      return;
+    }
+
+    responseBox.innerHTML = "<p>Thinking...</p>";
+
+    try {
+      const res = await fetch("/ask", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ question })
+      });
+
+      const data = await res.json();
+
+      responseBox.innerHTML = `
+        <p>${(data.answer || "No response returned.").replace(/\n/g, "<br>")}</p>
+      `;
+    } catch (error) {
+      responseBox.innerHTML = "<p>TARA could not connect right now.</p>";
+    }
+  });
+</script>
 </body>
 </html>
