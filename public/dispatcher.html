@@ -60,24 +60,7 @@
 
       <aside class="dispatcher-side-card">
         <h2>Driver List</h2>
-        <div id="driverList" class="dispatcher-driver-list">
-          <div class="driver-row">
-            <strong>Troy Unit 1</strong>
-            <span>Working</span>
-          </div>
-          <div class="driver-row">
-            <strong>Unit 2</strong>
-            <span>Driving</span>
-          </div>
-          <div class="driver-row">
-            <strong>Unit 3</strong>
-            <span>Idle</span>
-          </div>
-          <div class="driver-row alert">
-            <strong>Unit 4</strong>
-            <span>Emergency</span>
-          </div>
-        </div>
+        <div id="driverList" class="dispatcher-driver-list"></div>
       </aside>
     </section>
 
@@ -126,21 +109,66 @@
 
   let driverMarkers = [];
 
+  function formatStatus(status) {
+    if (!status) return "Unknown";
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
+  function renderDriverList(drivers) {
+    const driverList = document.getElementById("driverList");
+    const activeDriversCount = document.getElementById("activeDriversCount");
+    const activeAlertsCount = document.getElementById("activeAlertsCount");
+    const emergencyCount = document.getElementById("emergencyCount");
+
+    driverList.innerHTML = "";
+
+    let alerts = 0;
+    let emergencies = 0;
+
+    drivers.forEach((driver) => {
+      const status = driver.alert_type || "status";
+      const isEmergency = status.toLowerCase() === "emergency";
+
+      if (status && status.toLowerCase() !== "status") {
+        alerts++;
+      }
+
+      if (isEmergency) {
+        emergencies++;
+      }
+
+      const row = document.createElement("div");
+      row.className = isEmergency ? "driver-row alert" : "driver-row";
+
+      row.innerHTML = `
+        <strong>${driver.driver || "Unknown Driver"}</strong>
+        <span>${formatStatus(status)}</span>
+      `;
+
+      driverList.appendChild(row);
+    });
+
+    activeDriversCount.textContent = drivers.length;
+    activeAlertsCount.textContent = alerts;
+    emergencyCount.textContent = emergencies;
+  }
+
   async function loadDriverLocations() {
     try {
       const res = await fetch("/driver-locations");
       const drivers = await res.json();
 
-      driverMarkers.forEach(marker => map.removeLayer(marker));
+      driverMarkers.forEach((marker) => map.removeLayer(marker));
       driverMarkers = [];
 
       if (!Array.isArray(drivers) || drivers.length === 0) {
+        renderDriverList([]);
         return;
       }
 
       const bounds = [];
 
-      drivers.forEach(driver => {
+      drivers.forEach((driver) => {
         const lat = Number(driver.latitude);
         const lon = Number(driver.longitude);
 
@@ -150,13 +178,15 @@
           .addTo(map)
           .bindPopup(`
             <strong>${driver.driver || "Unknown Driver"}</strong><br>
-            Status: ${driver.alert_type || "status"}<br>
+            Status: ${formatStatus(driver.alert_type || "status")}<br>
             Last Update: ${driver.created_at || "Unknown"}
           `);
 
         driverMarkers.push(marker);
         bounds.push([lat, lon]);
       });
+
+      renderDriverList(drivers);
 
       if (bounds.length > 0) {
         map.fitBounds(bounds, { padding: [40, 40] });
