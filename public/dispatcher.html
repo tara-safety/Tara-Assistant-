@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TARA Dispatcher Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="tara-dashboard-page">
+  <div class="dashboard-shell">
+    <header class="dashboard-header">
+      <div>
+        <p class="dashboard-kicker">TARA Dispatch Command</p>
+        <h1>Dispatcher Dashboard</h1>
+        <p class="dashboard-subtext">
+          Monitor drivers, view live locations, track alerts, and manage roadside response from one screen.
+        </p>
+      </div>
+
+      <div class="dashboard-status-card">
+        <div class="status-label">Dispatch Status</div>
+        <strong>Online</strong>
+        <small>Fleet tracking active</small>
+      </div>
+    </header>
+
+    <section class="dashboard-stats">
+      <div class="stat-card">
+        <span>Active Drivers</span>
+        <strong id="activeDriversCount">12</strong>
+      </div>
+      <div class="stat-card">
+        <span>Active Alerts</span>
+        <strong id="activeAlertsCount">2</strong>
+      </div>
+      <div class="stat-card">
+        <span>Emergency Events</span>
+        <strong id="emergencyCount">1</strong>
+      </div>
+      <div class="stat-card">
+        <span>System Health</span>
+        <strong>Stable</strong>
+      </div>
+    </section>
+
+    <section class="dispatcher-grid">
+      <div class="dispatcher-map-card">
+        <div class="card-head">
+          <h2>Live Driver Locations</h2>
+          <span class="pill">Live Map</span>
+        </div>
+        <div id="dispatcherMap" class="dispatcher-map-placeholder">
+          Map area will go here next.
+        </div>
+      </div>
+
+      <aside class="dispatcher-side-card">
+        <h2>Driver List</h2>
+        <div id="driverList" class="dispatcher-driver-list">
+          <div class="driver-row">
+            <strong>Troy Unit 1</strong>
+            <span>Working</span>
+          </div>
+          <div class="driver-row">
+            <strong>Unit 2</strong>
+            <span>Driving</span>
+          </div>
+          <div class="driver-row">
+            <strong>Unit 3</strong>
+            <span>Idle</span>
+          </div>
+          <div class="driver-row alert">
+            <strong>Unit 4</strong>
+            <span>Emergency</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="dashboard-bottom-grid">
+      <div class="dashboard-card">
+        <h2>Recent Alerts</h2>
+        <div id="recentAlerts">
+          <p>Emergency alert - Unit 4 - Highway shoulder</p>
+          <p>High-risk roadside event - Unit 1</p>
+          <p>Driver status check triggered - Unit 2</p>
+        </div>
+      </div>
+
+      <div class="dashboard-card">
+        <h2>Dispatcher Actions</h2>
+        <div class="dispatcher-actions">
+          <button>Open Driver Details</button>
+          <button>Call Driver</button>
+          <button>View Alert History</button>
+          <button>Escalate Event</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="dashboard-footer">
+      <h3>Dispatcher Note</h3>
+      <p>
+        TARA dispatch tools support live fleet visibility and emergency awareness. Final dispatch decisions must follow company policy, local law, and operational judgment.
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
