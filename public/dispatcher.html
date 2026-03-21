@@ -186,5 +186,19 @@
       </p>
     </footer>
   </div>
+
+  <script>
+  const map = L.map("dispatcherMap").setView([46.0878, -64.7782], 11);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(map);
+
+  L.marker([46.0878, -64.7782])
+    .addTo(map)
+    .bindPopup("Test Driver - Unit 1")
+    .openPopup();
+
+</script>
 </body>
 </html>
