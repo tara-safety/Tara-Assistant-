@@ -791,3 +791,40 @@ button:active{
     grid-template-columns: 1fr;
   }
 }
+
+.driver-details-box {
+  margin-top: 16px;
+  background: #0b1220;
+  border: 1px solid #1f2937;
+  border-radius: 16px;
+  padding: 18px;
+  color: #e5e7eb;
+  line-height: 1.7;
+}
+
+.driver-details-box h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.driver-details-box .detail-label {
+  color: #94a3b8;
+  font-size: 13px;
+  display: block;
+  margin-top: 10px;
+}
+
+.driver-details-box .detail-value {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.driver-row.clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.driver-row.clickable:hover {
+  transform: translateY(-1px);
+  border-color: #34d399;
+}
