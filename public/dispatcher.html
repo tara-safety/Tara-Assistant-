@@ -1,25 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
+
+<!-- ===================== HEAD ===================== -->
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TARA Dispatcher Dashboard</title>
+
+  <!-- Main Styles -->
   <link rel="stylesheet" href="style.css" />
+
+  <!-- Leaflet Map Styles -->
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
   />
 </head>
+
+<!-- ===================== BODY START ===================== -->
 <body class="tara-dashboard-page">
+
   <div class="dashboard-shell">
+
+    <!-- ===================== HEADER ===================== -->
     <header class="dashboard-header">
       <div>
         <p class="dashboard-kicker">TARA Dispatch Command</p>
         <h1>Dispatcher Dashboard</h1>
         <p class="dashboard-subtext">
-          Monitor drivers, view live locations, track alerts, and manage roadside response from one screen.
+          Monitor drivers, view live locations, track alerts, and manage roadside response.
         </p>
       </div>
 
@@ -30,18 +39,19 @@
       </div>
     </header>
 
+    <!-- ===================== STATS ===================== -->
     <section class="dashboard-stats">
       <div class="stat-card">
         <span>Active Drivers</span>
-        <strong id="activeDriversCount">12</strong>
+        <strong id="activeDriversCount">0</strong>
       </div>
       <div class="stat-card">
         <span>Active Alerts</span>
-        <strong id="activeAlertsCount">2</strong>
+        <strong id="activeAlertsCount">0</strong>
       </div>
       <div class="stat-card">
         <span>Emergency Events</span>
-        <strong id="emergencyCount">1</strong>
+        <strong id="emergencyCount">0</strong>
       </div>
       <div class="stat-card">
         <span>System Health</span>
@@ -49,26 +59,38 @@
       </div>
     </section>
 
+    <!-- ===================== MAP + DRIVER LIST ===================== -->
     <section class="dispatcher-grid">
+
+      <!-- MAP -->
       <div class="dispatcher-map-card">
         <div class="card-head">
           <h2>Live Driver Locations</h2>
           <span class="pill">Live Map</span>
         </div>
+
         <div id="dispatcherMap" class="dispatcher-map-placeholder"></div>
       </div>
 
+      <!-- DRIVER LIST -->
       <aside class="dispatcher-side-card">
         <h2>Driver List</h2>
         <div id="driverList" class="dispatcher-driver-list"></div>
       </aside>
+
     </section>
 
+    <!-- ===================== ALERTS + ACTIONS ===================== -->
     <section class="dashboard-bottom-grid">
+
+      <!-- ALERTS -->
       <div class="dashboard-card">
         <h2>Recent Alerts</h2>
-       <div id="recentAlerts"></div> 
-       <div class="dashboard-card">
+        <div id="recentAlerts"></div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="dashboard-card">
         <h2>Dispatcher Actions</h2>
         <div class="dispatcher-actions">
           <button>Open Driver Details</button>
@@ -77,166 +99,133 @@
           <button>Escalate Event</button>
         </div>
       </div>
+
     </section>
 
+    <!-- ===================== FOOTER ===================== -->
     <footer class="dashboard-footer">
       <h3>Dispatcher Note</h3>
       <p>
-        TARA dispatch tools support live fleet visibility and emergency awareness.
-        Final dispatch decisions must follow company policy, local law, and operational judgment.
+        TARA supports live fleet visibility and emergency awareness.
+        Follow company policy and operational judgment.
       </p>
     </footer>
+
   </div>
 
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
-</script>
+  <!-- ===================== LEAFLET SCRIPT ===================== -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- ===================== MAIN DISPATCHER SCRIPT ===================== -->
   <script>
-  const map = L.map("dispatcherMap").setView([46.0878, -64.7782], 11);
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    attribution: "&copy; OpenStreetMap contributors"
-  }).addTo(map);
+    const map = L.map("dispatcherMap").setView([46.0878, -64.7782], 11);
 
-  let driverMarkers = [];
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
 
-  function formatStatus(status) {
-    if (!status) return "Unknown";
-    return status.charAt(0).toUpperCase() + status.slice(1);
-  }
+    let driverMarkers = [];
+    let driverMarkerLookup = {};
 
-  function formatTime(value) {
-    if (!value) return "Unknown time";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleString();
-  }
-
-  function renderDriverList(drivers) {
-    const driverList = document.getElementById("driverList");
-    const activeDriversCount = document.getElementById("activeDriversCount");
-    const activeAlertsCount = document.getElementById("activeAlertsCount");
-    const emergencyCount = document.getElementById("emergencyCount");
-
-    driverList.innerHTML = "";
-
-    let alerts = 0;
-    let emergencies = 0;
-
-    drivers.forEach((driver) => {
-      const status = driver.alert_type || "status";
-      const isEmergency = status.toLowerCase() === "emergency";
-
-      if (status && status.toLowerCase() !== "status") {
-        alerts++;
-      }
-
-      if (isEmergency) {
-        emergencies++;
-      }
-
-      const row = document.createElement("div");
-      row.className = isEmergency ? "driver-row alert" : "driver-row";
-
-      row.innerHTML = `
-        <strong>${driver.driver || "Unknown Driver"}</strong>
-        <span>${formatStatus(status)}</span>
-      `;
-
-      driverList.appendChild(row);
-    });
-
-    activeDriversCount.textContent = drivers.length;
-    activeAlertsCount.textContent = alerts;
-    emergencyCount.textContent = emergencies;
-  }
-
-  function renderRecentAlerts(alerts) {
-    const recentAlerts = document.getElementById("recentAlerts");
-    recentAlerts.innerHTML = "";
-
-    if (!Array.isArray(alerts) || alerts.length === 0) {
-      recentAlerts.innerHTML = "<p>No recent alerts.</p>";
-      return;
+    function formatStatus(status) {
+      if (!status) return "Unknown";
+      return status.charAt(0).toUpperCase() + status.slice(1);
     }
 
-    alerts.slice(0, 8).forEach((alert) => {
-      const item = document.createElement("div");
-      item.className = "recent-alert-item";
-
-      item.innerHTML = `
-        <strong>${alert.driver || "Unknown Driver"}</strong>
-        <span>${formatStatus(alert.alert_type || "status")}</span>
-        <small>${formatTime(alert.created_at)}</small>
-      `;
-
-      recentAlerts.appendChild(item);
-    });
-  }
-
-  async function loadRecentAlerts() {
-    try {
-      const res = await fetch("/alerts");
-      const alerts = await res.json();
-      renderRecentAlerts(alerts);
-    } catch (error) {
-      console.error("Failed to load recent alerts:", error);
+    function formatTime(value) {
+      if (!value) return "Unknown time";
+      return new Date(value).toLocaleString();
     }
-  }
 
-  async function loadDriverLocations() {
-    try {
-      const res = await fetch("/driver-locations");
-      const drivers = await res.json();
+    function focusDriver(driverName, lat, lon) {
+      map.setView([lat, lon], 14);
+      if (driverMarkerLookup[driverName]) {
+        driverMarkerLookup[driverName].openPopup();
+      }
+    }
 
-      driverMarkers.forEach((marker) => map.removeLayer(marker));
+    function renderDriverList(drivers) {
+      const list = document.getElementById("driverList");
+      list.innerHTML = "";
+
+      let alerts = 0;
+      let emergencies = 0;
+
+      drivers.forEach(driver => {
+
+        const status = driver.alert_type || "status";
+        const isEmergency = status.toLowerCase() === "emergency";
+
+        if (status !== "status") alerts++;
+        if (isEmergency) emergencies++;
+
+        const row = document.createElement("div");
+        row.className = isEmergency ? "driver-row alert clickable" : "driver-row clickable";
+
+        row.innerHTML = `
+          <strong>${driver.driver}</strong>
+          <span>${formatStatus(status)}</span>
+        `;
+
+        row.onclick = () => focusDriver(driver.driver, driver.latitude, driver.longitude);
+
+        list.appendChild(row);
+      });
+
+      document.getElementById("activeDriversCount").textContent = drivers.length;
+      document.getElementById("activeAlertsCount").textContent = alerts;
+      document.getElementById("emergencyCount").textContent = emergencies;
+    }
+
+    function renderAlerts(alerts) {
+      const box = document.getElementById("recentAlerts");
+      box.innerHTML = "";
+
+      alerts.slice(0, 6).forEach(alert => {
+        const item = document.createElement("div");
+        item.className = "recent-alert-item";
+
+        item.innerHTML = `
+          <strong>${alert.driver}</strong>
+          <span>${formatStatus(alert.alert_type)}</span>
+          <small>${formatTime(alert.created_at)}</small>
+        `;
+
+        box.appendChild(item);
+      });
+    }
+
+    async function loadData() {
+
+      const driversRes = await fetch("/driver-locations");
+      const drivers = await driversRes.json();
+
+      const alertsRes = await fetch("/alerts");
+      const alerts = await alertsRes.json();
+
+      driverMarkers.forEach(m => map.removeLayer(m));
       driverMarkers = [];
+      driverMarkerLookup = {};
 
-      if (!Array.isArray(drivers) || drivers.length === 0) {
-        renderDriverList([]);
-        return;
-      }
+      drivers.forEach(d => {
 
-      const bounds = [];
-
-      drivers.forEach((driver) => {
-        const lat = Number(driver.latitude);
-        const lon = Number(driver.longitude);
-
-        if (Number.isNaN(lat) || Number.isNaN(lon)) return;
-
-        const marker = L.marker([lat, lon])
+        const marker = L.marker([d.latitude, d.longitude])
           .addTo(map)
-          .bindPopup(`
-            <strong>${driver.driver || "Unknown Driver"}</strong><br>
-            Status: ${formatStatus(driver.alert_type || "status")}<br>
-            Last Update: ${formatTime(driver.created_at)}
-          `);
+          .bindPopup(`<strong>${d.driver}</strong><br>${formatStatus(d.alert_type)}`);
 
         driverMarkers.push(marker);
-        bounds.push([lat, lon]);
+        driverMarkerLookup[d.driver] = marker;
       });
 
       renderDriverList(drivers);
-
-      if (bounds.length > 0) {
-        map.fitBounds(bounds, { padding: [40, 40] });
-      }
-    } catch (error) {
-      console.error("Failed to load driver locations:", error);
+      renderAlerts(alerts);
     }
-  }
 
-  async function refreshDispatcher() {
-    await loadDriverLocations();
-    await loadRecentAlerts();
-  }
+    loadData();
+    setInterval(loadData, 15000);
 
-  refreshDispatcher();
-  setInterval(refreshDispatcher, 15000);
-</script>
+  </script>
+
 </body>
 </html>
