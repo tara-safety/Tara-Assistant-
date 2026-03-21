@@ -760,6 +760,33 @@ button:active{
     grid-template-columns: 1fr;
   }
 
+  #recentAlerts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.recent-alert-item {
+  background: #0b1220;
+  border: 1px solid #1f2937;
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #e5e7eb;
+}
+
+.recent-alert-item span {
+  color: #86efac;
+  font-size: 14px;
+}
+
+.recent-alert-item small {
+  color: #94a3b8;
+  font-size: 12px;
+}
   .dispatcher-actions {
     grid-template-columns: 1fr;
   }
