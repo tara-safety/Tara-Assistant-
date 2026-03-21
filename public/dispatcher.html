@@ -117,17 +117,57 @@
     crossorigin=""
   ></script>
 
-  <script>
-    const map = L.map("dispatcherMap").setView([46.0878, -64.7782], 11);
+ <script>
+  const map = L.map("dispatcherMap").setView([46.0878, -64.7782], 11);
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors"
-    }).addTo(map);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(map);
 
-    L.marker([46.0878, -64.7782])
-      .addTo(map)
-      .bindPopup("Test Driver - Unit 1")
-      .openPopup();
-  </script>
+  let driverMarkers = [];
+
+  async function loadDriverLocations() {
+    try {
+      const res = await fetch("/driver-locations");
+      const drivers = await res.json();
+
+      driverMarkers.forEach(marker => map.removeLayer(marker));
+      driverMarkers = [];
+
+      if (!Array.isArray(drivers) || drivers.length === 0) {
+        return;
+      }
+
+      const bounds = [];
+
+      drivers.forEach(driver => {
+        const lat = Number(driver.latitude);
+        const lon = Number(driver.longitude);
+
+        if (Number.isNaN(lat) || Number.isNaN(lon)) return;
+
+        const marker = L.marker([lat, lon])
+          .addTo(map)
+          .bindPopup(`
+            <strong>${driver.driver || "Unknown Driver"}</strong><br>
+            Status: ${driver.alert_type || "status"}<br>
+            Last Update: ${driver.created_at || "Unknown"}
+          `);
+
+        driverMarkers.push(marker);
+        bounds.push([lat, lon]);
+      });
+
+      if (bounds.length > 0) {
+        map.fitBounds(bounds, { padding: [40, 40] });
+      }
+    } catch (error) {
+      console.error("Failed to load driver locations:", error);
+    }
+  }
+
+  loadDriverLocations();
+  setInterval(loadDriverLocations, 15000);
+</script>
 </body>
 </html>
