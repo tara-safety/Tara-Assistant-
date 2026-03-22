@@ -234,6 +234,11 @@ function renderDriverDetails(driver) {
     return;
   }
 
+  const phone = driver.phone || "";
+  const lat = driver.latitude ?? "";
+  const lon = driver.longitude ?? "";
+  const mapsUrl = lat && lon ? `https://maps.google.com/?q=${lat},${lon}` : "#";
+
   box.innerHTML = `
     <h3>${driver.driver || "Unknown Driver"}</h3>
 
@@ -241,15 +246,19 @@ function renderDriverDetails(driver) {
     <div class="detail-value">${formatStatus(driver.alert_type || "status")}</div>
 
     <span class="detail-label">Latitude</span>
-    <div class="detail-value">${driver.latitude ?? "Unknown"}</div>
+    <div class="detail-value">${lat || "Unknown"}</div>
 
     <span class="detail-label">Longitude</span>
-    <div class="detail-value">${driver.longitude ?? "Unknown"}</div>
+    <div class="detail-value">${lon || "Unknown"}</div>
 
     <span class="detail-label">Last Update</span>
     <div class="detail-value">${formatTime(driver.created_at)}</div>
+
+    <div class="driver-detail-actions">
+      <a class="detail-action-btn" href="${phone ? `tel:${phone}` : '#'}" ${phone ? "" : 'onclick="return false;"'}>Call Driver</a>
+      <a class="detail-action-btn" href="${mapsUrl}" target="_blank" rel="noopener noreferrer">Open in Maps</a>
+    </div>
   `;
 }
-  
 </body>
 </html>
