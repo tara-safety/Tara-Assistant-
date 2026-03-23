@@ -190,12 +190,13 @@ function cancelHold(state) {
   }
 }
 
-/* ============================= */
-/* EMERGENCY COUNTDOWN */
-/* ============================= */
-
 export function startEmergencyCountdown(state, dom) {
   if (state.emergencyRunning) return;
+
+  if (state.holdTimer) {
+    clearTimeout(state.holdTimer);
+    state.holdTimer = null;
+  }
 
   state.emergencyRunning = true;
   playAlarm(state);
