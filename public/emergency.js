@@ -239,6 +239,7 @@ export function startEmergencyCountdown(state, dom) {
     addStatus(dom.chatBox, "Emergency cancelled");
     state.emergencyRunning = false;
     state.emergencyActive = false;
+    state.holdTimer = null;
   }
 
   cancelBtn.onclick = function () {
