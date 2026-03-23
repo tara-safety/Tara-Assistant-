@@ -1,7 +1,8 @@
 export function getDOM() {
   return {
-    askBtn: document.getElementById("sendBtn"),
+    askBtn: document.getElementById("askBtn"),
     voiceBtn: document.getElementById("voiceBtn"),
+    voiceToggle: document.getElementById("voiceToggle"),
     emergencyBtn: document.getElementById("emergencyBtn"),
     emergencyMiniBtn: document.getElementById("emergencyMiniBtn"),
     driverMinderBtn: document.getElementById("driverMinderBtn"),
