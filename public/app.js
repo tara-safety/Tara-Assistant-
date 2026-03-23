@@ -10,6 +10,7 @@ import {
 } from "./ui.js";
 import { setupSystemUnlock } from "./permissions.js";
 import {
+  initVoices,
   speak,
   stopSpeaking,
   startVoiceSystem,
@@ -29,6 +30,7 @@ document.addEventListener("DOMContentLoaded", function () {
   console.log("TARA System Booting");
 
   const dom = getDOM();
+  initVoices();
 
   setupMenu(dom.menuBtn, dom.menu);
   setupSystemUnlock(state);
@@ -79,6 +81,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (dom.askBtn) {
     dom.askBtn.addEventListener("click", sendQuestion);
+  }
+
+  if (dom.questionInput) {
+    dom.questionInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendQuestion();
+      }
+    });
   }
 
   if (dom.voiceBtn) {
