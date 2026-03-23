@@ -10,9 +10,11 @@
 <body class="tara-dashboard-page">
   <div class="dashboard-shell">
     <header class="dashboard-header">
+      <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+
       <div>
         <p class="dashboard-kicker">TARA Safety Intelligence</p>
-        <h1>Customer Dashboard</h1>
+        <h1>DASHBOARD</h1>
         <p class="dashboard-subtext">
           Professional towing safety guidance powered by your private company knowledge base.
         </p>
@@ -24,6 +26,63 @@
         <small>AI knowledge base connected</small>
       </div>
     </header>
+
+    <nav class="menu">
+      <a href="#">Dashboard</a>
+      <a href="#">Knowledge</a>
+      <a href="#">Safety Tools</a>
+      <a href="#">Settings</a>
+    </nav>
+
+    <section class="hero-emergency-wrap">
+      <button id="emergencyBtn" class="emergency-main-btn">
+        🚨<br />
+        HOLD<br />
+        EMERGENCY
+      </button>
+      <div class="hold-note">Hold for 3 seconds</div>
+    </section>
+
+    <button id="emergencyMiniBtn" class="emergency-mini-btn">🚨 SOS</button>
+
+    <section class="status-card" id="contextCard">
+      <div id="contextText">Context: Idle</div>
+      <div id="riskText">Risk: Normal</div>
+      <div id="soundText">Sound Watch: Off</div>
+      <div id="driverMinderText">Driver Minder: Off</div>
+    </section>
+
+    <div id="contextBadge" class="context-badge">⚪ IDLE</div>
+    <div id="motionDebug" class="motion-debug">Motion: 0.00 | Score: 0 | Mode: IDLE</div>
+
+    <section class="safety-panel">
+      <h2>Safety Controls</h2>
+
+      <button id="driverMinderBtn" class="safety-btn">
+        Driver Minder OFF
+      </button>
+
+      <button id="highRiskBtn" class="safety-btn">
+        HIGH-RISK MODE OFF
+      </button>
+
+      <button id="towModeBtn" class="safety-btn">
+        Tow Mode OFF
+      </button>
+
+      <button id="towCameraBtn" class="safety-btn">
+        Open Camera
+      </button>
+
+      <button id="voiceBtn" class="safety-btn">
+        Voice Input
+      </button>
+
+      <label class="voice-toggle-row">
+        <span>Voice Responses</span>
+        <input type="checkbox" id="voiceToggle" checked />
+      </label>
+    </section>
 
     <section class="dashboard-stats">
       <div class="stat-card">
@@ -53,18 +112,13 @@
 
         <div class="question-box">
           <label for="question">Ask TARA</label>
-          <textarea id="question" placeholder="Type a towing or roadside safety question...">How do I safely recover a vehicle on the highway shoulder?</textarea>
+          <textarea id="question" placeholder="Type a towing or roadside safety question..."></textarea>
           <button id="askBtn">Ask TARA</button>
         </div>
 
         <div class="response-box">
           <h3>TARA Response</h3>
-          <div id="chatBox">
-            <p><strong>Immediate Risk:</strong> Exposure to high-speed traffic and limited escape space.</p>
-            <p><strong>First Action:</strong> Position the tow truck as a barrier, activate warning lights, and wear high-visibility PPE.</p>
-            <p><strong>Safe Procedure:</strong> Approach from the safest side, deploy warning devices, secure the vehicle, and minimize time on scene.</p>
-            <p><strong>Final Warning:</strong> Expect distracted drivers and stop work if the scene becomes unsafe. Follow company policy and local regulations.</p>
-          </div>
+          <div id="chatBox"></div>
         </div>
       </div>
 
