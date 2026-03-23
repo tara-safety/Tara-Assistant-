@@ -619,3 +619,40 @@ textarea {
     font-size: 18px;
   }
 }
+
+.header-copy {
+  flex: 1;
+  min-width: 220px;
+}
+
+.safety-zone {
+  margin-bottom: 24px;
+}
+
+.safety-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.half-btn {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.voice-toggle-row.half-btn {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.22);
+}
+
+@media (max-width: 640px) {
+  .safety-row {
+    flex-direction: column;
+  }
+
+  .half-btn {
+    width: 100%;
+  }
+}
