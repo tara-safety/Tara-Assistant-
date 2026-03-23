@@ -42,8 +42,11 @@ document.addEventListener("DOMContentLoaded", function () {
       state.highRiskMode = !state.highRiskMode;
 
       if (dom.riskText) {
-  dom.riskText.textContent = state.highRiskMode ? "Risk: High" : "Risk: Normal";
-}
+        dom.riskText.textContent = state.highRiskMode
+          ? "Risk: High"
+          : "Risk: Normal";
+      }
+
       if (state.highRiskMode) {
         dom.highRiskBtn.innerText = "HIGH-RISK MODE ON";
         dom.highRiskBtn.classList.add("active");
