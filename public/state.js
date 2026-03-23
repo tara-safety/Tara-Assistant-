@@ -7,6 +7,7 @@ export const state = {
   emergencyRunning: false,
   listeningForCommand: false,
   systemUnlocked: false,
+  touchStarted: false,
   lastImpactTime: 0,
   inactivityTimer: null,
   holdTimer: null,
