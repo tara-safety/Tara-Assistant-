@@ -1,41 +1,141 @@
-export function speak(text, state) {
+let cachedVoice = null;
+let voicesLoaded = false;
+
+function loadVoices() {
+  const voices = window.speechSynthesis.getVoices();
+
+  if (voices && voices.length > 0) {
+    voicesLoaded = true;
+    cachedVoice = pickBestVoice(voices);
+  }
+
+  return voices;
+}
+
+function pickBestVoice(voices) {
+  if (!voices || !voices.length) return null;
+
+  const preferredNames = [
+    "Samantha",
+    "Ava",
+    "Allison",
+    "Susan",
+    "Karen",
+    "Moira",
+    "Jenny",
+    "Aria"
+  ];
+
+  for (const preferred of preferredNames) {
+    const match = voices.find(v =>
+      v.lang &&
+      v.lang.toLowerCase().startsWith("en") &&
+      v.name.toLowerCase().includes(preferred.toLowerCase())
+    );
+    if (match) return match;
+  }
+
+  const anyEnglish = voices.find(v =>
+    v.lang && v.lang.toLowerCase().startsWith("en")
+  );
+  if (anyEnglish) return anyEnglish;
+
+  return voices[0];
+}
+
+function buildUtterance(text, options = {}) {
+  const utterance = new SpeechSynthesisUtterance(text);
+
+  utterance.lang = options.lang || "en-US";
+  utterance.rate = options.rate ?? 0.94;
+  utterance.pitch = options.pitch ?? 1.03;
+  utterance.volume = options.volume ?? 1;
+
+  if (!voicesLoaded) {
+    loadVoices();
+  }
+
+  if (cachedVoice) {
+    utterance.voice = cachedVoice;
+  }
+
+  return utterance;
+}
+
+function speakNow(text, options = {}) {
   if (!text) return;
-  if (state && state.voiceEnabled === false) return;
 
   try {
-    speechSynthesis.cancel();
+    const synth = window.speechSynthesis;
+    loadVoices();
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = 1;
-    utterance.pitch = 1;
+    const runSpeak = function () {
+      try {
+        synth.cancel();
+        const utterance = buildUtterance(text, options);
+        synth.speak(utterance);
+      } catch (err) {
+        console.log("Speech output failed:", err);
+      }
+    };
 
-    speechSynthesis.speak(utterance);
+    if (!voicesLoaded) {
+      setTimeout(runSpeak, 150);
+    } else {
+      runSpeak();
+    }
   } catch (err) {
     console.log("Speech output failed:", err);
   }
 }
 
+export function initVoices() {
+  loadVoices();
+
+  if (typeof speechSynthesis !== "undefined") {
+    speechSynthesis.onvoiceschanged = function () {
+      loadVoices();
+    };
+  }
+}
+
+export function speak(text, state) {
+  if (!text) return;
+  if (state && state.voiceEnabled === false) return;
+
+  speakNow(text, {
+    lang: "en-US",
+    rate: 0.94,
+    pitch: 1.03,
+    volume: 1
+  });
+}
+
 export function forceSpeak(text) {
   if (!text) return;
 
-  try {
-    speechSynthesis.cancel();
+  speakNow(text, {
+    lang: "en-US",
+    rate: 0.9,
+    pitch: 1.0,
+    volume: 1
+  });
+}
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = 1;
-    utterance.pitch = 1;
+export function emergencySpeak(text) {
+  if (!text) return;
 
-    speechSynthesis.speak(utterance);
-  } catch (err) {
-    console.log("Forced speech output failed:", err);
-  }
+  speakNow(text, {
+    lang: "en-US",
+    rate: 0.88,
+    pitch: 0.98,
+    volume: 1
+  });
 }
 
 export function stopSpeaking() {
   try {
-    speechSynthesis.cancel();
+    window.speechSynthesis.cancel();
   } catch (err) {
     console.log("Stop speaking failed:", err);
   }
@@ -70,7 +170,7 @@ export function startVoiceSystem(state, dom, sendQuestion) {
     if (!state.listeningForCommand) {
       if (text.includes("hey tara")) {
         state.listeningForCommand = true;
-        speak("Yes driver", state);
+        speak("Yes driver.", state);
       }
       return;
     }
