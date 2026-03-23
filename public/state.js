@@ -18,6 +18,13 @@ export const state = {
   alarmAudio: null,
   recognition: null,
 
+  soundWatchActive: false,
+  pendingContext: null,
+  pendingContextSince: 0,
+  lastContextChangeAt: 0,
+  lastWarningClearedAt: 0,
+  inactivityTimer: null,
+  
   warningRunning: false,
   warningTimeout: null,
   warningStartedAt: 0,
