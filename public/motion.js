@@ -10,7 +10,7 @@ import {
   restoreWakeLockIfNeeded
 } from "./wakelock.js";
 import {
-  forceSpeak,
+  emergencySpeak,
   stopSpeaking,
   startSafetyVoiceListener,
   stopSafetyVoiceListener
@@ -42,6 +42,11 @@ export function setupDriverMinder(state, dom, startEmergencyCountdown) {
 
     if (state.driverMinderActive) {
       dom.driverMinderBtn.innerText = "Driver Minder ON";
+
+      if (dom.driverMinderText) {
+        dom.driverMinderText.textContent = "Driver Minder: On";
+      }
+
       addStatus(dom.chatBox, "🟢 Driver Minder Activated");
 
       await requestMotionPermission();
@@ -64,6 +69,11 @@ export function setupDriverMinder(state, dom, startEmergencyCountdown) {
       resetInactivityTimer(state, dom, startEmergencyCountdown);
     } else {
       dom.driverMinderBtn.innerText = "Driver Minder OFF";
+
+      if (dom.driverMinderText) {
+        dom.driverMinderText.textContent = "Driver Minder: Off";
+      }
+
       addStatus(dom.chatBox, "⚪ Driver Minder Disabled");
 
       clearTimeout(state.inactivityTimer);
@@ -177,7 +187,10 @@ function getWarningTime(state) {
 function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
   if (state.warningRunning || state.emergencyRunning) return;
 
-  if (Date.now() - (state.lastWarningClearedAt || 0) < WARNING_RETRIGGER_COOLDOWN) {
+  if (
+    Date.now() - (state.lastWarningClearedAt || 0) <
+    WARNING_RETRIGGER_COOLDOWN
+  ) {
     return;
   }
 
@@ -198,17 +211,27 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
     playAlarm(state);
 
     if (reason === "loud_sound") {
-      forceSpeak("Danger nearby. Loud hazard detected. Respond now. Press I am safe or say I am safe.");
+      emergencySpeak(
+        "Danger nearby. Loud hazard detected. Respond now. Press I am safe or say I am safe."
+      );
     } else if (reason === "impact") {
-      forceSpeak("Impact detected. Respond now. Press I am safe or say I am safe.");
+      emergencySpeak(
+        "Impact detected. Respond now. Press I am safe or say I am safe."
+      );
     } else {
-      forceSpeak("Danger detected. Respond now. Press I am safe or say I am safe.");
+      emergencySpeak(
+        "Danger detected. Respond now. Press I am safe or say I am safe."
+      );
     }
   } else {
     if (reason === "loud_sound") {
-      forceSpeak("Loud hazard detected nearby. Press I am safe or say I am safe to cancel.");
+      emergencySpeak(
+        "Loud hazard detected nearby. Press I am safe or say I am safe to cancel."
+      );
     } else {
-      forceSpeak("Driver check required. Press I am safe or say I am safe to cancel.");
+      emergencySpeak(
+        "Driver check required. Press I am safe or say I am safe to cancel."
+      );
     }
   }
 
@@ -274,9 +297,9 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
   setTimeout(function () {
     if (state.warningRunning) {
       if (state.highRiskMode) {
-        forceSpeak("High-risk danger continues. Respond now.");
+        emergencySpeak("High-risk danger continues. Respond now.");
       } else {
-        forceSpeak("Respond now or emergency will start.");
+        emergencySpeak("Respond now or emergency will start.");
       }
     }
   }, 4000);
