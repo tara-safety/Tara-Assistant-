@@ -64,19 +64,47 @@ if (
 }
 
 export function updateMotionContext(state, motionLevel) {
-  state.lastMotionLevel = motionLevel;
-
   const now = Date.now();
 
-  if (motionLevel >= 2.2) {
-    state.motionActivityScore = Math.min(state.motionActivityScore + 3, 20);
-    state.lastMovementTime = now;
-  } else if (motionLevel >= 1.2) {
-    state.motionActivityScore = Math.min(state.motionActivityScore + 1, 20);
-    state.lastMovementTime = now;
-  } else {
-    state.motionActivityScore = Math.max(state.motionActivityScore - 1, 0);
+  let candidate = "idle";
+
+  if (motionLevel > 11) {
+    candidate = "driving";
+  } else if (motionLevel > 5) {
+    candidate = "working";
+  } else if (motionLevel > 2.2) {
+    candidate = "walking";
   }
+
+  if (state.pendingContext !== candidate) {
+    state.pendingContext = candidate;
+    state.pendingContextSince = now;
+    return;
+  }
+
+  const holdTime = candidate === "driving" ? 2500 : 4000;
+  const canSwitch =
+    !state.lastContextChangeAt ||
+    now - state.lastContextChangeAt > 3000;
+
+  if (
+    canSwitch &&
+    state.contextMode !== candidate &&
+    now - state.pendingContextSince >= holdTime
+  ) {
+    state.contextMode = candidate;
+    state.lastContextChangeAt = now;
+
+    const el = document.getElementById("contextText");
+    if (el) {
+      el.textContent =
+        `Context: ${candidate.charAt(0).toUpperCase() + candidate.slice(1)}`;
+    }
+  }
+}
+
+export function shouldPauseInactivityForDriving(state) {
+  return state.contextMode === "driving";
 }
 
 export function setContextMode(state, dom, mode) {
