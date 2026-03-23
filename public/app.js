@@ -53,8 +53,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-   const voiceToggle = dom.voiceToggle;
-   const emergencyMiniBtn = dom.emergencyMiniBtn;
+  const voiceToggle = dom.voiceToggle;
+  const emergencyMiniBtn = dom.emergencyMiniBtn;
 
   if (voiceToggle) {
     state.voiceEnabled = voiceToggle.checked;
@@ -76,10 +76,10 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   if (dom.voiceBtn) {
-  dom.voiceBtn.addEventListener("click", function () {
-    startSingleVoiceInput(dom, sendQuestion);
-  });
-}
+    dom.voiceBtn.addEventListener("click", function () {
+      startSingleVoiceInput(dom, sendQuestion);
+    });
+  }
 
   if (dom.towModeBtn) {
     dom.towModeBtn.addEventListener("click", function () {
@@ -124,38 +124,38 @@ document.addEventListener("DOMContentLoaded", function () {
   toggleMiniSOS();
 
   async function sendQuestion() {
-  if (!dom.questionInput || !dom.chatBox) return;
+    if (!dom.questionInput || !dom.chatBox) return;
 
-  const text = dom.questionInput.value.trim();
-  if (!text) return;
+    const text = dom.questionInput.value.trim();
+    if (!text) return;
 
-  addUserMessage(dom.chatBox, text);
-  dom.questionInput.value = "";
+    addUserMessage(dom.chatBox, text);
+    dom.questionInput.value = "";
 
-  const thinking = createThinking(dom.chatBox);
+    const thinking = createThinking(dom.chatBox);
 
-  try {
-    const res = await fetch("/ask", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: text })
-    });
+    try {
+      const res = await fetch("/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: text })
+      });
 
-    if (!res.ok) {
-      throw new Error("Server returned error");
+      if (!res.ok) {
+        throw new Error("Server returned error");
+      }
+
+      const data = await res.json();
+      thinking.remove();
+      addTaraMessage(dom.chatBox, data.answer || "No response returned.");
+      speak(data.answer || "No response returned.", state);
+    } catch (err) {
+      console.error("Ask error:", err);
+      thinking.remove();
+      addStatus(
+        dom.chatBox,
+        `<span style="color:red;">TARA Error: ${err.message}</span>`
+      );
     }
-
-    const data = await res.json();
-    thinking.remove();
-    addTaraMessage(dom.chatBox, data.answer || "No response returned.");
-    speak(data.answer || "No response returned.", state);
-  } catch (err) {
-    console.error("Ask error:", err);
-    thinking.remove();
-    addStatus(
-      dom.chatBox,
-      `<span style="color:red;">TARA Error: ${err.message}</span>`
-    );
   }
-}
-
+});
