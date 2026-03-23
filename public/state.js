@@ -1,49 +1,39 @@
 export const state = {
   voiceEnabled: true,
-  driverMinderActive: false,
   towModeActive: false,
-  motionStarted: false,
-
-  emergencyActive: false,
+  driverMinderActive: false,
+  highRiskMode: false,
   emergencyRunning: false,
 
-  listeningForCommand: false,
-  systemUnlocked: false,
-  touchStarted: false,
-
-  lastImpactTime: 0,
-  inactivityTimer: null,
-  holdTimer: null,
-
-  alarmAudio: null,
   recognition: null,
-
-  soundWatchActive: false,
-  pendingContext: null,
-  pendingContextSince: 0,
-  lastContextChangeAt: 0,
-  lastWarningClearedAt: 0,
-  inactivityTimer: null,
-  
-  warningRunning: false,
-  warningTimeout: null,
-  warningStartedAt: 0,
-  warningClearHits: 0,
-
-  wakeLock: null,
+  listeningForCommand: false,
 
   safetyRecognition: null,
   safetyVoiceActive: false,
 
+  soundWatchActive: false,
+
   contextMode: "idle",
   watchId: null,
+
+  pendingContext: null,
+  pendingContextSince: 0,
+  lastContextChangeAt: 0,
+
   lastMotionLevel: 0,
   motionActivityScore: 0,
   lastMovementTime: 0,
 
-  highRiskMode: false,
-  sirenAudioContext: null,
-  sirenOscillator: null,
-  sirenGain: null,
-  sirenInterval: null
+  lastImpactTime: 0,
+
+  motionStarted: false,
+  inactivityTimer: null,
+
+  warningRunning: false,
+  warningStartedAt: 0,
+  warningClearHits: 0,
+  warningTimeout: null,
+  lastWarningClearedAt: 0,
+
+  wakeLock: null
 };
