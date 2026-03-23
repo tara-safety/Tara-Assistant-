@@ -9,7 +9,7 @@ export function addUserMessage(chatBox, text) {
 }
 
 export function addTaraMessage(chatBox, text) {
-  addChat(chatBox, `<b>TARA:</b> ${text}`);
+  addChat(chatBox, `<b>TARA:</b> ${escapeHtml(text).replace(/\n/g, "<br>")}`);
 }
 
 export function addStatus(chatBox, text) {
