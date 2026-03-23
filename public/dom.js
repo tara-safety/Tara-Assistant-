@@ -1,6 +1,6 @@
 export function getDOM() {
   return {
-    askBtn: document.getElementById("askBtn"),
+    askBtn: document.getElementById("sendBtn"),
     voiceBtn: document.getElementById("voiceBtn"),
     emergencyBtn: document.getElementById("emergencyBtn"),
     emergencyMiniBtn: document.getElementById("emergencyMiniBtn"),
