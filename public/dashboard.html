@@ -6,7 +6,7 @@
   <title>TARA Dashboard</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-  
+
 <body class="tara-dashboard-page">
   <div class="dashboard-shell">
     <header class="dashboard-header">
@@ -45,27 +45,28 @@
     </section>
 
     <section class="dashboard-grid">
-      </div> class="dashboard-main-card">
+      <div class="dashboard-main-card">
         <div class="card-head">
           <h2>Ask TARA</h2>
           <span class="pill">Field Ready</span>
         </div>
 
-       <div class="question-box">
-  <label for="taraQuestion">Ask TARA</label>
-  <textarea id="taraQuestion" placeholder="Type a towing or roadside safety question...">How do I safely recover a vehicle on the highway shoulder?</textarea>
-  <button id="askTaraBtn">Ask TARA</button>
-</div>
+        <div class="question-box">
+          <label for="question">Ask TARA</label>
+          <textarea id="question" placeholder="Type a towing or roadside safety question...">How do I safely recover a vehicle on the highway shoulder?</textarea>
+          <button id="askBtn">Ask TARA</button>
+        </div>
 
-<div class="response-box">
-  <h3>TARA Response</h3>
-  <div id="taraResponse">
-    <p><strong>Immediate Risk:</strong> Exposure to high-speed traffic and limited escape space.</p>
-    <p><strong>First Action:</strong> Position the tow truck as a barrier, activate warning lights, and wear high-visibility PPE.</p>
-    <p><strong>Safe Procedure:</strong> Approach from the safest side, deploy warning devices, secure the vehicle, and minimize time on scene.</p>
-    <p><strong>Final Warning:</strong> Expect distracted drivers and stop work if the scene becomes unsafe. Follow company policy and local regulations.</p>
-  </div>
-</div> 
+        <div class="response-box">
+          <h3>TARA Response</h3>
+          <div id="chatBox">
+            <p><strong>Immediate Risk:</strong> Exposure to high-speed traffic and limited escape space.</p>
+            <p><strong>First Action:</strong> Position the tow truck as a barrier, activate warning lights, and wear high-visibility PPE.</p>
+            <p><strong>Safe Procedure:</strong> Approach from the safest side, deploy warning devices, secure the vehicle, and minimize time on scene.</p>
+            <p><strong>Final Warning:</strong> Expect distracted drivers and stop work if the scene becomes unsafe. Follow company policy and local regulations.</p>
+          </div>
+        </div>
+      </div>
 
       <aside class="dashboard-side-card">
         <h2>Knowledge Library</h2>
@@ -114,46 +115,7 @@
       </p>
     </footer>
   </div>
-  <script>
-  const askBtn = document.getElementById("askTaraBtn");
-  const questionInput = document.getElementById("taraQuestion");
-  const responseBox = document.getElementById("taraResponse");
 
-  askBtn.addEventListener("click", async () => {
-    const question = questionInput.value.trim();
-
-    if (!question) {
-      responseBox.innerHTML = "<p>Please enter a question.</p>";
-      return;
-    }
-
-    responseBox.innerHTML = "<p>Thinking...</p>";
-
-    try {
-      const res = await fetch("/ask", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ question })
-      });
-
-      const data = await res.json();
-
-      responseBox.innerHTML = `
-        <p>${(data.answer || "No response returned.").replace(/\n/g, "<br>")}</p>
-      `;
-    } catch (error) {
-      responseBox.innerHTML = "<p>TARA could not connect right now.</p>";
-    }
-  });
-</script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
-
-<script src="state.js"></script>
-<script src="motion.js"></script>
-<script src="emergency.js"></script>
-<script src="script.js"></script>
-<script src="camera.js"></script>
-<script src="app.js"></script>
