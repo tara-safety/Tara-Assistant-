@@ -158,3 +158,5 @@ document.addEventListener("DOMContentLoaded", function () {
     );
   }
 }
+
+<script type="module" src="app.js"></script>
