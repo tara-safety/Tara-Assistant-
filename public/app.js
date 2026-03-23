@@ -124,36 +124,37 @@ document.addEventListener("DOMContentLoaded", function () {
   toggleMiniSOS();
 
   async function sendQuestion() {
-    const text = dom.questionInput.value.trim();
-    if (!text) return;
+  if (!dom.questionInput || !dom.chatBox) return;
 
-    addUserMessage(dom.chatBox, text);
-    dom.questionInput.value = "";
+  const text = dom.questionInput.value.trim();
+  if (!text) return;
 
-    const thinking = createThinking(dom.chatBox);
+  addUserMessage(dom.chatBox, text);
+  dom.questionInput.value = "";
 
-    try {
-      const res = await fetch("/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: text })
-      });
+  const thinking = createThinking(dom.chatBox);
 
-      if (!res.ok) {
-        throw new Error("Server returned error");
-      }
+  try {
+    const res = await fetch("/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: text })
+    });
 
-      const data = await res.json();
-      thinking.remove();
-      addTaraMessage(dom.chatBox, data.answer);
-      speak(data.answer, state);
-    } catch (err) {
-      console.error("Ask error:", err);
-      thinking.remove();
-      addStatus(
-        dom.chatBox,
-        `<span style="color:red;">TARA Error: ${err.message}</span>`
-      );
+    if (!res.ok) {
+      throw new Error("Server returned error");
     }
+
+    const data = await res.json();
+    thinking.remove();
+    addTaraMessage(dom.chatBox, data.answer || "No response returned.");
+    speak(data.answer || "No response returned.", state);
+  } catch (err) {
+    console.error("Ask error:", err);
+    thinking.remove();
+    addStatus(
+      dom.chatBox,
+      `<span style="color:red;">TARA Error: ${err.message}</span>`
+    );
   }
-});
+}
