@@ -25,34 +25,6 @@ import {
   setupEmergencyFailSafe
 } from "./emergency.js";
 
-document.addEventListener("DOMContentLoaded", () => {
-
-  // SEND BUTTON
-  document.getElementById("sendBtn")?.addEventListener("click", () => {
-    askQuestion();
-  });
-
-  // TALK BUTTON
-  document.getElementById("talkBtn")?.addEventListener("click", () => {
-    startVoice();
-  });
-
-  // CAMERA
-  document.getElementById("cameraBtn")?.addEventListener("click", () => {
-    startCamera();
-  });
-
-  // DRIVER MINDER
-  document.getElementById("driverMinder")?.addEventListener("click", () => {
-    toggleDriverMinder();
-  });
-
-  // HIGH RISK MODE
-  document.getElementById("highRisk")?.addEventListener("click", () => {
-    toggleHighRisk();
-  });
-
-});
 document.addEventListener("DOMContentLoaded", function () {
   console.log("TARA System Booting");
 
