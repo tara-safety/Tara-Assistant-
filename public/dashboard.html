@@ -9,23 +9,6 @@
 
 <body class="tara-dashboard-page">
   <div class="dashboard-shell">
-    <header class="dashboard-header">
-      <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-
-      <div>
-        <p class="dashboard-kicker">TARA Safety Intelligence</p>
-        <h1>DASHBOARD</h1>
-        <p class="dashboard-subtext">
-          Professional towing safety guidance powered by your private company knowledge base.
-        </p>
-      </div>
-
-      <div class="dashboard-status-card">
-        <div class="status-label">System Status</div>
-        <strong>Live &amp; Searchable</strong>
-        <small>AI knowledge base connected</small>
-      </div>
-    </header>
 
     <nav class="menu">
       <a href="#">Dashboard</a>
@@ -34,73 +17,78 @@
       <a href="#">Settings</a>
     </nav>
 
-    <section class="hero-emergency-wrap">
-      <button id="emergencyBtn" class="emergency-main-btn">
-        🚨<br />
-        HOLD<br />
-        EMERGENCY
-      </button>
-      <div class="hold-note">Hold for 3 seconds</div>
-    </section>
+    <header class="dashboard-header">
+      <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
 
-    <button id="emergencyMiniBtn" class="emergency-mini-btn">🚨 SOS</button>
-
-    <section class="status-card" id="contextCard">
-      <div id="contextText">Context: Idle</div>
-      <div id="riskText">Risk: Normal</div>
-      <div id="soundText">Sound Watch: Off</div>
-      <div id="driverMinderText">Driver Minder: Off</div>
-    </section>
-
-    <div id="contextBadge" class="context-badge">⚪ IDLE</div>
-    <div id="motionDebug" class="motion-debug">Motion: 0.00 | Score: 0 | Mode: IDLE</div>
-
-    <section class="safety-panel">
-      <h2>Safety Controls</h2>
-
-      <button id="driverMinderBtn" class="safety-btn">
-        Driver Minder OFF
-      </button>
-
-      <button id="highRiskBtn" class="safety-btn">
-        HIGH-RISK MODE OFF
-      </button>
-
-      <button id="towModeBtn" class="safety-btn">
-        Tow Mode OFF
-      </button>
-
-      <button id="towCameraBtn" class="safety-btn">
-        Open Camera
-      </button>
-
-      <button id="voiceBtn" class="safety-btn">
-        Voice Input
-      </button>
-
-      <label class="voice-toggle-row">
-        <span>Voice Responses</span>
-        <input type="checkbox" id="voiceToggle" checked />
-      </label>
-    </section>
-
-    <section class="dashboard-stats">
-      <div class="stat-card">
-        <span>Knowledge Base</span>
-        <strong>Ready</strong>
+      <div class="header-copy">
+        <p class="dashboard-kicker">TARA Safety Intelligence</p>
+        <h1>DASHBOARD</h1>
+        <p class="dashboard-subtext">
+          Built for towing safety, roadside awareness, and emergency response.
+        </p>
       </div>
-      <div class="stat-card">
-        <span>Categories</span>
-        <strong>7</strong>
+
+      <div class="dashboard-status-card">
+        <div class="status-label">System Status</div>
+        <strong>ONLINE</strong>
+        <small>Driver monitoring ready</small>
       </div>
-      <div class="stat-card">
-        <span>Driver Support</span>
-        <strong>Active</strong>
+    </header>
+
+    <section class="safety-zone">
+      <div class="hero-emergency-wrap">
+        <button id="emergencyBtn" class="emergency-main-btn">
+          🚨<br />
+          HOLD<br />
+          EMERGENCY
+        </button>
+        <div class="hold-note">Hold for 3 seconds</div>
       </div>
-      <div class="stat-card">
-        <span>Response Mode</span>
-        <strong>Professional</strong>
-      </div>
+
+      <button id="emergencyMiniBtn" class="emergency-mini-btn">🚨 SOS</button>
+
+      <section class="status-card" id="contextCard">
+        <div id="contextText">Context: Idle</div>
+        <div id="riskText">Risk: Normal</div>
+        <div id="soundText">Sound Watch: Off</div>
+        <div id="driverMinderText">Driver Minder: Off</div>
+      </section>
+
+      <div id="contextBadge" class="context-badge">⚪ IDLE</div>
+      <div id="motionDebug" class="motion-debug">Motion: 0.00 | Score: 0 | Mode: IDLE</div>
+
+      <section class="safety-panel">
+        <h2>Safety Controls</h2>
+
+        <button id="driverMinderBtn" class="safety-btn">
+          Driver Minder OFF
+        </button>
+
+        <button id="highRiskBtn" class="safety-btn">
+          HIGH-RISK MODE OFF
+        </button>
+
+        <div class="safety-row">
+          <button id="towModeBtn" class="safety-btn half-btn">
+            Tow Mode OFF
+          </button>
+
+          <button id="towCameraBtn" class="safety-btn half-btn">
+            Open Camera
+          </button>
+        </div>
+
+        <div class="safety-row">
+          <button id="voiceBtn" class="safety-btn half-btn">
+            Voice Input
+          </button>
+
+          <label class="voice-toggle-row half-btn">
+            <span>Voice</span>
+            <input type="checkbox" id="voiceToggle" checked />
+          </label>
+        </div>
+      </section>
     </section>
 
     <section class="dashboard-grid">
@@ -112,7 +100,10 @@
 
         <div class="question-box">
           <label for="question">Ask TARA</label>
-          <textarea id="question" placeholder="Type a towing or roadside safety question..."></textarea>
+          <textarea
+            id="question"
+            placeholder="Type a towing or roadside safety question..."
+          ></textarea>
           <button id="askBtn">Ask TARA</button>
         </div>
 
