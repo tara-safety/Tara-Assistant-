@@ -53,9 +53,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  const voiceToggle = document.getElementById("voiceToggle");
-  const voiceBtn = document.getElementById("voiceBtn");
-  const emergencyMiniBtn = document.getElementById("emergencyMiniBtn");
+   const voiceToggle = dom.voiceToggle;
+   const emergencyMiniBtn = dom.emergencyMiniBtn;
 
   if (voiceToggle) {
     state.voiceEnabled = voiceToggle.checked;
@@ -76,11 +75,11 @@ document.addEventListener("DOMContentLoaded", function () {
     dom.askBtn.addEventListener("click", sendQuestion);
   }
 
-  if (voiceBtn) {
-    voiceBtn.addEventListener("click", function () {
-      startSingleVoiceInput(dom, sendQuestion);
-    });
-  }
+  if (dom.voiceBtn) {
+  dom.voiceBtn.addEventListener("click", function () {
+    startSingleVoiceInput(dom, sendQuestion);
+  });
+}
 
   if (dom.towModeBtn) {
     dom.towModeBtn.addEventListener("click", function () {
