@@ -126,13 +126,21 @@ export function setupEmergencyButton(state, dom, startEmergencyCountdown) {
   ].filter(Boolean);
 
   buttons.forEach(function (btn) {
-    btn.addEventListener("mousedown", function () {
+    btn.addEventListener("mousedown", function (e) {
+      if (state.touchStarted) return;
+      e.preventDefault();
       startHold(state, startEmergencyCountdown);
     });
 
-    btn.addEventListener("touchstart", function () {
-      startHold(state, startEmergencyCountdown);
-    });
+    btn.addEventListener(
+      "touchstart",
+      function (e) {
+        state.touchStarted = true;
+        e.preventDefault();
+        startHold(state, startEmergencyCountdown);
+      },
+      { passive: false }
+    );
 
     btn.addEventListener("mouseup", function () {
       cancelHold(state);
@@ -144,10 +152,14 @@ export function setupEmergencyButton(state, dom, startEmergencyCountdown) {
 
     btn.addEventListener("touchend", function () {
       cancelHold(state);
+      setTimeout(function () {
+        state.touchStarted = false;
+      }, 50);
     });
 
     btn.addEventListener("touchcancel", function () {
       cancelHold(state);
+      state.touchStarted = false;
     });
   });
 }
@@ -157,28 +169,19 @@ export function setupEmergencyButton(state, dom, startEmergencyCountdown) {
 /* ============================= */
 
 function startHold(state, startEmergencyCountdown) {
-  if (state.holdTimer) {
-    clearInterval(state.holdTimer);
-  }
-
-  let count = 3;
+  if (state.holdTimer || state.emergencyRunning) return;
 
   playAlarm(state);
 
-  state.holdTimer = setInterval(function () {
-    count--;
-
-    if (count <= 0) {
-      clearInterval(state.holdTimer);
-      state.holdTimer = null;
-      startEmergencyCountdown();
-    }
-  }, 1000);
+  state.holdTimer = setTimeout(function () {
+    state.holdTimer = null;
+    startEmergencyCountdown();
+  }, 3000);
 }
 
 function cancelHold(state) {
   if (state.holdTimer) {
-    clearInterval(state.holdTimer);
+    clearTimeout(state.holdTimer);
     state.holdTimer = null;
   }
 
