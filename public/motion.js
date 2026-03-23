@@ -20,6 +20,7 @@ import {
   shouldPauseInactivityForDriving
 } from "./context.js";
 import { playAlarm, stopAlarm } from "./emergency.js";
+import { startSoundWatch, stopSoundWatch } from "./soundwatch.js";
 
 const NORMAL_WARNING_TIME = 15000;
 const HIGH_RISK_WARNING_TIME = 8000;
@@ -27,6 +28,10 @@ const HIGH_RISK_WARNING_TIME = 8000;
 const WARNING_CLEAR_DELAY = 3000;
 const WARNING_CLEAR_THRESHOLD = 12;
 const WARNING_CLEAR_HITS_REQUIRED = 3;
+
+const MEANINGFUL_IMPACT_RESET = 8;
+const MEANINGFUL_MOTION_RESET = 3.5;
+const WARNING_RETRIGGER_COOLDOWN = 5000;
 
 export function setupDriverMinder(state, dom, startEmergencyCountdown) {
   if (!dom.driverMinderBtn) return;
@@ -47,14 +52,24 @@ export function setupDriverMinder(state, dom, startEmergencyCountdown) {
         addStatus(dom.chatBox, "⚠️ Stay-awake not available on this device");
       }
 
-      resetInactivityTimer(state, dom, startEmergencyCountdown);
       startMotionMonitoring(state, dom, startEmergencyCountdown);
+
+      startSoundWatch(state, dom, function (reason) {
+        if (reason === "loud_sound") {
+          startDriverWarning(state, dom, startEmergencyCountdown, "loud_sound");
+        }
+      });
+
+      resetInactivityTimer(state, dom, startEmergencyCountdown);
     } else {
       dom.driverMinderBtn.innerText = "Driver Minder OFF";
       addStatus(dom.chatBox, "⚪ Driver Minder Disabled");
 
       clearTimeout(state.inactivityTimer);
+      state.inactivityTimer = null;
+
       clearDriverWarning(state);
+      stopSoundWatch(state, dom);
       releaseWakeLock(state);
     }
   });
@@ -86,7 +101,7 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
     if (impact > IMPACT_LIMIT) {
       const now = Date.now();
 
-      if (now - state.lastImpactTime > IMPACT_COOLDOWN) {
+      if (now - (state.lastImpactTime || 0) > IMPACT_COOLDOWN) {
         state.lastImpactTime = now;
         startDriverWarning(state, dom, startEmergencyCountdown, "impact");
       }
@@ -108,19 +123,30 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
       }
     }
 
-    resetInactivityTimer(state, dom, startEmergencyCountdown);
+    const meaningfulMotion =
+      impact > MEANINGFUL_IMPACT_RESET ||
+      motionLevel > MEANINGFUL_MOTION_RESET ||
+      state.contextMode === "driving" ||
+      state.contextMode === "working" ||
+      state.contextMode === "walking";
+
+    if (meaningfulMotion) {
+      resetInactivityTimer(state, dom, startEmergencyCountdown);
+    }
   });
 }
 
 export function resetInactivityTimer(state, dom, startEmergencyCountdown) {
   clearTimeout(state.inactivityTimer);
+  state.inactivityTimer = null;
 
   if (!state.driverMinderActive) return;
 
   if (shouldPauseInactivityForDriving(state)) {
     state.inactivityTimer = setTimeout(function () {
-      if (state.driverMinderActive) {
-        addStatus(dom.chatBox, "🟢 Driving detected. Inactivity check paused.");
+      if (!state.driverMinderActive) return;
+
+      if (shouldPauseInactivityForDriving(state)) {
         resetInactivityTimer(state, dom, startEmergencyCountdown);
       }
     }, 30000);
@@ -129,7 +155,6 @@ export function resetInactivityTimer(state, dom, startEmergencyCountdown) {
   }
 
   const limit = getContextInactivityLimit(state);
-
   if (!limit) return;
 
   state.inactivityTimer = setTimeout(function () {
@@ -151,16 +176,25 @@ function getContextInactivityLimit(state) {
 
   if (state.highRiskMode) {
     if (state.contextMode === "working") {
-      return 25000; // 25 sec in roadside danger
+      return 25000;
     }
-    return 60000; // 1 min if high-risk but idle
+
+    if (state.contextMode === "walking") {
+      return 35000;
+    }
+
+    return 60000;
   }
 
   if (state.contextMode === "working") {
-    return 120000; // 2 min normal working
+    return 120000;
   }
 
-  return 8 * 60 * 1000; // 8 min normal idle
+  if (state.contextMode === "walking") {
+    return 180000;
+  }
+
+  return 8 * 60 * 1000;
 }
 
 function getWarningTime(state) {
@@ -170,6 +204,10 @@ function getWarningTime(state) {
 function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
   if (state.warningRunning || state.emergencyRunning) return;
 
+  if (Date.now() - (state.lastWarningClearedAt || 0) < WARNING_RETRIGGER_COOLDOWN) {
+    return;
+  }
+
   state.warningRunning = true;
   state.warningStartedAt = Date.now();
   state.warningClearHits = 0;
@@ -178,14 +216,27 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
     dom.chatBox,
     reason === "impact"
       ? "⚠️ Driver Minder warning: impact detected. Emergency check started."
+      : reason === "loud_sound"
+      ? "⚠️ Driver Minder warning: loud hazard detected nearby. Emergency check started."
       : "⚠️ Driver Minder warning: no movement detected. Emergency check started."
   );
 
   if (state.highRiskMode) {
     playAlarm(state);
-    forceSpeak("Danger detected. Respond now. Press I am safe or say I am safe.");
+
+    if (reason === "loud_sound") {
+      forceSpeak("Danger nearby. Loud hazard detected. Respond now. Press I am safe or say I am safe.");
+    } else if (reason === "impact") {
+      forceSpeak("Impact detected. Respond now. Press I am safe or say I am safe.");
+    } else {
+      forceSpeak("Danger detected. Respond now. Press I am safe or say I am safe.");
+    }
   } else {
-    forceSpeak("Driver check required. Press I am safe or say I am safe to cancel.");
+    if (reason === "loud_sound") {
+      forceSpeak("Loud hazard detected nearby. Press I am safe or say I am safe to cancel.");
+    } else {
+      forceSpeak("Driver check required. Press I am safe or say I am safe to cancel.");
+    }
   }
 
   const warningBox = document.createElement("div");
@@ -195,7 +246,9 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
   warningBox.style.left = "50%";
   warningBox.style.transform = "translateX(-50%)";
   warningBox.style.zIndex = "9999";
-  warningBox.style.background = state.highRiskMode ? "rgba(120,0,0,0.92)" : "rgba(0,0,0,0.88)";
+  warningBox.style.background = state.highRiskMode
+    ? "rgba(120,0,0,0.92)"
+    : "rgba(0,0,0,0.88)";
   warningBox.style.color = "#ffffff";
   warningBox.style.padding = "18px 20px";
   warningBox.style.borderRadius = "16px";
@@ -203,6 +256,7 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
   warningBox.style.fontWeight = "bold";
   warningBox.style.textAlign = "center";
   warningBox.style.minWidth = "280px";
+  warningBox.style.maxWidth = "90vw";
   warningBox.style.boxShadow = "0 8px 24px rgba(0,0,0,0.35)";
   warningBox.innerText = state.highRiskMode
     ? "🚧 HIGH-RISK DRIVER CHECK"
@@ -264,6 +318,7 @@ function clearDriverWarning(state) {
   state.warningRunning = false;
   state.warningStartedAt = 0;
   state.warningClearHits = 0;
+  state.lastWarningClearedAt = Date.now();
 
   if (state.warningTimeout) {
     clearTimeout(state.warningTimeout);
