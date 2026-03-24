@@ -358,17 +358,19 @@ Scene question or scene details:
 ${sceneQuestion}`;
 }
 
-function buildWebSearchPrompt(question, mode, knowledgeContext) {
-  if (mode === "camera") {
-    return buildCameraPrompt(question, knowledgeContext);
+function buildFallbackAnswer(question) {
+  const q = cleanText(question);
+
+  if (q.includes("ev") || q.includes("electric vehicle") || q.includes("tesla")) {
+    return "Most EVs should be transported on a flatbed because dragging the drive wheels can damage the drivetrain or create system issues. Confirm the exact make, model, drive type, and whether transport mode or tow mode is required before moving it. Do not assume the vehicle will roll freely just because it is powered off, and do not attach to unknown underbody components. If the exact OEM procedure is unclear, stop and verify it before towing. Follow company policy and local regulations.";
   }
 
-  return buildChatPrompt(question, knowledgeContext);
-}
-
-function buildFallbackAnswer(question) {
   if (isLockoutQuestion(question)) {
     return "Start with the least-damaging entry method and make sure the vehicle is secure before touching glass, trim, or seals. If the exact method for that vehicle is uncertain, stop and verify before proceeding. Protect the vehicle first and follow company policy and local regulations.";
+  }
+
+  if (q.includes("flat tire") || q.includes("spare tire")) {
+    return "First confirm the vehicle is in a safe location and properly secured before lifting or moving it. Check whether the vehicle has a spare, inflator kit, run-flat tires, or manufacturer restrictions before choosing the next step. On newer vehicles, especially EVs and hybrids, verify approved lifting and jacking points before service. Follow company policy and local regulations.";
   }
 
   return "I don’t have a strong answer on that yet. The safest move is to slow down, verify the vehicle details, and confirm the right procedure before continuing. Follow company policy and local regulations.";
