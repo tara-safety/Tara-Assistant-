@@ -7,38 +7,46 @@ export function openCamera(dom) {
   input.accept = "image/*";
   input.capture = "environment";
 
-  input.onchange = async function () {
+  input.onchange = function () {
     const file = input.files && input.files[0];
     if (!file) return;
 
-    const form = new FormData();
-    form.append("image", file);
+    const reader = new FileReader();
 
-    addStatus(dom.chatBox, "📷 TARA Vision is analyzing the recovery scene...");
+    reader.onload = async function () {
+      const imageDataUrl = reader.result;
 
-    try {
-      const res = await fetch("/tow-ai", {
-        method: "POST",
-        body: form
-      });
+      addStatus(dom.chatBox, "📷 TARA Vision is analyzing the recovery scene...");
 
-      if (!res.ok) {
-        throw new Error("Tow AI server error");
+      try {
+        const res = await fetch("/tow-ai", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ imageDataUrl })
+        });
+
+        if (!res.ok) {
+          throw new Error("Tow AI server error");
+        }
+
+        const data = await res.json();
+        const answer = data.answer || "TARA Vision could not analyze that image.";
+
+        addStatus(
+          dom.chatBox,
+          `<b>TARA Vision:</b><br>${answer.replace(/\n/g, "<br>")}`
+        );
+
+        speak(answer);
+      } catch (err) {
+        console.log("Camera analysis failed:", err);
+        addStatus(dom.chatBox, "TARA Vision image analysis failed.");
       }
+    };
 
-      const data = await res.json();
-      const answer = data.answer || "TARA Vision could not analyze that image.";
-
-      addStatus(
-        dom.chatBox,
-        `<b>TARA Vision:</b><br>${answer.replace(/\n/g, "<br>")}`
-      );
-
-      speak(answer);
-    } catch (err) {
-      console.log("Camera analysis failed:", err);
-      addStatus(dom.chatBox, "TARA Vision image analysis failed.");
-    }
+    reader.readAsDataURL(file);
   };
 
   input.click();
