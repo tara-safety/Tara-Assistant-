@@ -419,7 +419,9 @@ app.post("/ask", async (req, res) => {
     });
 
     let answer = extractResponseText(firstPass).replace(/\n\s+/g, "\n").trim();
-
+    if (!answer && (question.toLowerCase().includes("ev") || question.toLowerCase().includes("electric vehicle"))) {
+  answer = "Most EVs should be moved on a flatbed because dragging driven wheels can damage components or create system issues. Confirm the exact make, model, drive type, and whether transport mode is required before recovery. Never assume the vehicle will free-roll just because it is powered down, and verify approved recovery points before loading. If the exact procedure is unclear, stop and check manufacturer guidance first.";
+}
     const uncertainPhrases = [
       "i'm not sure",
       "i am not sure",
