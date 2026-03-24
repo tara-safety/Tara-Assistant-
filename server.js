@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import twilio from "twilio";
 import cors from "cors";
 import dotenv from "dotenv";
+import multer from "multer";
 import { createClient } from "@supabase/supabase-js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -34,6 +35,13 @@ const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 8 * 1024 * 1024
+  }
+});
 
 let supabase = null;
 
@@ -249,6 +257,79 @@ ${knowledgeContext}`
     return res.json({
       answer: "TARA could not connect to AI right now.",
       sourcesUsed: 0
+    });
+  }
+});
+
+/* ------------------------
+   TOW AI VISION
+------------------------- */
+
+app.post("/tow-ai", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        answer: "No image was uploaded."
+      });
+    }
+
+    const mimeType = req.file.mimetype || "image/jpeg";
+    const base64Image = req.file.buffer.toString("base64");
+    const dataUrl = `data:${mimeType};base64,${base64Image}`;
+
+    const response = await openai.responses.create({
+      model: "gpt-5.4",
+      instructions: `You are TARA Vision, a towing and roadside safety scene assistant.
+
+Your job is to analyze a recovery scene image and give SAFE, practical, high-level guidance.
+
+Rules:
+- Safety comes first.
+- Do NOT guess exact OEM hook points from one image.
+- Do NOT claim hidden areas are safe.
+- Do NOT provide exact dangerous recovery instructions that depend on unseen underbody points.
+- Separate what is observed from what is inferred.
+- If information is missing, say so clearly.
+- Focus on scene type, hazards, likely recovery category, and verification steps.
+- Never tell the user to attach to suspension, steering, or unknown underbody components.
+- Mention EV / battery / structural uncertainty if relevant.
+- Keep the answer practical, short, and field-usable.
+
+Use this exact structure:
+
+1. What I see
+2. Main hazards
+3. Likely recovery category
+4. Verify before recovery
+5. Do not do this
+6. Next best question`,
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: "Analyze this towing recovery scene image for safe, high-level towing guidance."
+            },
+            {
+              type: "input_image",
+              image_url: dataUrl
+            }
+          ]
+        }
+      ]
+    });
+
+    const answer =
+      response.output_text?.trim() ||
+      "TARA Vision could not confidently analyze that image.";
+
+    return res.json({ answer });
+  } catch (err) {
+    console.error("Tow AI route error:", err);
+
+    return res.status(500).json({
+      answer: "TARA Vision could not analyze this image right now."
     });
   }
 });
@@ -504,20 +585,6 @@ app.get("/alerts", async (req, res) => {
 });
 
 /* ------------------------
-   HEALTH CHECK
-------------------------- */
-
-app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
-});
-
-/* ------------------------
-   START SERVER
-------------------------- */
-
-const PORT = process.env.PORT || 3000;
-
-/* ------------------------
    LIVE DRIVER LOCATIONS
 ------------------------- */
 
@@ -569,6 +636,20 @@ app.get("/driver-locations", async (req, res) => {
     });
   }
 });
+
+/* ------------------------
+   HEALTH CHECK
+------------------------- */
+
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
+
+/* ------------------------
+   START SERVER
+------------------------- */
+
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`TARA server running on port ${PORT}`);
