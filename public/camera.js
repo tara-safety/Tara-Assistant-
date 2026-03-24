@@ -8,13 +8,13 @@ export function openCamera(dom) {
   input.capture = "environment";
 
   input.onchange = async function () {
-    const file = input.files[0];
+    const file = input.files && input.files[0];
     if (!file) return;
 
     const form = new FormData();
     form.append("image", file);
 
-    addStatus(dom.chatBox, "📷 Analyzing tow situation...");
+    addStatus(dom.chatBox, "📷 TARA Vision is analyzing the recovery scene...");
 
     try {
       const res = await fetch("/tow-ai", {
@@ -27,11 +27,17 @@ export function openCamera(dom) {
       }
 
       const data = await res.json();
-      addStatus(dom.chatBox, `<b>Tow AI:</b> ${data.advice}`);
-      speak(data.advice);
+      const answer = data.answer || "TARA Vision could not analyze that image.";
+
+      addStatus(
+        dom.chatBox,
+        `<b>TARA Vision:</b><br>${answer.replace(/\n/g, "<br>")}`
+      );
+
+      speak(answer);
     } catch (err) {
       console.log("Camera analysis failed:", err);
-      addStatus(dom.chatBox, "Image analysis failed");
+      addStatus(dom.chatBox, "TARA Vision image analysis failed.");
     }
   };
 
