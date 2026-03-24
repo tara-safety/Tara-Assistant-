@@ -3,67 +3,114 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TARA Dispatcher Dashboard</title>
-  <link rel="stylesheet" href="style.css?v=3" />
+  <title>TARA Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css?v=1" />
 </head>
-
-<body class="tara-dashboard-page">
+<body>
   <div class="dashboard-shell">
     <header class="dashboard-header">
-      <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-
-      <div class="header-copy">
+      <div>
         <p class="dashboard-kicker">TARA Safety Intelligence</p>
-        <h1>DISPATCHER DASHBOARD</h1>
+        <h1>DASHBOARD</h1>
         <p class="dashboard-subtext">
-          Fleet visibility, safety alerts, and live driver monitoring for towing operations.
+          Company overview, safety knowledge, and business-facing TARA presentation page.
         </p>
       </div>
 
       <div class="dashboard-status-card">
         <div class="status-label">System Status</div>
         <strong>ONLINE</strong>
-        <small>Fleet monitoring active</small>
+        <small>Knowledge system available</small>
       </div>
     </header>
 
-    <nav class="menu">
-      <a href="#">Dashboard</a>
-      <a href="#">Drivers</a>
-      <a href="#">Alerts</a>
-      <a href="#">Settings</a>
-    </nav>
-
     <section class="dashboard-stats">
       <div class="stat-card">
-        <span>Drivers Online</span>
-        <strong>12</strong>
+        <span>Knowledge Base</span>
+        <strong>Ready</strong>
       </div>
       <div class="stat-card">
-        <span>High-Risk Alerts</span>
-        <strong>1</strong>
+        <span>Categories</span>
+        <strong>7</strong>
       </div>
       <div class="stat-card">
-        <span>Driver Minder</span>
+        <span>Driver Support</span>
         <strong>Active</strong>
       </div>
       <div class="stat-card">
-        <span>Fleet Status</span>
-        <strong>Live</strong>
+        <span>Response Mode</span>
+        <strong>Professional</strong>
       </div>
     </section>
 
     <section class="dashboard-grid">
       <div class="dashboard-main-card">
         <div class="card-head">
-          <h2>Live Driver Status</h2>
-          <span class="pill">Monitoring</span>
+          <h2>Ask TARA</h2>
+          <span class="pill">Field Ready</span>
         </div>
 
-        <div class="driver-table">
-          <div class="driver-row">
-            <div>
-              <strong>Truck 12 — Troy</strong>
-              <p>Context: Working</p>
-            </div>
-            <span class="driver-pill working">Working
+        <div class="question-box">
+          <label for="question">Ask TARA</label>
+          <textarea id="question" placeholder="Type a towing or roadside safety question..."></textarea>
+          <button type="button">Ask TARA</button>
+        </div>
+
+        <div class="response-box">
+          <h3>TARA Response</h3>
+          <div id="chatBox">
+            <p>This page is separated from the live driver app.</p>
+            <p>Use it for overview, knowledge display, and future dashboard tools.</p>
+          </div>
+        </div>
+      </div>
+
+      <aside class="dashboard-side-card">
+        <h2>Knowledge Library</h2>
+        <p class="muted">Private towing intelligence categories.</p>
+
+        <div class="tag-list">
+          <span>Towing Safety</span>
+          <span>Near Miss Reports</span>
+          <span>Understanding Vehicles</span>
+          <span>Training Docs</span>
+          <span>Towing Standards</span>
+          <span>Towing Equipment</span>
+          <span>Towing Stats</span>
+        </div>
+      </aside>
+    </section>
+
+    <section class="dashboard-bottom-grid">
+      <div class="dashboard-card">
+        <h2>Recent Knowledge Areas</h2>
+        <ul class="doc-list">
+          <li>Highway Shoulder Recovery Best Practices</li>
+          <li>Distracted Driver Near-Miss Lessons</li>
+          <li>EV Flatbed Loading Procedure</li>
+          <li>Winch and Rigging Inspection</li>
+        </ul>
+      </div>
+
+      <div class="dashboard-card">
+        <h2>Customer Value</h2>
+        <ul class="value-list">
+          <li>Company-specific safety guidance in seconds</li>
+          <li>Near-miss lessons turned into field decisions</li>
+          <li>Professional responses for drivers and fleets</li>
+          <li>Private knowledge system built for towing</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer class="dashboard-footer">
+      <h3>Safety Disclaimer</h3>
+      <p>
+        TARA provides operational guidance to support trained professionals.
+        Users must follow company policies, manufacturer procedures, local laws,
+        and scene-specific judgment at all times.
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
