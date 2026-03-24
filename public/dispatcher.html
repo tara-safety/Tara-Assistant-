@@ -1,264 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<!-- ===================== HEAD ===================== -->
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TARA Dispatcher Dashboard</title>
-
-  <!-- Main Styles -->
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- Leaflet Map Styles -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+  <title>TARA Dispatcher</title>
+  <link rel="stylesheet" href="dispatcher.css?v=1" />
 </head>
-
-<!-- ===================== BODY START ===================== -->
-<body class="tara-dashboard-page">
-
-  <div class="dashboard-shell">
-
-    <!-- ===================== HEADER ===================== -->
-    <header class="dashboard-header">
+<body>
+  <div class="dispatcher-shell">
+    <header class="dispatcher-header">
       <div>
-        <p class="dashboard-kicker">TARA Dispatch Command</p>
-        <h1>Dispatcher Dashboard</h1>
-        <p class="dashboard-subtext">
-          Monitor drivers, view live locations, track alerts, and manage roadside response.
+        <p class="dispatcher-kicker">TARA Safety Intelligence</p>
+        <h1>DISPATCHER</h1>
+        <p class="dispatcher-subtext">
+          Live driver awareness, fleet monitoring, and alert visibility for dispatch operations.
         </p>
       </div>
 
-      <div class="dashboard-status-card">
-        <div class="status-label">Dispatch Status</div>
-        <strong>Online</strong>
-        <small>Fleet tracking active</small>
+      <div class="dispatcher-status-card">
+        <div>System Status</div>
+        <strong>ACTIVE</strong>
+        <small>Monitoring ready</small>
       </div>
     </header>
 
-    <!-- ===================== STATS ===================== -->
-    <section class="dashboard-stats">
-      <div class="stat-card">
-        <span>Active Drivers</span>
-        <strong id="activeDriversCount">0</strong>
+    <section class="dispatcher-grid">
+      <div class="dispatcher-panel">
+        <h2>Live Drivers</h2>
+
+        <div class="driver-list">
+          <div class="driver-row">
+            <div>
+              <strong>Truck 12 — Troy</strong>
+              <p>Context: Working roadside</p>
+            </div>
+            <span class="status-pill status-working">Working</span>
+          </div>
+
+          <div class="driver-row">
+            <div>
+              <strong>Truck 08 — Mike</strong>
+              <p>Context: Driving</p>
+            </div>
+            <span class="status-pill status-driving">Driving</span>
+          </div>
+
+          <div class="driver-row">
+            <div>
+              <strong>Truck 04 — Sarah</strong>
+              <p>Context: High-risk alert</p>
+            </div>
+            <span class="status-pill status-alert">Alert</span>
+          </div>
+        </div>
       </div>
-      <div class="stat-card">
-        <span>Active Alerts</span>
-        <strong id="activeAlertsCount">0</strong>
-      </div>
-      <div class="stat-card">
-        <span>Emergency Events</span>
-        <strong id="emergencyCount">0</strong>
-      </div>
-      <div class="stat-card">
-        <span>System Health</span>
-        <strong>Stable</strong>
+
+      <div class="dispatcher-panel">
+        <h2>Recent Alerts</h2>
+
+        <div class="alert-list">
+          <div class="alert-card">
+            <strong>High-Risk Trigger</strong>
+            <p>Truck 04 entered high-risk mode near roadside scene.</p>
+          </div>
+
+          <div class="alert-card">
+            <strong>Driver Minder Active</strong>
+            <p>Truck 12 has roadside monitoring enabled.</p>
+          </div>
+
+          <div class="alert-card">
+            <strong>Sound Watch Event</strong>
+            <p>Loud hazard detected near active roadside unit.</p>
+          </div>
+        </div>
       </div>
     </section>
-
-    <!-- ===================== MAP + DRIVER LIST ===================== -->
-    <section class="dispatcher-grid">
-
-      <!-- MAP -->
-      <div class="dispatcher-map-card">
-        <div class="card-head">
-          <h2>Live Driver Locations</h2>
-          <span class="pill">Live Map</span>
-        </div>
-
-        <div id="dispatcherMap" class="dispatcher-map-placeholder"></div>
-      </div>
-
-      <!-- DRIVER LIST -->
-      <aside class="dispatcher-side-card">
-        <h2>Driver List</h2>
-        <div id="driverList" class="dispatcher-driver-list"></div>
-      </aside>
-
-    </section></section>
-
-    <!-- ===================== DETAILS + ALERTS ===================== -->
-<section class="dashboard-bottom-grid">
-
-  <!-- DRIVER DETAILS -->
-  <div class="dashboard-card">
-    <h2>Driver Details</h2>
-    <div id="driverDetails" class="driver-details-box">
-      <p>Select a driver from the list to view details.</p>
-    </div>
   </div>
-
-  <!-- RECENT ALERTS -->
-  <div class="dashboard-card">
-    <h2>Recent Alerts</h2>
-    <div id="recentAlerts"></div>
-  </div>
-
-</section>
-    
-    <!-- ===================== FOOTER ===================== -->
-    <footer class="dashboard-footer">
-      <h3>Dispatcher Note</h3>
-      <p>
-        TARA supports live fleet visibility and emergency awareness.
-        Follow company policy and operational judgment.
-      </p>
-    </footer>
-
-  </div>
-
-  <!-- ===================== LEAFLET SCRIPT ===================== -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <!-- ===================== MAIN DISPATCHER SCRIPT ===================== -->
-  <script>
-
-    const map = L.map("dispatcherMap").setView([46.0878, -64.7782], 11);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors"
-    }).addTo(map);
-
-    let driverMarkers = [];
-    let driverMarkerLookup = {};
-
-    function formatStatus(status) {
-      if (!status) return "Unknown";
-      return status.charAt(0).toUpperCase() + status.slice(1);
-    }
-
-    function formatTime(value) {
-      if (!value) return "Unknown time";
-      return new Date(value).toLocaleString();
-    }
-
-    function focusDriver(driverName, lat, lon) {
-      map.setView([lat, lon], 14);
-      if (driverMarkerLookup[driverName]) {
-        driverMarkerLookup[driverName].openPopup();
-      }
-    }
-
-    function renderDriverList(drivers) {
-      const list = document.getElementById("driverList");
-      list.innerHTML = "";
-
-      let alerts = 0;
-      let emergencies = 0;
-
-      drivers.forEach(driver => {
-
-        const status = driver.alert_type || "status";
-        const isEmergency = status.toLowerCase() === "emergency";
-
-        if (status !== "status") alerts++;
-        if (isEmergency) emergencies++;
-
-        const row = document.createElement("div");
-        row.className = isEmergency ? "driver-row alert clickable" : "driver-row clickable";
-
-        row.innerHTML = `
-          <strong>${driver.driver}</strong>
-          <span>${formatStatus(status)}</span>
-        `;
-
-        row.onclick = () => {
-  focusDriver(driver.driver, driver.latitude, driver.longitude);
-  renderDriverDetails(driver);
-};
-
-        list.appendChild(row);
-      });
-
-      document.getElementById("activeDriversCount").textContent = drivers.length;
-      document.getElementById("activeAlertsCount").textContent = alerts;
-      document.getElementById("emergencyCount").textContent = emergencies;
-    }
-
-    function renderAlerts(alerts) {
-      const box = document.getElementById("recentAlerts");
-      box.innerHTML = "";
-
-      alerts.slice(0, 6).forEach(alert => {
-        const item = document.createElement("div");
-        item.className = "recent-alert-item";
-
-        item.innerHTML = `
-          <strong>${alert.driver}</strong>
-          <span>${formatStatus(alert.alert_type)}</span>
-          <small>${formatTime(alert.created_at)}</small>
-        `;
-
-        box.appendChild(item);
-      });
-    }
-
-    async function loadData() {
-
-      const driversRes = await fetch("/driver-locations");
-      const drivers = await driversRes.json();
-
-      const alertsRes = await fetch("/alerts");
-      const alerts = await alertsRes.json();
-
-      driverMarkers.forEach(m => map.removeLayer(m));
-      driverMarkers = [];
-      driverMarkerLookup = {};
-
-      drivers.forEach(d => {
-
-        const marker = L.marker([d.latitude, d.longitude])
-          .addTo(map)
-          .bindPopup(`<strong>${d.driver}</strong><br>${formatStatus(d.alert_type)}`);
-
-        driverMarkers.push(marker);
-        driverMarkerLookup[d.driver] = marker;
-      });
-
-      renderDriverList(drivers);
-      renderAlerts(alerts);
-    }
-
-    loadData();
-    setInterval(loadData, 15000);
-
-  </script>
-function renderDriverDetails(driver) {
-  const box = document.getElementById("driverDetails");
-
-  if (!driver) {
-    box.innerHTML = "<p>Select a driver from the list to view details.</p>";
-    return;
-  }
-
-  const phone = driver.phone || "";
-  const lat = driver.latitude ?? "";
-  const lon = driver.longitude ?? "";
-  const mapsUrl = lat && lon ? `https://maps.google.com/?q=${lat},${lon}` : "#";
-
-  box.innerHTML = `
-    <h3>${driver.driver || "Unknown Driver"}</h3>
-
-    <span class="detail-label">Status</span>
-    <div class="detail-value">${formatStatus(driver.alert_type || "status")}</div>
-
-    <span class="detail-label">Latitude</span>
-    <div class="detail-value">${lat || "Unknown"}</div>
-
-    <span class="detail-label">Longitude</span>
-    <div class="detail-value">${lon || "Unknown"}</div>
-
-    <span class="detail-label">Last Update</span>
-    <div class="detail-value">${formatTime(driver.created_at)}</div>
-
-    <div class="driver-detail-actions">
-      <a class="detail-action-btn" href="${phone ? `tel:${phone}` : '#'}" ${phone ? "" : 'onclick="return false;"'}>Call Driver</a>
-      <a class="detail-action-btn" href="${mapsUrl}" target="_blank" rel="noopener noreferrer">Open in Maps</a>
-    </div>
-  `;
-}
 </body>
 </html>
