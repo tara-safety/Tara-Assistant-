@@ -399,7 +399,46 @@ function getSmartBuiltInAnswer(question) {
   if (q.includes("tow points") || q.includes("hook points")) {
     return "Do not guess tow points from appearance alone. Confirm approved recovery or tie-down points for that exact vehicle before loading or pulling, and never attach to suspension, steering, battery protection, or unknown underbody parts. Follow company policy and local regulations.";
   }
-
+  if (
+     q.includes("rear first ditch") ||
+    (q.includes("ditch") && q.includes("rear"))
+) {
+    return "Start by checking traffic exposure, ditch angle, rear overhang, and whether the vehicle is hung up or just sitting in the ditch. Watch for bumper, exhaust, or frame contact that could catch during the pull. Stabilize the vehicle if there is any chance of shifting or sliding during hookup. Use the straightest pull possible and avoid dragging the rear deeper or lifting in a way that increases damage. Plan where the front of the vehicle will travel as it comes out, and be ready to adjust once it reaches the shoulder. If the vehicle is binding, hung up, or the pull angle is poor, stop and reassess before continuing. Follow company policy and local regulations.";
+}
+   if (
+  q.includes("snow") ||
+  q.includes("ice") ||
+  q.includes("slippery") ||
+  q.includes("stuck in snow")
+) {
+  return "Start by checking how deep the vehicle is stuck and whether it will roll once it breaks free. Clear snow around the drive wheels if needed and confirm the path the vehicle will take when it starts moving. Use a controlled pull and avoid spinning tires or shock loading, which can dig the vehicle in deeper or cause sudden movement. Keep the pull as straight as possible and watch for sideways slide on ice. Be ready for the vehicle to gain momentum quickly once it releases. If traction, angle, or control is uncertain, stop and reassess before continuing. Follow company policy and local regulations.";
+}
+   if (
+  q.includes("soft shoulder") ||
+  q.includes("off road") ||
+  q.includes("edge of road") ||
+  q.includes("soft ground")
+) {
+  return "Check the ground condition first and make sure your truck is not at risk of sinking or sliding toward the ditch. Position for the safest and most stable pull, even if it means taking more time to set up. Avoid driving too close to the edge and watch for collapse under load. Use a controlled, straight pull and avoid sudden jerks that can shift both vehicles. Plan the recovery so the casualty vehicle comes up onto solid ground without pulling you into the soft area. If ground stability or positioning is questionable, stop and reassess before continuing. Follow company policy and local regulations.";
+}
+   if (
+  q.includes("won't roll") ||
+  q.includes("wont roll") ||
+  q.includes("locked wheel") ||
+  q.includes("parking brake stuck")
+) {
+  return "Confirm why the vehicle is not rolling before forcing movement. Check for parking brake engagement, seized brakes, transmission lock, or wheel damage. Do not drag the vehicle without understanding the cause, as this can create further damage. Use dollies, skates, or a lift method if the wheels cannot rotate safely. Keep the movement controlled and avoid shock loading the drivetrain or suspension. If the cause of the lock-up is unclear, stop and verify before continuing. Follow company policy and local regulations.";
+}
+   if (
+  q.includes("flatbed") ||
+  q.includes("rollback") ||
+  q.includes("loading angle") ||
+  q.includes("low car") ||
+  q.includes("scrape")
+) {
+  return "Check the vehicle’s ground clearance and approach angle before loading. Reduce the loading angle using ramps, blocks, or tilt adjustments to prevent front-end or underbody contact. Load slowly and watch the front bumper, exhaust, and undercarriage as the vehicle transitions onto the deck. Keep the pull straight and controlled to avoid shifting or scraping. If the vehicle risks bottoming out or hanging up, stop and adjust your setup before continuing. Follow company policy and local regulations.";
+}
+   
   return "";
 }
 
@@ -463,6 +502,9 @@ Rules:
 - do not mention internal source files
 - do not mention AAA or CAA
 - if the user asks outside your scope, say exactly: Sorry, I can only answer towing and roadside safety questions.
+- Keep answers easy to scan in the field
+- Prefer short paragraphs or step-style flow
+- Avoid long blocks of text when possible
 
 Knowledge base context:
 ${knowledgeContext}
