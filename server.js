@@ -274,7 +274,7 @@ app.post("/tow-ai", async (req, res) => {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-5.4",
+        model: "gpt-4.1-mini",
         input: [
           {
             role: "user",
