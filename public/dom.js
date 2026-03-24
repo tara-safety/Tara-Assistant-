@@ -13,7 +13,6 @@ export function getDOM() {
     menu: document.querySelector(".menu"),
     questionInput: document.getElementById("question"),
     chatBox: document.getElementById("chatBox"),
-
     contextText: document.getElementById("contextText"),
     riskText: document.getElementById("riskText"),
     soundText: document.getElementById("soundText"),
