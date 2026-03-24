@@ -8,7 +8,6 @@ export function getDOM() {
     driverMinderBtn: document.getElementById("driverMinderBtn"),
     towModeBtn: document.getElementById("towModeBtn"),
     towCameraBtn: document.getElementById("towCameraBtn"),
-    highRiskBtn: document.getElementById("highRiskBtn"),
     menuBtn: document.getElementById("menuBtn"),
     menu: document.querySelector(".menu"),
     questionInput: document.getElementById("question"),
