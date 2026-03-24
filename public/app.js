@@ -39,27 +39,6 @@ document.addEventListener("DOMContentLoaded", function () {
   setupEmergencyFailSafe(dom);
   setupContextAwareness(state, dom);
 
-  if (dom.highRiskBtn) {
-    dom.highRiskBtn.addEventListener("click", function () {
-      state.highRiskMode = !state.highRiskMode;
-
-      if (dom.riskText) {
-        dom.riskText.textContent = state.highRiskMode
-          ? "Risk: High"
-          : "Risk: Normal";
-      }
-
-      if (state.highRiskMode) {
-        dom.highRiskBtn.innerText = "HIGH-RISK MODE ON";
-        dom.highRiskBtn.classList.add("active");
-        addStatus(dom.chatBox, "🚧 High-Risk Mode Activated");
-      } else {
-        dom.highRiskBtn.innerText = "HIGH-RISK MODE OFF";
-        dom.highRiskBtn.classList.remove("active");
-        addStatus(dom.chatBox, "✅ High-Risk Mode Disabled");
-      }
-    });
-  }
 
   const voiceToggle = dom.voiceToggle;
   const emergencyMiniBtn = dom.emergencyMiniBtn;
