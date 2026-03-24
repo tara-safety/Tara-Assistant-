@@ -438,6 +438,103 @@ function getSmartBuiltInAnswer(question) {
 ) {
   return "Check the vehicle’s ground clearance and approach angle before loading. Reduce the loading angle using ramps, blocks, or tilt adjustments to prevent front-end or underbody contact. Load slowly and watch the front bumper, exhaust, and undercarriage as the vehicle transitions onto the deck. Keep the pull straight and controlled to avoid shifting or scraping. If the vehicle risks bottoming out or hanging up, stop and adjust your setup before continuing. Follow company policy and local regulations.";
 }
+   /* =========================
+   ADVANCED OPERATOR SCENARIOS
+========================= */
+
+/* 1. Accident – damaged vehicle */
+if (
+  q.includes("accident") ||
+  q.includes("collision") ||
+  q.includes("crash") ||
+  q.includes("damaged vehicle")
+) {
+  return "Treat the vehicle as unstable until proven otherwise. Check for fluid leaks, broken suspension, loose panels, and shifting weight before touching it. Do not assume wheels will roll or steer correctly. Choose the safest loading method, often a flatbed, and control the vehicle during movement to prevent further damage. If anything looks compromised or unpredictable, stop and reassess before continuing. Follow company policy and local regulations.";
+}
+
+/* 2. EV won’t go into neutral */
+if (
+  q.includes("ev") &&
+  (q.includes("neutral") || q.includes("won't move") || q.includes("wont move"))
+) {
+  return "Confirm the vehicle state first, as many EVs require specific steps to enter transport or tow mode. Do not force movement if the drivetrain is locked. Use dollies or a flatbed if the wheels cannot rotate freely. Avoid dragging the vehicle, as this can damage the drive system or create electrical issues. If the correct procedure is unknown for that model, stop and verify before continuing. Follow company policy and local regulations.";
+}
+
+/* 3. Underground parking / low clearance tow */
+if (
+  q.includes("underground") ||
+  q.includes("parking garage") ||
+  q.includes("low clearance")
+) {
+  return "Check height clearance, ramp angles, and tight turning space before committing your truck. Use low-clearance equipment and plan your exit path before starting. Avoid getting into a position where you cannot safely load or exit. Move slowly and control every step, especially on ramps. If space, height, or angle is too tight for safe operation, stop and reassess before continuing. Follow company policy and local regulations.";
+}
+
+/* 4. Tight space / confined tow */
+if (
+  q.includes("tight space") ||
+  q.includes("tight area") ||
+  q.includes("narrow") ||
+  q.includes("confined")
+) {
+  return "Slow the operation down and plan every movement before starting. Watch clearances on all sides including mirrors, doors, and surrounding vehicles. Use the smallest movement possible to gain position and avoid sudden adjustments. Keep the vehicle controlled at all times and avoid oversteering or binding. If positioning becomes unsafe or too tight to control properly, stop and reassess before continuing. Follow company policy and local regulations.";
+}
+
+/* 5. Broken suspension */
+if (
+  q.includes("broken suspension") ||
+  q.includes("wheel collapsed") ||
+  q.includes("wheel bent") ||
+  q.includes("control arm")
+) {
+  return "Do not attempt to roll or drag the vehicle without assessing the damage. A collapsed suspension can cause further structural damage if forced. Use dollies or a flatbed to support the damaged corner and keep the vehicle stable. Move slowly and watch for shifting or binding. If the vehicle cannot be safely supported, stop and reassess before continuing. Follow company policy and local regulations.";
+}
+
+/* 6. Vehicle stuck on curb / high center */
+if (
+  q.includes("high centered") ||
+  q.includes("on curb") ||
+  q.includes("stuck on curb") ||
+  q.includes("bottomed out")
+) {
+  return "Check where the vehicle is contacting and what is supporting its weight. Avoid pulling in a way that drags or tears underbody components. Reduce the load on the contact point if possible and use controlled movement to free the vehicle. Keep the pull straight and avoid sudden force that could cause damage. If the vehicle is hung up in a way that could shift suddenly, stop and reassess before continuing. Follow company policy and local regulations.";
+}
+
+/* 7. Wheel lift vs flatbed decision */
+if (
+  q.includes("wheel lift") ||
+  q.includes("flatbed or wheel lift") ||
+  q.includes("which tow method")
+) {
+  return "Choose the method based on vehicle condition, drivetrain, and damage. If the vehicle is damaged, not rolling, or an EV or AWD with uncertainty, a flatbed is usually the safest option. Wheel lift can be used when the vehicle is stable, rolling freely, and appropriate for that drivetrain. Always confirm you are not causing drivetrain or structural damage. If unsure, default to the safest method. Follow company policy and local regulations.";
+}
+
+/* 8. Steep driveway / angle pull */
+if (
+  q.includes("steep driveway") ||
+  q.includes("steep angle") ||
+  q.includes("incline") ||
+  q.includes("hill recovery")
+) {
+  return "Check the slope and how the vehicle weight will shift during movement. Control the pull to prevent rollback or sudden acceleration. Use the straightest path possible and avoid side load on the vehicle or equipment. Be ready to stop and secure if the vehicle starts to move unpredictably. If traction or control is uncertain, stop and reassess before continuing. Follow company policy and local regulations.";
+}
+
+/* 9. Frozen brakes / seized wheels */
+if (
+  q.includes("frozen brakes") ||
+  q.includes("seized") ||
+  q.includes("wheel stuck")
+) {
+  return "Confirm the cause of the wheel lock before forcing movement. Do not drag the vehicle if the wheels cannot rotate, as this can cause damage. Use dollies or lift methods to move the vehicle safely. Apply controlled movement and avoid shock loading. If the condition cannot be safely managed, stop and reassess before continuing. Follow company policy and local regulations.";
+}
+
+/* 10. Highway recovery / live traffic */
+if (
+  q.includes("highway") ||
+  q.includes("live traffic") ||
+  q.includes("shoulder recovery")
+) {
+  return "Your first priority is traffic control and visibility. Position your truck to protect the scene and create a safe work area. Stay aware of traffic flow at all times and minimize time exposed to live lanes. Set up quickly but safely, and avoid turning your back to traffic. If the scene becomes unsafe or traffic conditions change, stop and reassess immediately. Follow company policy and local regulations.";
+}
    
   return "";
 }
