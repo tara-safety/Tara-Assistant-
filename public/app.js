@@ -119,39 +119,46 @@ document.addEventListener("DOMContentLoaded", function () {
   window.addEventListener("resize", toggleMiniSOS);
   toggleMiniSOS();
 
-  async function sendQuestion() {
-    if (!dom.questionInput || !dom.chatBox) return;
+ async function sendQuestion() {
+  if (!dom.questionInput || !dom.chatBox) return;
 
-    const text = dom.questionInput.value.trim();
-    if (!text) return;
+  const text = dom.questionInput.value.trim();
+  if (!text) return;
 
-    addUserMessage(dom.chatBox, text);
-    dom.questionInput.value = "";
+  addUserMessage(dom.chatBox, text);
+  dom.questionInput.value = "";
 
-    const thinking = createThinking(dom.chatBox);
+  const thinking = createThinking(dom.chatBox);
 
-    try {
-      const res = await fetch("/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: text })
-      });
+  try {
+    const res = await fetch("/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: text,
+        mode: "chat"
+      })
+    });
 
-      if (!res.ok) {
-        throw new Error("Server returned error");
-      }
-
-      const data = await res.json();
-      thinking.remove();
-      addTaraMessage(dom.chatBox, data.answer || "No response returned.");
-      speak(data.answer || "No response returned.", state);
-    } catch (err) {
-      console.error("Ask error:", err);
-      thinking.remove();
-      addStatus(
-        dom.chatBox,
-        `<span style="color:red;">TARA Error: ${err.message}</span>`
-      );
+    if (!res.ok) {
+      throw new Error("Server returned error");
     }
+
+    const data = await res.json();
+    thinking.remove();
+
+    const answer = data.answer || "No response returned.";
+    addTaraMessage(dom.chatBox, answer);
+
+    if (state.voiceEnabled) {
+      speak(answer, state);
+    }
+  } catch (err) {
+    console.error("Ask error:", err);
+    thinking.remove();
+    addStatus(
+      dom.chatBox,
+      `<span style="color:red;">TARA Error: ${err.message}</span>`
+    );
   }
-});
+}
