@@ -3,101 +3,83 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TARA</title>
-  <link rel="stylesheet" href="app.css?v=1" />
+  <title>TARA Safety Intelligence</title>
+  <link rel="stylesheet" href="app.css?v=2" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#1e9f4f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 </head>
 <body>
-  <nav class="menu">
+
+  <div class="header">
+    <button id="menuBtn">☰</button>
+    <span>DASHBOARD</span>
+  </div>
+
+  <div class="menu">
     <a href="/">TARA App</a>
     <a href="/dashboard.html">Dashboard</a>
     <a href="/dispatcher.html">Dispatcher</a>
-  </nav>
+  </div>
 
-  <div class="app-shell">
-    <header class="app-header">
-      <button id="menuBtn" aria-label="Open menu">☰</button>
+  <div class="main">
 
-      <div class="header-copy">
-        <p class="app-kicker">TARA Safety Intelligence</p>
-        <h1>TARA</h1>
-        <p class="app-subtext">
-          Driver safety app for towing, roadside awareness, and emergency response.
-        </p>
-      </div>
-    </header>
-
-    <section class="hero-emergency-wrap">
-      <button id="emergencyBtn">
+    <div class="emergencyWrap">
+      <button id="emergencyBtn" class="emergencyBtn">
         🚨<br />
         HOLD<br />
         EMERGENCY
       </button>
-      <div class="hold-note">Hold for 3 seconds</div>
-    </section>
+    </div>
 
-    <button id="emergencyMiniBtn">🚨 SOS</button>
+    <div class="holdText">Hold for 3 seconds</div>
 
-    <section id="contextCard">
+    <button id="emergencyMiniBtn" class="emergencyMiniBtn">🚨 SOS</button>
+
+    <div id="contextCard" class="statusCard">
       <div id="contextText">Context: Idle</div>
       <div id="riskText">Risk: Normal</div>
       <div id="soundText">Sound Watch: Off</div>
       <div id="driverMinderText">Driver Minder: Off</div>
-    </section>
-
-    <div id="contextBadge">⚪ IDLE</div>
-    <div id="motionDebug">Motion: 0.00 | Score: 0 | Mode: IDLE</div>
-
-    <section class="controls-card">
-      <h2>Safety Controls</h2>
-
-      <button id="driverMinderBtn" class="control-btn">
-        Driver Minder OFF
-      </button>
-
-      <button id="highRiskBtn" class="control-btn">
-        HIGH-RISK MODE OFF
-      </button>
-
-      <div class="control-row">
-        <button id="towModeBtn" class="control-btn half-btn">
-          Tow Mode OFF
-        </button>
-
-        <button id="towCameraBtn" class="control-btn half-btn">
-          Open Camera
-        </button>
-      </div>
-
-      <div class="control-row">
-        <button id="voiceBtn" class="control-btn half-btn">
-          Voice Input
-        </button>
-
-        <label class="voice-toggle-row half-btn">
-          <span>Voice</span>
-          <input type="checkbox" id="voiceToggle" checked />
-        </label>
-      </div>
-    </section>
-
-    <section class="ask-card">
-      <h2>Ask TARA</h2>
-
-      <div class="ask-box">
-        <label for="question">Ask TARA</label>
-        <textarea
-          id="question"
-          placeholder="Type a towing or roadside safety question..."
-        ></textarea>
-        <button id="askBtn">Ask TARA</button>
-      </div>
-
-      <div id="chatBox"></div>
-    </section>
-
-    <div class="footer-note">
-      Powered by AI Intelligence • Safety Buzz Alerts • TARA Safety
     </div>
+
+    <div id="contextBadge" class="contextBadge">⚪ IDLE</div>
+    <div id="motionDebug" class="motionDebug">Motion: 0.00 | Score: 0 | Mode: IDLE</div>
+
+    <div class="chatBox" id="chatBox"></div>
+
+    <textarea
+      id="question"
+      class="messageInput"
+      placeholder="Ask towing safety question..."
+    ></textarea>
+
+    <div class="buttonRow">
+      <button id="askBtn">SEND</button>
+      <button id="voiceBtn">🎤 TALK</button>
+    </div>
+
+    <div class="buttonRow">
+      <button id="towModeBtn">Tow Mode OFF</button>
+      <button id="towCameraBtn">📷 Camera</button>
+    </div>
+
+    <button id="driverMinderBtn" class="driverMinderBtn">
+      DRIVER MINDER OFF
+    </button>
+
+    <button id="highRiskBtn" class="highRiskBtn">
+      HIGH-RISK MODE OFF
+    </button>
+
+    <div class="voiceRow">
+      <label class="voiceToggleWrap">
+        <span>Voice Response</span>
+        <input type="checkbox" id="voiceToggle" checked />
+      </label>
+    </div>
+
   </div>
 
   <script type="module" src="app.js"></script>
