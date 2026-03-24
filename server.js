@@ -319,11 +319,14 @@ Use this exact structure:
     const data = await openaiRes.json();
 
     if (!openaiRes.ok) {
-      console.error("Tow AI OpenAI error:", data);
-      return res.status(500).json({
-        answer: "TARA Vision could not analyze this image right now."
-      });
-    }
+  console.error("Tow AI OpenAI error:", data);
+
+  return res.status(500).json({
+    answer:
+      data?.error?.message ||
+      "TARA Vision could not analyze this image right now."
+  });
+}
 
     const answer =
       data.output_text?.trim() ||
