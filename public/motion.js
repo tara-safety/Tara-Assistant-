@@ -41,13 +41,21 @@ export function setupDriverMinder(state, dom, startEmergencyCountdown) {
     state.driverMinderActive = !state.driverMinderActive;
 
     if (state.driverMinderActive) {
-      dom.driverMinderBtn.innerText = "Driver Minder ON";
+      state.highRiskMode = true;
+
+      dom.driverMinderBtn.innerText = "ROADSIDE PROTECTION ON";
+      dom.driverMinderBtn.classList.add("active");
 
       if (dom.driverMinderText) {
-        dom.driverMinderText.textContent = "Driver Minder: On";
+        dom.driverMinderText.textContent = "Roadside Protection: On";
       }
 
-      addStatus(dom.chatBox, "🟢 Driver Minder Activated");
+      if (dom.riskText) {
+        dom.riskText.textContent = "Risk: High";
+      }
+
+      addStatus(dom.chatBox, "🟢 Roadside Protection Activated");
+      addStatus(dom.chatBox, "🚧 High-risk roadside monitoring active");
 
       await requestMotionPermission();
 
@@ -68,13 +76,20 @@ export function setupDriverMinder(state, dom, startEmergencyCountdown) {
 
       resetInactivityTimer(state, dom, startEmergencyCountdown);
     } else {
-      dom.driverMinderBtn.innerText = "Driver Minder OFF";
+      state.highRiskMode = false;
+
+      dom.driverMinderBtn.innerText = "ROADSIDE PROTECTION OFF";
+      dom.driverMinderBtn.classList.remove("active");
 
       if (dom.driverMinderText) {
-        dom.driverMinderText.textContent = "Driver Minder: Off";
+        dom.driverMinderText.textContent = "Roadside Protection: Off";
       }
 
-      addStatus(dom.chatBox, "⚪ Driver Minder Disabled");
+      if (dom.riskText) {
+        dom.riskText.textContent = "Risk: Normal";
+      }
+
+      addStatus(dom.chatBox, "⚪ Roadside Protection Disabled");
 
       clearTimeout(state.inactivityTimer);
       state.inactivityTimer = null;
@@ -201,10 +216,10 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
   addStatus(
     dom.chatBox,
     reason === "impact"
-      ? "⚠️ Driver Minder warning: impact detected. Emergency check started."
+      ? "⚠️ Roadside Protection warning: impact detected. Emergency check started."
       : reason === "loud_sound"
-      ? "⚠️ Driver Minder warning: loud hazard detected nearby. Emergency check started."
-      : "⚠️ Driver Minder warning: no movement detected. Emergency check started."
+      ? "⚠️ Roadside Protection warning: loud hazard detected nearby. Emergency check started."
+      : "⚠️ Roadside Protection warning: no movement detected. Emergency check started."
   );
 
   if (state.highRiskMode) {
@@ -254,9 +269,7 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
   warningBox.style.minWidth = "280px";
   warningBox.style.maxWidth = "90vw";
   warningBox.style.boxShadow = "0 8px 24px rgba(0,0,0,0.35)";
-  warningBox.innerText = state.highRiskMode
-    ? "🚧 HIGH-RISK DRIVER CHECK"
-    : "⚠️ Driver Check Required";
+  warningBox.innerText = "🚧 ROADSIDE DRIVER CHECK";
 
   const safeBtn = document.createElement("button");
   safeBtn.id = "driverSafeBtn";
@@ -296,11 +309,7 @@ function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
 
   setTimeout(function () {
     if (state.warningRunning) {
-      if (state.highRiskMode) {
-        emergencySpeak("High-risk danger continues. Respond now.");
-      } else {
-        emergencySpeak("Respond now or emergency will start.");
-      }
+      emergencySpeak("Danger continues. Respond now.");
     }
   }, 4000);
 
