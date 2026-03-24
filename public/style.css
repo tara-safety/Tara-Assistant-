@@ -144,6 +144,13 @@ textarea {
   color: #f1fffa;
 }
 
+.subTitle{
+  text-align:center;
+  font-size:14px;
+  color:#ffffffcc;
+  margin-top:70px;
+}
+
 /* SAFETY ZONE */
 
 .safety-zone {
