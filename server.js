@@ -9,9 +9,9 @@ import { fileURLToPath } from "url";
 
 dotenv.config();
 
-/* ------------------------
-   APP SETUP
-------------------------- */
+/* =========================================================
+   1. APP SETUP
+========================================================= */
 
 const app = express();
 app.use(cors());
@@ -22,9 +22,9 @@ const __dirname = path.dirname(__filename);
 
 app.use(express.static(path.join(__dirname, "public")));
 
-/* ------------------------
-   CLIENT SETUP
-------------------------- */
+/* =========================================================
+   2. CLIENT SETUP
+========================================================= */
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -47,9 +47,9 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
   console.warn("Supabase environment variables missing");
 }
 
-/* ------------------------
-   HELPERS
-------------------------- */
+/* =========================================================
+   3. TEXT + QUESTION HELPERS
+========================================================= */
 
 function cleanText(text = "") {
   return String(text)
@@ -105,7 +105,12 @@ function isTowingQuestion(question) {
     "dispatch",
     "disabled vehicle",
     "jack",
-    "lug nut"
+    "lug nut",
+    "dolly",
+    "rollback",
+    "j-hook",
+    "tie down",
+    "move over"
   ];
 
   return keywords.some((word) => q.includes(word));
@@ -119,6 +124,18 @@ function isLockoutQuestion(question) {
     q.includes("locked keys") ||
     q.includes("keys locked") ||
     q.includes("locked out")
+  );
+}
+
+function isEVQuestion(question) {
+  const q = cleanText(question);
+  return (
+    q.includes("ev") ||
+    q.includes("electric vehicle") ||
+    q.includes("tesla") ||
+    q.includes("hybrid") ||
+    q.includes("plug in") ||
+    q.includes("battery electric")
   );
 }
 
@@ -154,6 +171,10 @@ function getImportantQuestionTerms(question) {
         ].includes(word)
     );
 }
+
+/* =========================================================
+   4. EMBEDDINGS + KNOWLEDGE SEARCH
+========================================================= */
 
 async function getEmbedding(text) {
   const response = await openai.embeddings.create({
@@ -227,6 +248,10 @@ Metadata: ${metadata}`;
     .join("\n\n");
 }
 
+/* =========================================================
+   5. RESPONSE PARSING + WEB SOURCES
+========================================================= */
+
 function extractResponseText(data) {
   if (typeof data?.output_text === "string" && data.output_text.trim()) {
     return data.output_text.trim();
@@ -278,6 +303,10 @@ function extractWebSources(data) {
   return sources.slice(0, 5);
 }
 
+/* =========================================================
+   6. LEARNING / SAVE TO KNOWLEDGE BASE
+========================================================= */
+
 async function saveLearnedKnowledge(question, answer, metadata = {}) {
   if (!supabase) return;
 
@@ -306,25 +335,94 @@ async function saveLearnedKnowledge(question, answer, metadata = {}) {
   }
 }
 
+/* =========================================================
+   7. BUILT-IN SMART ANSWERS
+========================================================= */
+
+function getSmartBuiltInAnswer(question) {
+  const q = cleanText(question);
+
+  if (isEVQuestion(question) && (q.includes("tow") || q.includes("towing"))) {
+    return "Most EVs should be transported on a flatbed because dragging the drive wheels can damage the drivetrain or create system issues. First confirm the exact make, model, drive type, and whether transport mode or tow mode is required before moving it. Do not assume the vehicle will roll freely just because it is powered off, and do not attach to unknown underbody components. If the exact manufacturer procedure is unclear, stop and verify it before towing. Follow company policy and local regulations.";
+  }
+
+  if (isLockoutQuestion(question)) {
+    return "Start with the least-damaging entry method and make sure the vehicle is secure before touching glass, trim, or seals. If the exact method for that vehicle is uncertain, stop and verify before proceeding. Protect the vehicle first and follow company policy and local regulations.";
+  }
+
+  if (q.includes("flat tire") || q.includes("spare tire")) {
+    return "First confirm the vehicle is in a safe location and properly secured before lifting or moving it. Check whether the vehicle has a spare, inflator kit, run-flat tires, or manufacturer restrictions before choosing the next step. On newer vehicles, especially EVs and hybrids, verify approved lifting and jacking points before service. Follow company policy and local regulations.";
+  }
+
+  if (q.includes("jump start") || q.includes("jump-start") || q.includes("battery")) {
+    return "Confirm the vehicle type first, because EVs, hybrids, and newer vehicles can have different low-voltage support procedures than older gas vehicles. Use the correct connection points, protect modules from reverse polarity, and verify whether the issue is a low 12-volt system or a deeper fault before continuing. Follow company policy and local regulations.";
+  }
+
+  if (q.includes("tow points") || q.includes("hook points")) {
+    return "Do not guess tow points from appearance alone. Confirm approved recovery or tie-down points for that exact vehicle before loading or pulling, and never attach to suspension, steering, battery protection, or unknown underbody parts. Follow company policy and local regulations.";
+  }
+
+  return "";
+}
+
+function buildFallbackAnswer(question) {
+  const builtIn = getSmartBuiltInAnswer(question);
+
+  if (builtIn) {
+    return builtIn;
+  }
+
+  return "I don’t have a strong answer on that yet. The safest move is to slow down, verify the vehicle details, and confirm the right procedure before continuing. Follow company policy and local regulations.";
+}
+
+function shouldUseWebFallback(answer) {
+  if (!answer) return true;
+
+  const a = answer.toLowerCase().trim();
+
+  if (a.length < 80) return true;
+
+  const weakPhrases = [
+    "i don't have a strong answer",
+    "i dont have a strong answer",
+    "i'm not sure",
+    "i am not sure",
+    "not certain",
+    "may vary",
+    "depends on the model",
+    "depends on trim",
+    "check the owner",
+    "check the manual",
+    "not enough information",
+    "unclear from the information"
+  ];
+
+  return weakPhrases.some((phrase) => a.includes(phrase));
+}
+
+/* =========================================================
+   8. PROMPTS
+========================================================= */
+
 function buildChatPrompt(question, knowledgeContext) {
   return `You are TARA (Tow Awareness and Response Assistant).
 
-You are talking to a tow operator, dispatcher, roadside tech, or fleet user.
+You are speaking to a tow operator, dispatcher, roadside tech, or fleet user.
 
-How you speak:
-- Sound natural, calm, practical, and human
-- Do NOT sound robotic
-- Do NOT use a rigid template unless the situation is clearly dangerous
-- For simple questions, answer simply
-- For vehicle-specific details, be honest when something can vary by model or trim
+Style:
+- sound natural, practical, and human
+- do not sound robotic
+- do not use a rigid safety template for normal questions
+- for simple questions, give a simple direct answer first
+- after the direct answer, add the most important caution or verification step if needed
 
 Rules:
-- Stay focused on towing, roadside, recovery, EV service, dispatch, and vehicle disablement
-- Use the knowledge context when it is relevant
-- If exact details are uncertain, say what is typical and what should be verified
-- Do not mention internal source files
-- Do not mention AAA or CAA
-- If the user asks outside your scope, say exactly: Sorry, I can only answer towing and roadside safety questions.
+- stay focused on towing, roadside, recovery, EV service, dispatch, and vehicle disablement
+- use the knowledge context if it is relevant
+- if the exact make/model procedure may vary, say what is typical first, then say what should be verified
+- do not mention internal source files
+- do not mention AAA or CAA
+- if the user asks outside your scope, say exactly: Sorry, I can only answer towing and roadside safety questions.
 
 Knowledge base context:
 ${knowledgeContext}
@@ -337,19 +435,19 @@ function buildCameraPrompt(sceneQuestion, knowledgeContext) {
   return `You are TARA Vision, a towing and roadside scene assistant.
 
 How you speak:
-- Short
-- Clear
-- Human
-- Safety-first
-- Not robotic
+- short
+- clear
+- human
+- safety-first
+- not robotic
 
 Rules:
-- Focus on what is visible, what is risky, and what should be verified next
-- Do NOT guess exact OEM hook points from limited information
-- Do NOT claim hidden areas are safe
-- Never advise attaching to suspension, steering, or unknown underbody parts
-- If information is missing, say so clearly
-- Use practical field language
+- focus on what is visible, what is risky, and what should be verified next
+- do not guess exact OEM hook points from limited information
+- do not claim hidden areas are safe
+- never advise attaching to suspension, steering, or unknown underbody parts
+- if information is missing, say so clearly
+- use practical field language
 
 Knowledge base context:
 ${knowledgeContext}
@@ -358,37 +456,26 @@ Scene question or scene details:
 ${sceneQuestion}`;
 }
 
-function buildFallbackAnswer(question) {
-  const q = cleanText(question);
-
-  if (q.includes("ev") || q.includes("electric vehicle") || q.includes("tesla")) {
-    return "Most EVs should be transported on a flatbed because dragging the drive wheels can damage the drivetrain or create system issues. Confirm the exact make, model, drive type, and whether transport mode or tow mode is required before moving it. Do not assume the vehicle will roll freely just because it is powered off, and do not attach to unknown underbody components. If the exact OEM procedure is unclear, stop and verify it before towing. Follow company policy and local regulations.";
-  }
-
-  if (isLockoutQuestion(question)) {
-    return "Start with the least-damaging entry method and make sure the vehicle is secure before touching glass, trim, or seals. If the exact method for that vehicle is uncertain, stop and verify before proceeding. Protect the vehicle first and follow company policy and local regulations.";
-  }
-
-  if (q.includes("flat tire") || q.includes("spare tire")) {
-    return "First confirm the vehicle is in a safe location and properly secured before lifting or moving it. Check whether the vehicle has a spare, inflator kit, run-flat tires, or manufacturer restrictions before choosing the next step. On newer vehicles, especially EVs and hybrids, verify approved lifting and jacking points before service. Follow company policy and local regulations.";
-  }
-
-  return "I don’t have a strong answer on that yet. The safest move is to slow down, verify the vehicle details, and confirm the right procedure before continuing. Follow company policy and local regulations.";
+function buildWebSearchPrompt(question, mode, knowledgeContext) {
+  return mode === "camera"
+    ? buildCameraPrompt(question, knowledgeContext)
+    : buildChatPrompt(question, knowledgeContext);
 }
 
-/* ------------------------
-   AI ASSISTANT
-------------------------- */
+/* =========================================================
+   9. MAIN AI CHAT ROUTE
+========================================================= */
 
 app.post("/ask", async (req, res) => {
   const question = String(req.body.question || "").trim();
   const mode = String(req.body.mode || "chat").trim().toLowerCase();
+  const modeUsed = mode === "camera" ? "camera" : "chat";
 
   if (!question) {
     return res.json({
       answer: "Please enter a towing or roadside safety question.",
       sourcesUsed: 0,
-      modeUsed: mode === "camera" ? "camera" : "chat"
+      modeUsed
     });
   }
 
@@ -396,7 +483,7 @@ app.post("/ask", async (req, res) => {
     return res.json({
       answer: "Sorry, I can only answer towing and roadside safety questions.",
       sourcesUsed: 0,
-      modeUsed: mode === "camera" ? "camera" : "chat"
+      modeUsed
     });
   }
 
@@ -404,14 +491,15 @@ app.post("/ask", async (req, res) => {
     const rawMatches = await searchKnowledgeBase(question, 5);
     const matches = filterKnowledgeMatches(question, rawMatches);
     const knowledgeContext = formatKnowledgeContext(matches);
+    const builtInAnswer = getSmartBuiltInAnswer(question);
 
     /* ------------------------
-       STEP 1: NORMAL CHAT/CAMERA ANSWER
+       STEP 1: FIRST PASS
     ------------------------- */
     const firstPass = await openai.responses.create({
       model: "gpt-5-mini",
       instructions:
-        mode === "camera"
+        modeUsed === "camera"
           ? buildCameraPrompt(question, knowledgeContext)
           : buildChatPrompt(question, knowledgeContext),
       input: question,
@@ -419,55 +507,45 @@ app.post("/ask", async (req, res) => {
     });
 
     let answer = extractResponseText(firstPass).replace(/\n\s+/g, "\n").trim();
-    if (!answer && (question.toLowerCase().includes("ev") || question.toLowerCase().includes("electric vehicle"))) {
-  answer = "Most EVs should be moved on a flatbed because dragging driven wheels can damage components or create system issues. Confirm the exact make, model, drive type, and whether transport mode is required before recovery. Never assume the vehicle will free-roll just because it is powered down, and verify approved recovery points before loading. If the exact procedure is unclear, stop and check manufacturer guidance first.";
-}
-    const uncertainPhrases = [
-      "i'm not sure",
-      "i am not sure",
-      "not certain",
-      "may vary",
-      "depends on the model",
-      "depends on trim",
-      "check the owner",
-      "check the manual",
-      "not enough information",
-      "unclear from the information"
-    ];
-
-    const needsWebFallback =
-      !answer ||
-      answer.length < 60 ||
-      uncertainPhrases.some((phrase) => answer.toLowerCase().includes(phrase));
 
     /* ------------------------
-       STEP 2: WEB FALLBACK IF NEEDED
+       STEP 2: UPGRADE WEAK ANSWERS
+    ------------------------- */
+    if ((!answer || shouldUseWebFallback(answer)) && builtInAnswer) {
+      answer = builtInAnswer;
+    }
+
+    /* ------------------------
+       STEP 3: WEB FALLBACK
     ------------------------- */
     let webSources = [];
 
-    if (needsWebFallback) {
+    if (shouldUseWebFallback(answer)) {
       const webResult = await openai.responses.create({
         model: "gpt-5-mini",
         tools: [{ type: "web_search" }],
         include: ["web_search_call.action.sources"],
-        instructions: buildWebSearchPrompt(question, mode, knowledgeContext),
+        instructions: buildWebSearchPrompt(question, modeUsed, knowledgeContext),
         input: question,
         max_output_tokens: 400
       });
 
       const webAnswer = extractResponseText(webResult).trim();
 
-      if (webAnswer) {
+      if (webAnswer && webAnswer.length > 60) {
         answer = webAnswer;
         webSources = extractWebSources(webResult);
 
         await saveLearnedKnowledge(question, webAnswer, {
-          mode_used: mode,
+          mode_used: modeUsed,
           web_sources: webSources
         });
       }
     }
 
+    /* ------------------------
+       STEP 4: FINAL FALLBACK
+    ------------------------- */
     if (!answer) {
       answer = buildFallbackAnswer(question);
     }
@@ -475,7 +553,7 @@ app.post("/ask", async (req, res) => {
     return res.json({
       answer,
       sourcesUsed: matches.length,
-      modeUsed: mode === "camera" ? "camera" : "chat",
+      modeUsed,
       webSources
     });
   } catch (err) {
@@ -484,14 +562,14 @@ app.post("/ask", async (req, res) => {
     return res.json({
       answer: "TARA could not connect to AI right now.",
       sourcesUsed: 0,
-      modeUsed: mode === "camera" ? "camera" : "chat"
+      modeUsed
     });
   }
 });
 
-/* ------------------------
-   TOW AI VISION
-------------------------- */
+/* =========================================================
+   10. TOW AI VISION ROUTE
+========================================================= */
 
 app.post("/tow-ai", async (req, res) => {
   try {
@@ -565,9 +643,9 @@ Use this exact structure:
   }
 });
 
-/* ------------------------
-   ADD SINGLE KNOWLEDGE ENTRY
-------------------------- */
+/* =========================================================
+   11. KNOWLEDGE MANAGEMENT ROUTES
+========================================================= */
 
 app.post("/knowledge", async (req, res) => {
   const { content, metadata = {} } = req.body;
@@ -608,10 +686,6 @@ app.post("/knowledge", async (req, res) => {
     return res.status(500).json({ error: "Failed to create embedding" });
   }
 });
-
-/* ------------------------
-   BULK KNOWLEDGE UPLOAD
-------------------------- */
 
 app.post("/knowledge/bulk", async (req, res) => {
   const { entries } = req.body;
@@ -666,10 +740,6 @@ app.post("/knowledge/bulk", async (req, res) => {
   }
 });
 
-/* ------------------------
-   BACKFILL EMBEDDINGS
-------------------------- */
-
 app.post("/backfill-embeddings", async (req, res) => {
   if (!supabase) {
     return res.status(500).json({ error: "Supabase not configured" });
@@ -717,9 +787,9 @@ app.post("/backfill-embeddings", async (req, res) => {
   }
 });
 
-/* ------------------------
-   EMERGENCY ALERT
-------------------------- */
+/* =========================================================
+   12. EMERGENCY ALERT ROUTE
+========================================================= */
 
 app.post("/emergency", async (req, res) => {
   const { lat, lon, driver = "Unknown Driver" } = req.body;
@@ -781,9 +851,9 @@ Immediate response required.`;
   }
 });
 
-/* ------------------------
-   DASHBOARD ALERTS
-------------------------- */
+/* =========================================================
+   13. ALERT + DRIVER LOCATION ROUTES
+========================================================= */
 
 app.get("/alerts", async (req, res) => {
   try {
@@ -814,10 +884,6 @@ app.get("/alerts", async (req, res) => {
     });
   }
 });
-
-/* ------------------------
-   LIVE DRIVER LOCATIONS
-------------------------- */
 
 app.get("/driver-locations", async (req, res) => {
   try {
@@ -868,9 +934,9 @@ app.get("/driver-locations", async (req, res) => {
   }
 });
 
-/* ------------------------
-   HEALTH CHECK
-------------------------- */
+/* =========================================================
+   14. HEALTH CHECK
+========================================================= */
 
 app.get("/health", (req, res) => {
   res.json({
@@ -879,9 +945,9 @@ app.get("/health", (req, res) => {
   });
 });
 
-/* ------------------------
-   START SERVER
-------------------------- */
+/* =========================================================
+   15. START SERVER
+========================================================= */
 
 const PORT = process.env.PORT || 3000;
 
