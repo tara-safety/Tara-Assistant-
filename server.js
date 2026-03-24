@@ -347,14 +347,52 @@ function getSmartBuiltInAnswer(question) {
   }
 
   if (isLockoutQuestion(question)) {
-    return "Start with the least-damaging entry method and make sure the vehicle is secure before touching glass, trim, or seals. If the exact method for that vehicle is uncertain, stop and verify before proceeding. Protect the vehicle first and follow company policy and local regulations.";
+    return "Start with the least-damaging entry method and make sure the vehicle is secure before touching glass, trim, or seals. Protect the glass, weather stripping, trim, and paint during entry. If the exact method for that vehicle is uncertain, stop and verify before proceeding. Protect the vehicle first and follow company policy and local regulations.";
+  }
+
+  if (
+    q.includes("ditch") ||
+    q.includes("nose first") ||
+    q.includes("rear first") ||
+    q.includes("stuck in ditch")
+  ) {
+    return "Start by slowing the whole scene down and checking traffic exposure, shoulder stability, ditch depth, vehicle angle, ground condition, and whether the customer can stay safely inside or must move to a protected area. Stabilize the vehicle first if there is any chance of shifting, sliding, or rolling during hookup. Use the straightest and least-shocking pull possible, and avoid side-loading, sudden jerks, or attachment to weak or unknown components. Before pulling, confirm where the vehicle will travel, what will happen when it reaches the shoulder, and whether a winch-out, wheel-lift assist, dollies, or flatbed load is the safer finish. If the recovery angle, anchor point, or vehicle condition is uncertain, stop and reassess before continuing. Follow company policy and local regulations.";
+  }
+
+  if (
+    q.includes("winch") ||
+    q.includes("winching") ||
+    q.includes("pull out")
+  ) {
+    return "Set up for the straightest pull you can, and reduce side-load on the cable, vehicle, and casualty unit as much as possible. Inspect the scene, ground condition, vehicle condition, and likely travel path before loading the line. Keep people clear of the danger zone, remove slack carefully, and use controlled tension instead of shock loading. If the vehicle may bind, shift, or climb unpredictably, stop and reset the plan before continuing. Follow company policy and local regulations.";
+  }
+
+  if (
+    q.includes("rollover") ||
+    q.includes("on side") ||
+    q.includes("upside down")
+  ) {
+    return "Treat rollover work as a high-risk recovery from the start. Control the scene, check for occupant, fuel, battery, cargo, and stability hazards, and make sure the vehicle is not going to shift unexpectedly during setup. Build the recovery plan before applying force, control the roll path, and avoid rushing the lift or rotation. If stabilization, traffic exposure, or attachment strategy is uncertain, stop and reassess before proceeding. Follow company policy and local regulations.";
+  }
+
+  if (
+    q.includes("snow") ||
+    q.includes("mud") ||
+    q.includes("soft shoulder") ||
+    q.includes("soft ground")
+  ) {
+    return "Check traction, sink depth, ground firmness, and whether the casualty vehicle can roll once it starts moving. Use the least aggressive recovery that will work, and avoid spinning tires, digging deeper, or shock loading the vehicle. Keep the pull as straight and controlled as possible, and think through where the vehicle will go once it breaks free. If the ground, angle, or attachment plan is uncertain, stop and reassess before continuing. Follow company policy and local regulations.";
   }
 
   if (q.includes("flat tire") || q.includes("spare tire")) {
     return "First confirm the vehicle is in a safe location and properly secured before lifting or moving it. Check whether the vehicle has a spare, inflator kit, run-flat tires, or manufacturer restrictions before choosing the next step. On newer vehicles, especially EVs and hybrids, verify approved lifting and jacking points before service. Follow company policy and local regulations.";
   }
 
-  if (q.includes("jump start") || q.includes("jump-start") || q.includes("battery")) {
+  if (
+    q.includes("jump start") ||
+    q.includes("jump-start") ||
+    q.includes("battery")
+  ) {
     return "Confirm the vehicle type first, because EVs, hybrids, and newer vehicles can have different low-voltage support procedures than older gas vehicles. Use the correct connection points, protect modules from reverse polarity, and verify whether the issue is a low 12-volt system or a deeper fault before continuing. Follow company policy and local regulations.";
   }
 
