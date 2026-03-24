@@ -15,7 +15,7 @@ dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "12mb" }));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -249,6 +249,91 @@ ${knowledgeContext}`
     return res.json({
       answer: "TARA could not connect to AI right now.",
       sourcesUsed: 0
+    });
+  }
+});
+
+/* ------------------------
+   TOW AI VISION (NO INSTALL VERSION)
+------------------------- */
+
+app.post("/tow-ai", async (req, res) => {
+  try {
+    const imageDataUrl = req.body?.imageDataUrl;
+
+    if (!imageDataUrl || typeof imageDataUrl !== "string") {
+      return res.status(400).json({
+        answer: "No image was uploaded."
+      });
+    }
+
+    const openaiRes = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-5.4",
+        input: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "input_text",
+                text: `You are TARA Vision, a towing and roadside safety scene assistant.
+
+Analyze this towing recovery scene image and give SAFE, practical, high-level guidance.
+
+Rules:
+- Safety comes first.
+- Do NOT guess exact OEM hook points from one image.
+- Do NOT claim hidden areas are safe.
+- Do NOT provide exact dangerous recovery instructions that depend on unseen underbody points.
+- Separate what is observed from what is inferred.
+- If information is missing, say so clearly.
+- Focus on scene type, hazards, likely recovery category, and verification steps.
+- Never tell the user to attach to suspension, steering, or unknown underbody components.
+- Mention EV / battery / structural uncertainty if relevant.
+- Keep the answer practical, short, and field-usable.
+
+Use this exact structure:
+
+1. What I see
+2. Main hazards
+3. Likely recovery category
+4. Verify before recovery
+5. Do not do this
+6. Next best question`
+              },
+              {
+                type: "input_image",
+                image_url: imageDataUrl
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    const data = await openaiRes.json();
+
+    if (!openaiRes.ok) {
+      console.error("Tow AI OpenAI error:", data);
+      return res.status(500).json({
+        answer: "TARA Vision could not analyze this image right now."
+      });
+    }
+
+    const answer =
+      data.output_text?.trim() ||
+      "TARA Vision could not confidently analyze that image.";
+
+    return res.json({ answer });
+  } catch (err) {
+    console.error("Tow AI route error:", err);
+    return res.status(500).json({
+      answer: "TARA Vision could not analyze this image right now."
     });
   }
 });
