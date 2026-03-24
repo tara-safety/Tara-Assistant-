@@ -64,6 +64,7 @@ function isTowingQuestion(question) {
     "wheel-lift",
     "strap",
     "chain",
+    "unlock",
     "hook",
     "roadside",
     "ditch",
