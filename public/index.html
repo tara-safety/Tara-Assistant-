@@ -1,91 +1,185 @@
 <!DOCTYPE html>
-
-<div style="background:red;color:white;padding:12px;font-size:28px;font-weight:bold;">
-TEST INDEX FILE
-</div>
-
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>TARA Safety Intelligence</title>
-<link rel="stylesheet" href="style.css">
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#1e9f4f">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TARA Dashboard</title>
+  <link rel="stylesheet" href="style.css?v=2" />
 </head>
-<body>
-  
-<div class="emergencySection">
-  <div class="emergencyWrap">
-    <button id="emergencyBtn" class="emergencyBtn">
-      <span class="emgIcon">🚨</span>
-      <div class="emgLine">HOLD</div>
-      <div class="emgLine">EMERGENCY</div>
-    </button>
+
+<body class="tara-dashboard-page">
+  <div class="dashboard-shell">
+
+    <nav class="menu">
+      <a href="#">Dashboard</a>
+      <a href="#">Knowledge</a>
+      <a href="#">Safety Tools</a>
+      <a href="#">Settings</a>
+    </nav>
+
+    <header class="dashboard-header">
+      <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+
+      <div class="header-copy">
+        <p class="dashboard-kicker">TARA Safety Intelligence</p>
+        <h1>DASHBOARD</h1>
+        <p class="dashboard-subtext">
+          Built for towing safety, roadside awareness, and emergency response.
+        </p>
+      </div>
+
+      <div class="dashboard-status-card">
+        <div class="status-label">System Status</div>
+        <strong>ONLINE</strong>
+        <small>Driver monitoring ready</small>
+      </div>
+    </header>
+
+    <section class="safety-zone">
+      <div class="hero-emergency-wrap">
+        <button id="emergencyBtn" class="emergency-main-btn">
+          🚨<br />
+          HOLD<br />
+          EMERGENCY
+        </button>
+        <div class="hold-note">Hold for 3 seconds</div>
+      </div>
+
+      <button id="emergencyMiniBtn" class="emergency-mini-btn">🚨 SOS</button>
+
+      <section class="status-card" id="contextCard">
+        <div id="contextText">Context: Idle</div>
+        <div id="riskText">Risk: Normal</div>
+        <div id="soundText">Sound Watch: Off</div>
+        <div id="driverMinderText">Driver Minder: Off</div>
+      </section>
+
+      <div id="contextBadge" class="context-badge">⚪ IDLE</div>
+      <div id="motionDebug" class="motion-debug">Motion: 0.00 | Score: 0 | Mode: IDLE</div>
+
+      <section class="safety-panel">
+        <h2>Safety Controls</h2>
+
+        <button id="driverMinderBtn" class="safety-btn">
+          Driver Minder OFF
+        </button>
+
+        <button id="highRiskBtn" class="safety-btn">
+          HIGH-RISK MODE OFF
+        </button>
+
+        <div class="safety-row">
+          <button id="towModeBtn" class="safety-btn half-btn">
+            Tow Mode OFF
+          </button>
+
+          <button id="towCameraBtn" class="safety-btn half-btn">
+            Open Camera
+          </button>
+        </div>
+
+        <div class="safety-row">
+          <button id="voiceBtn" class="safety-btn half-btn">
+            Voice Input
+          </button>
+
+          <label class="voice-toggle-row half-btn">
+            <span>Voice</span>
+            <input type="checkbox" id="voiceToggle" checked />
+          </label>
+        </div>
+      </section>
+    </section>
+
+    <section class="dashboard-stats">
+      <div class="stat-card">
+        <span>Knowledge Base</span>
+        <strong>Ready</strong>
+      </div>
+      <div class="stat-card">
+        <span>Categories</span>
+        <strong>7</strong>
+      </div>
+      <div class="stat-card">
+        <span>Driver Support</span>
+        <strong>Active</strong>
+      </div>
+      <div class="stat-card">
+        <span>Response Mode</span>
+        <strong>Professional</strong>
+      </div>
+    </section>
+
+    <section class="dashboard-grid">
+      <div class="dashboard-main-card">
+        <div class="card-head">
+          <h2>Ask TARA</h2>
+          <span class="pill">Field Ready</span>
+        </div>
+
+        <div class="question-box">
+          <label for="question">Ask TARA</label>
+          <textarea
+            id="question"
+            placeholder="Type a towing or roadside safety question..."
+          ></textarea>
+          <button id="askBtn">Ask TARA</button>
+        </div>
+
+        <div class="response-box">
+          <h3>TARA Response</h3>
+          <div id="chatBox"></div>
+        </div>
+      </div>
+
+      <aside class="dashboard-side-card">
+        <h2>Knowledge Library</h2>
+        <p class="muted">Private towing intelligence categories.</p>
+
+        <div class="tag-list">
+          <span>Towing Safety</span>
+          <span>Near Miss Reports</span>
+          <span>Understanding Vehicles</span>
+          <span>Training Docs</span>
+          <span>Towing Standards</span>
+          <span>Towing Equipment</span>
+          <span>Towing Stats</span>
+        </div>
+      </aside>
+    </section>
+
+    <section class="dashboard-bottom-grid">
+      <div class="dashboard-card">
+        <h2>Recent Knowledge Areas</h2>
+        <ul class="doc-list">
+          <li>Highway Shoulder Recovery Best Practices</li>
+          <li>Distracted Driver Near-Miss Lessons</li>
+          <li>EV Flatbed Loading Procedure</li>
+          <li>Winch and Rigging Inspection</li>
+        </ul>
+      </div>
+
+      <div class="dashboard-card">
+        <h2>Customer Value</h2>
+        <ul class="value-list">
+          <li>Company-specific safety guidance in seconds</li>
+          <li>Near-miss lessons turned into field decisions</li>
+          <li>Professional responses for drivers and fleets</li>
+          <li>Private knowledge system built for towing</li>
+        </ul>
+      </div>
+    </section>
+
+    <footer class="dashboard-footer">
+      <h3>Safety Disclaimer</h3>
+      <p>
+        TARA provides operational guidance to support trained professionals.
+        Users must follow company policies, manufacturer procedures, local laws,
+        and scene-specific judgment at all times.
+      </p>
+    </footer>
   </div>
 
-  <div class="holdText">Hold for 3 seconds</div>
-</div>
-
-<button id="emergencyMiniBtn" class="emergencyMiniBtn">🚨 SOS</button>
-  
-<div class="header">
-<button id="menuBtn">☰</button>
-<span>DASHBOARD</span>
-</div>
-
-<div id="menu" class="menu">
-<button id="closeMenu">✕</button>
-<h3>Menu</h3>
-</div>
-
-<div id="contextCard" class="context-card">
-  <div id="contextText">Context: Idle</div>
-  <div id="riskText">Risk: Normal</div>
-  <div id="soundText">Sound Watch: Off</div>
-</div>
-  
-<div class="main">
-
-<div id="contextBadge" class="contextBadge">⚪ IDLE</div>
-<div id="motionDebug" class="motionDebug">
-  Motion: 0 | Score: 0 | Mode: IDLE
-</div>
-  
-<div id="chatBox" class="chatBox"></div>
-
-<input id="question"class="messageInput"placeholder="Ask towing safety question..."
->
-<label class="voiceToggle">
-<input type="checkbox" id="voiceToggle" checked>
-Voice Response
-</label>
-
-<button id="voiceBtn">🎤 TALK</button>
-  
-<div class="buttonRow">
-<button id="askBtn">SEND</button>
-<button id="voiceBtn">🎤 TALK</button>
-</div>
-
-<button id="towCameraBtn">📷 Tow Camera AI</button>        
-
-<div id="driverMinderBtn" class="driverMinder">
-
-DRIVER MINDER OFF
-</div>
-
-<button id="highRiskBtn" class="highRiskBtn">HIGH-RISK MODE OFF</button>
-  
-<button id="emergencyMiniBtn" class="emergencyMiniBtn">🚨 SOS</button>
-
-</div>
-
-<script type="module" src="/app.js"></script>
-
+  <script type="module" src="app.js"></script>
 </body>
 </html>
