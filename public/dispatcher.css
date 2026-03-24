@@ -1,0 +1,170 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  background: linear-gradient(180deg, #07131f, #12313f);
+  color: #ffffff;
+}
+
+.dispatcher-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 18px 40px;
+}
+
+.dispatcher-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.dispatcher-kicker {
+  margin: 0 0 8px 0;
+  color: #8ef0c8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.dispatcher-header h1 {
+  margin: 0;
+  font-size: 38px;
+  line-height: 1.1;
+}
+
+.dispatcher-subtext {
+  margin-top: 10px;
+  max-width: 700px;
+  color: #d9f4ea;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.dispatcher-status-card,
+.dispatcher-panel,
+.driver-row,
+.alert-card {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.dispatcher-status-card {
+  min-width: 230px;
+  padding: 18px 20px;
+}
+
+.dispatcher-status-card strong {
+  display: block;
+  margin: 6px 0;
+  font-size: 24px;
+  color: #8ef0c8;
+}
+
+.dispatcher-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.dispatcher-panel {
+  padding: 24px;
+}
+
+.driver-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.driver-row {
+  padding: 16px 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+}
+
+.driver-row strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.driver-row p {
+  margin: 0;
+  color: #d8fff2;
+}
+
+.status-pill {
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.status-working {
+  background: rgba(245, 158, 11, 0.18);
+  color: #ffd27a;
+}
+
+.status-driving {
+  background: rgba(16, 185, 129, 0.18);
+  color: #8ef0c8;
+}
+
+.status-alert {
+  background: rgba(239, 68, 68, 0.18);
+  color: #ffb4b4;
+}
+
+.alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.alert-card {
+  padding: 16px 18px;
+}
+
+.alert-card strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.alert-card p {
+  margin: 0;
+  color: #d8fff2;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .dispatcher-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dispatcher-header h1 {
+    font-size: 30px;
+  }
+
+  .dispatcher-status-card {
+    width: 100%;
+  }
+}
