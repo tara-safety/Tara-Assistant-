@@ -65,6 +65,7 @@ function isTowingQuestion(question) {
     "strap",
     "chain",
     "unlock",
+    "lockout",
     "hook",
     "roadside",
     "ditch",
@@ -76,17 +77,59 @@ function isTowingQuestion(question) {
     "battery",
     "jump start",
     "jump-start",
-    "lockout",
     "flat tire",
     "spare tire",
     "ev",
     "electric vehicle",
     "tow truck",
     "carrier",
-    "vehicle"
+    "vehicle",
+    "stuck",
+    "snow",
+    "ditch pull",
+    "tow points"
   ];
 
   return keywords.some((word) => q.includes(word));
+}
+
+function isLockoutQuestion(question) {
+  const q = question.toLowerCase();
+  return (
+    q.includes("unlock") ||
+    q.includes("lockout") ||
+    q.includes("locked keys") ||
+    q.includes("keys locked") ||
+    q.includes("locked out")
+  );
+}
+
+function getImportantQuestionTerms(question) {
+  return question
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .split(/\s+/)
+    .filter(
+      (word) =>
+        word.length > 3 &&
+        ![
+          "what",
+          "how",
+          "when",
+          "where",
+          "with",
+          "from",
+          "that",
+          "this",
+          "into",
+          "your",
+          "does",
+          "have",
+          "will",
+          "ford",
+          "vehicle"
+        ].includes(word)
+    );
 }
 
 async function getEmbedding(text) {
@@ -98,7 +141,7 @@ async function getEmbedding(text) {
   return response.data[0].embedding;
 }
 
-async function searchKnowledgeBase(question, matchCount = 3) {
+async function searchKnowledgeBase(question, matchCount = 5) {
   if (!supabase) {
     console.log("Supabase not configured for search");
     return [];
@@ -123,6 +166,27 @@ async function searchKnowledgeBase(question, matchCount = 3) {
     console.error("Embedding/search failure:", err.message);
     return [];
   }
+}
+
+function filterKnowledgeMatches(question, matches) {
+  if (!Array.isArray(matches) || matches.length === 0) return [];
+
+  const terms = getImportantQuestionTerms(question);
+
+  if (terms.length === 0) {
+    return matches.slice(0, 3);
+  }
+
+  const filtered = matches.filter((item) => {
+    const content = (item?.content || "").toLowerCase();
+    const metadata = JSON.stringify(item?.metadata || {}).toLowerCase();
+    const haystack = `${content} ${metadata}`;
+
+    const hitCount = terms.filter((term) => haystack.includes(term)).length;
+    return hitCount >= 1;
+  });
+
+  return filtered.slice(0, 3);
 }
 
 function formatKnowledgeContext(matches) {
@@ -163,6 +227,74 @@ function extractAnswerFromCompletion(completion) {
   return "";
 }
 
+function extractResponseText(data) {
+  if (typeof data?.output_text === "string" && data.output_text.trim()) {
+    return data.output_text.trim();
+  }
+
+  if (Array.isArray(data?.output)) {
+    const parts = [];
+
+    for (const item of data.output) {
+      if (!Array.isArray(item?.content)) continue;
+
+      for (const part of item.content) {
+        if (part?.type === "output_text" && typeof part.text === "string") {
+          parts.push(part.text);
+        }
+      }
+    }
+
+    const joined = parts.join("\n").trim();
+    if (joined) return joined;
+  }
+
+  return "";
+}
+
+function buildSystemPrompt(question) {
+  if (isLockoutQuestion(question)) {
+    return `You are TARA (Tow Awareness and Response Assistant).
+
+You assist professional tow truck operators with roadside lockout questions.
+
+Answer using this exact format:
+Immediate Risk: ...
+First Action: ...
+Safe Procedure: ...
+Final Warning: ...
+
+Rules:
+- Maximum 5 short sentences total
+- Be practical and direct
+- Focus on non-destructive entry, scene safety, and vehicle protection
+- If exact vehicle-specific entry steps are uncertain, say to verify method before proceeding
+- Do not mention source files
+- Do not mention AAA or CAA
+- Always end with: Follow company policy and local regulations.`;
+  }
+
+  return `You are TARA (Tow Awareness and Response Assistant).
+
+You assist professional tow truck operators in real-world roadside situations.
+
+Answer using this exact format:
+Immediate Risk: ...
+First Action: ...
+Safe Procedure: ...
+Final Warning: ...
+
+Rules:
+- Maximum 5 short sentences total
+- Be direct, practical, and professional
+- Only answer towing and roadside safety questions
+- Use the supplied knowledge base only when it is clearly relevant
+- Do not mention source files unless specifically asked
+- Do not mention AAA or CAA
+- If the question is unrelated, say exactly: Sorry, I can only answer towing and roadside safety questions.
+- Always end with: Follow company policy and local regulations.`;
+}
+
 /* ------------------------
    AI ASSISTANT
 ------------------------- */
@@ -185,35 +317,18 @@ app.post("/ask", async (req, res) => {
   }
 
   try {
-    const matches = await searchKnowledgeBase(question, 3);
+    const rawMatches = await searchKnowledgeBase(question, 5);
+    const matches = filterKnowledgeMatches(question, rawMatches);
     const knowledgeContext = formatKnowledgeContext(matches);
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-5.4-mini",
+      model: "gpt-5-mini",
       reasoning_effort: "low",
-      max_completion_tokens: 400,
+      max_completion_tokens: 300,
       messages: [
         {
           role: "system",
-          content: `You are TARA (Tow Awareness and Response Assistant).
-
-You assist professional tow truck operators in real-world roadside situations.
-
-You must answer using this format:
-Immediate Risk: ...
-First Action: ...
-Safe Procedure: ...
-Final Warning: ...
-
-Rules:
-- Maximum 5 short sentences total
-- Be direct, practical, and professional
-- Only answer towing and roadside safety questions
-- Use the supplied knowledge base first when relevant
-- Do not mention AAA or CAA
-- Do not mention source files unless specifically asked
-- If the question is unrelated, say exactly: Sorry, I can only answer towing and roadside safety questions.
-- Always end with: Follow company policy and local regulations.`
+          content: buildSystemPrompt(question)
         },
         {
           role: "system",
@@ -233,17 +348,15 @@ ${knowledgeContext}`
       .trim();
 
     if (!answer) {
-      answer = matches.length
-        ? `TARA found ${matches.length} matching safety sources, but the AI response came back empty. Top match: ${matches[0].content}`
-        : "TARA could not generate a response right now.";
+      answer = isLockoutQuestion(question)
+        ? "Immediate Risk: Vehicle damage or unsafe positioning. First Action: Confirm the vehicle is secure and identify the safest non-destructive entry method available. Safe Procedure: Verify the exact vehicle before attempting entry and protect glass, paint, trim, and weather seals. Final Warning: Do not force entry if the method is uncertain. Follow company policy and local regulations."
+        : "Immediate Risk: The scene or recovery details are not fully confirmed. First Action: Slow down and verify the hazards, vehicle condition, and safest setup before proceeding. Safe Procedure: Use the least-damaging method and confirm equipment, tow points, and traffic protection first. Final Warning: Stop if the scene becomes unsafe or information is uncertain. Follow company policy and local regulations.";
     }
 
-    if (!res.headersSent) {
-      return res.json({
-        answer,
-        sourcesUsed: matches.length
-      });
-    }
+    return res.json({
+      answer,
+      sourcesUsed: matches.length
+    });
   } catch (err) {
     console.error("OpenAI / ask route error:", err);
 
@@ -295,7 +408,7 @@ Rules:
 - If information is missing, say so clearly.
 - Focus on scene type, hazards, likely recovery category, and verification steps.
 - Never tell the user to attach to suspension, steering, or unknown underbody components.
-- Mention EV / battery / structural uncertainty if relevant.
+- Mention EV, battery, or structural uncertainty if relevant.
 - Keep the answer practical, short, and field-usable.
 
 Use this exact structure:
@@ -309,7 +422,8 @@ Use this exact structure:
               },
               {
                 type: "input_image",
-                image_url: imageDataUrl
+                image_url: imageDataUrl,
+                detail: "low"
               }
             ]
           }
@@ -320,24 +434,30 @@ Use this exact structure:
     const data = await openaiRes.json();
 
     if (!openaiRes.ok) {
-  console.error("Tow AI OpenAI error:", data);
+      console.error("Tow AI OpenAI error:", data);
 
-  return res.status(500).json({
-    answer:
-      data?.error?.message ||
-      "TARA Vision could not analyze this image right now."
-  });
-}
+      return res.status(500).json({
+        answer:
+          data?.error?.message ||
+          "TARA Vision could not analyze this image right now."
+      });
+    }
 
-    const answer =
-      data.output_text?.trim() ||
-      "TARA Vision could not confidently analyze that image.";
+    const answer = extractResponseText(data);
+
+    if (!answer) {
+      console.error("Tow AI empty response payload:", JSON.stringify(data, null, 2));
+
+      return res.json({
+        answer: "TARA Vision received the image, but the model returned no readable text."
+      });
+    }
 
     return res.json({ answer });
   } catch (err) {
     console.error("Tow AI route error:", err);
     return res.status(500).json({
-      answer: "TARA Vision could not analyze this image right now."
+      answer: err.message || "TARA Vision could not analyze this image right now."
     });
   }
 });
