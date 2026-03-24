@@ -4,6 +4,7 @@ export const state = {
   driverMinderActive: false,
   highRiskMode: false,
   emergencyRunning: false,
+  proMode: false,
 
   recognition: null,
   listeningForCommand: false,
