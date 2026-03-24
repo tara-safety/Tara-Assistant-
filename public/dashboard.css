@@ -1,0 +1,273 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  background: linear-gradient(180deg, #0b1220, #123642);
+  color: #ffffff;
+}
+
+.dashboard-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 18px 40px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.dashboard-kicker {
+  margin: 0 0 8px 0;
+  color: #8ef0c8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 38px;
+  line-height: 1.1;
+}
+
+.dashboard-subtext {
+  margin-top: 10px;
+  max-width: 700px;
+  color: #d9f4ea;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.dashboard-status-card,
+.stat-card,
+.dashboard-main-card,
+.dashboard-side-card,
+.dashboard-card,
+.dashboard-footer {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.dashboard-status-card {
+  min-width: 230px;
+  padding: 18px 20px;
+}
+
+.status-label {
+  color: #b7ddd0;
+  font-size: 13px;
+}
+
+.dashboard-status-card strong {
+  display: block;
+  margin: 6px 0;
+  font-size: 24px;
+  color: #8ef0c8;
+}
+
+.dashboard-status-card small {
+  color: #e4fff4;
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  padding: 18px;
+}
+
+.stat-card span {
+  display: block;
+  color: #b7ddd0;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.stat-card strong {
+  font-size: 30px;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.dashboard-main-card,
+.dashboard-side-card,
+.dashboard-card,
+.dashboard-footer {
+  padding: 24px;
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.card-head h2,
+.dashboard-side-card h2,
+.dashboard-card h2,
+.dashboard-footer h3 {
+  margin: 0;
+}
+
+.pill {
+  background: rgba(52, 211, 153, 0.16);
+  color: #8ef0c8;
+  border: 1px solid rgba(52, 211, 153, 0.25);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.question-box,
+.response-box {
+  border-radius: 18px;
+  padding: 18px;
+  margin-top: 14px;
+}
+
+.question-box {
+  background: rgba(5, 10, 20, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.question-box label {
+  display: block;
+  color: #d8fff2;
+  font-size: 13px;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.question-box textarea {
+  width: 100%;
+  min-height: 120px;
+  background: #020617;
+  color: #ffffff;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 15px;
+  resize: vertical;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.question-box button {
+  margin-top: 14px;
+  background: #10b981;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.response-box {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.22);
+  min-height: 200px;
+}
+
+.response-box h3 {
+  margin-top: 0;
+  color: #8ef0c8;
+}
+
+#chatBox {
+  min-height: 120px;
+  color: #ffffff;
+  line-height: 1.6;
+}
+
+.muted {
+  color: #d8fff2;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.tag-list span {
+  background: rgba(5, 10, 20, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+.dashboard-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.doc-list,
+.value-list {
+  margin: 16px 0 0 0;
+  padding-left: 20px;
+}
+
+.doc-list li,
+.value-list li {
+  margin-bottom: 12px;
+  color: #ffffff;
+  line-height: 1.5;
+}
+
+.dashboard-footer p {
+  color: #e8fff7;
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+
+@media (max-width: 900px) {
+  .dashboard-stats,
+  .dashboard-grid,
+  .dashboard-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-header h1 {
+    font-size: 30px;
+  }
+
+  .dashboard-status-card {
+    width: 100%;
+  }
+}
