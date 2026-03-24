@@ -29,16 +29,51 @@ import {
 document.addEventListener("DOMContentLoaded", function () {
   console.log("TARA System Booting");
 
-  const dom = getDOM();
-  initVoices();
+  let dom;
 
-  setupMenu(dom.menuBtn, dom.menu);
-  setupSystemUnlock(state);
-  addFooter();
+  try {
+    dom = getDOM();
+    console.log("DOM loaded:", dom);
+  } catch (err) {
+    console.error("DOM setup failed:", err);
+    return;
+  }
 
-  setupEmergencyFailSafe(dom);
-  setupContextAwareness(state, dom);
+  try {
+    initVoices();
+  } catch (err) {
+    console.error("initVoices failed:", err);
+  }
 
+  try {
+    setupMenu(dom.menuBtn, dom.menu);
+  } catch (err) {
+    console.error("setupMenu failed:", err);
+  }
+
+  try {
+    setupSystemUnlock(state);
+  } catch (err) {
+    console.error("setupSystemUnlock failed:", err);
+  }
+
+  try {
+    addFooter();
+  } catch (err) {
+    console.error("addFooter failed:", err);
+  }
+
+  try {
+    setupEmergencyFailSafe(dom);
+  } catch (err) {
+    console.error("setupEmergencyFailSafe failed:", err);
+  }
+
+  try {
+    setupContextAwareness(state, dom);
+  } catch (err) {
+    console.error("setupContextAwareness failed:", err);
+  }
 
   const voiceToggle = dom.voiceToggle;
   const emergencyMiniBtn = dom.emergencyMiniBtn;
@@ -50,7 +85,12 @@ document.addEventListener("DOMContentLoaded", function () {
       state.voiceEnabled = voiceToggle.checked;
 
       if (!state.voiceEnabled) {
-        stopSpeaking();
+        try {
+          stopSpeaking();
+        } catch (err) {
+          console.error("stopSpeaking failed:", err);
+        }
+
         addStatus(dom.chatBox, "🔇 Voice Response Off");
       } else {
         addStatus(dom.chatBox, "🔊 Voice Response On");
@@ -59,7 +99,12 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   if (dom.askBtn) {
-    dom.askBtn.addEventListener("click", sendQuestion);
+    dom.askBtn.addEventListener("click", function () {
+      console.log("Ask button clicked");
+      sendQuestion();
+    });
+  } else {
+    console.warn("askBtn not found");
   }
 
   if (dom.questionInput) {
@@ -69,41 +114,87 @@ document.addEventListener("DOMContentLoaded", function () {
         sendQuestion();
       }
     });
+  } else {
+    console.warn("questionInput not found");
   }
 
   if (dom.voiceBtn) {
     dom.voiceBtn.addEventListener("click", function () {
-      startSingleVoiceInput(dom, sendQuestion);
+      console.log("Voice button clicked");
+
+      try {
+        startSingleVoiceInput(dom, sendQuestion);
+      } catch (err) {
+        console.error("startSingleVoiceInput failed:", err);
+        addStatus(
+          dom.chatBox,
+          `<span style="color:red;">Voice input failed: ${err.message}</span>`
+        );
+      }
     });
+  } else {
+    console.warn("voiceBtn not found");
   }
 
   if (dom.towModeBtn) {
     dom.towModeBtn.addEventListener("click", function () {
-      state.towModeActive = !state.towModeActive;
+      console.log("Tow mode button clicked");
 
-      if (state.towModeActive) {
-        startVoiceSystem(state, dom, sendQuestion);
-        addStatus(dom.chatBox, "🚚 Tow Mode Activated");
-      } else {
-        stopVoiceSystem(state);
-        addStatus(dom.chatBox, "🚚 Tow Mode Disabled");
+      try {
+        state.towModeActive = !state.towModeActive;
+
+        if (state.towModeActive) {
+          startVoiceSystem(state, dom, sendQuestion);
+          addStatus(dom.chatBox, "🚚 Tow Mode Activated");
+        } else {
+          stopVoiceSystem(state);
+          addStatus(dom.chatBox, "🚚 Tow Mode Disabled");
+        }
+      } catch (err) {
+        console.error("Tow mode failed:", err);
+        addStatus(
+          dom.chatBox,
+          `<span style="color:red;">Tow Mode failed: ${err.message}</span>`
+        );
       }
     });
+  } else {
+    console.warn("towModeBtn not found");
   }
 
   if (dom.towCameraBtn) {
     dom.towCameraBtn.addEventListener("click", function () {
-      openCamera(dom);
+      console.log("Camera button clicked");
+
+      try {
+        openCamera(dom);
+      } catch (err) {
+        console.error("openCamera failed:", err);
+        addStatus(
+          dom.chatBox,
+          `<span style="color:red;">Camera failed: ${err.message}</span>`
+        );
+      }
     });
+  } else {
+    console.warn("towCameraBtn not found");
   }
 
-  setupDriverMinder(state, dom, function () {
-    startEmergencyCountdown(state, dom);
-  });
+  try {
+    setupDriverMinder(state, dom, function () {
+      startEmergencyCountdown(state, dom);
+    });
+  } catch (err) {
+    console.error("setupDriverMinder failed:", err);
+  }
 
-  setupEmergencyButton(state, dom, function () {
-    startEmergencyCountdown(state, dom);
-  });
+  try {
+    setupEmergencyButton(state, dom, function () {
+      startEmergencyCountdown(state, dom);
+    });
+  } catch (err) {
+    console.error("setupEmergencyButton failed:", err);
+  }
 
   function toggleMiniSOS() {
     if (!emergencyMiniBtn) return;
@@ -119,46 +210,58 @@ document.addEventListener("DOMContentLoaded", function () {
   window.addEventListener("resize", toggleMiniSOS);
   toggleMiniSOS();
 
- async function sendQuestion() {
-  if (!dom.questionInput || !dom.chatBox) return;
+  async function sendQuestion() {
+    if (!dom.questionInput || !dom.chatBox) return;
 
-  const text = dom.questionInput.value.trim();
-  if (!text) return;
+    const text = dom.questionInput.value.trim();
+    if (!text) return;
 
-  addUserMessage(dom.chatBox, text);
-  dom.questionInput.value = "";
+    addUserMessage(dom.chatBox, text);
+    dom.questionInput.value = "";
 
-  const thinking = createThinking(dom.chatBox);
+    const thinking = createThinking(dom.chatBox);
 
-  try {
-    const res = await fetch("/ask", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        question: text,
-        mode: "chat"
-      })
-    });
+    try {
+      const res = await fetch("/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question: text,
+          mode: "chat"
+        })
+      });
 
-    if (!res.ok) {
-      throw new Error("Server returned error");
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      if (thinking && typeof thinking.remove === "function") {
+        thinking.remove();
+      }
+
+      const answer = data.answer || "No response returned.";
+      addTaraMessage(dom.chatBox, answer);
+
+      if (state.voiceEnabled) {
+        try {
+          speak(answer, state);
+        } catch (err) {
+          console.error("speak failed:", err);
+        }
+      }
+    } catch (err) {
+      console.error("Ask error:", err);
+
+      if (thinking && typeof thinking.remove === "function") {
+        thinking.remove();
+      }
+
+      addStatus(
+        dom.chatBox,
+        `<span style="color:red;">TARA Error: ${err.message}</span>`
+      );
     }
-
-    const data = await res.json();
-    thinking.remove();
-
-    const answer = data.answer || "No response returned.";
-    addTaraMessage(dom.chatBox, answer);
-
-    if (state.voiceEnabled) {
-      speak(answer, state);
-    }
-  } catch (err) {
-    console.error("Ask error:", err);
-    thinking.remove();
-    addStatus(
-      dom.chatBox,
-      `<span style="color:red;">TARA Error: ${err.message}</span>`
-    );
   }
-}
+});
