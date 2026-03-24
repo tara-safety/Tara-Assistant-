@@ -6,6 +6,13 @@ import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import path from "path";
 import { fileURLToPath } from "url";
+import {
+  handleAsk,
+  analyzeTowImage,
+  insertKnowledge,
+  bulkInsertKnowledge,
+  backfillEmbeddings
+} from "./taraAI.js";
 
 dotenv.config();
 
@@ -48,695 +55,29 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 /* =========================================================
-   3. TEXT + QUESTION HELPERS
-========================================================= */
-
-function cleanText(text = "") {
-  return String(text)
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function isTowingQuestion(question) {
-  const q = cleanText(question);
-
-  const keywords = [
-    "tow",
-    "towing",
-    "recovery",
-    "winch",
-    "flatbed",
-    "wheel lift",
-    "wheel-lift",
-    "strap",
-    "chain",
-    "unlock",
-    "lockout",
-    "hook",
-    "roadside",
-    "ditch",
-    "rollover",
-    "highway",
-    "traffic",
-    "pylons",
-    "cones",
-    "battery",
-    "jump start",
-    "jump-start",
-    "flat tire",
-    "spare tire",
-    "ev",
-    "electric vehicle",
-    "tow truck",
-    "carrier",
-    "vehicle",
-    "stuck",
-    "snow",
-    "ditch pull",
-    "tow points",
-    "transport mode",
-    "tesla",
-    "hybrid",
-    "12v",
-    "charging",
-    "dispatcher",
-    "dispatch",
-    "disabled vehicle",
-    "jack",
-    "lug nut",
-    "dolly",
-    "rollback",
-    "j-hook",
-    "tie down",
-    "move over"
-  ];
-
-  return keywords.some((word) => q.includes(word));
-}
-
-function isLockoutQuestion(question) {
-  const q = cleanText(question);
-  return (
-    q.includes("unlock") ||
-    q.includes("lockout") ||
-    q.includes("locked keys") ||
-    q.includes("keys locked") ||
-    q.includes("locked out")
-  );
-}
-
-function isEVQuestion(question) {
-  const q = cleanText(question);
-  return (
-    q.includes("ev") ||
-    q.includes("electric vehicle") ||
-    q.includes("tesla") ||
-    q.includes("hybrid") ||
-    q.includes("plug in") ||
-    q.includes("battery electric")
-  );
-}
-
-function getImportantQuestionTerms(question) {
-  return cleanText(question)
-    .split(/\s+/)
-    .filter(
-      (word) =>
-        word.length > 3 &&
-        ![
-          "what",
-          "how",
-          "when",
-          "where",
-          "with",
-          "from",
-          "that",
-          "this",
-          "into",
-          "your",
-          "does",
-          "have",
-          "will",
-          "ford",
-          "vehicle",
-          "about",
-          "could",
-          "would",
-          "should",
-          "there",
-          "their",
-          "them"
-        ].includes(word)
-    );
-}
-
-/* =========================================================
-   4. EMBEDDINGS + KNOWLEDGE SEARCH
-========================================================= */
-
-async function getEmbedding(text) {
-  const response = await openai.embeddings.create({
-    model: "text-embedding-3-small",
-    input: text
-  });
-
-  return response.data[0].embedding;
-}
-
-async function searchKnowledgeBase(question, matchCount = 5) {
-  if (!supabase) {
-    console.log("Supabase not configured for search");
-    return [];
-  }
-
-  try {
-    const queryEmbedding = await getEmbedding(question);
-
-    const { data, error } = await supabase.rpc("match_knowledge_base", {
-      query_embedding: queryEmbedding,
-      match_count: matchCount,
-      match_threshold: 0.45
-    });
-
-    if (error) {
-      console.error("Knowledge search error:", error);
-      return [];
-    }
-
-    return data || [];
-  } catch (err) {
-    console.error("Embedding/search failure:", err.message);
-    return [];
-  }
-}
-
-function filterKnowledgeMatches(question, matches) {
-  if (!Array.isArray(matches) || matches.length === 0) return [];
-
-  const terms = getImportantQuestionTerms(question);
-
-  if (terms.length === 0) {
-    return matches.slice(0, 3);
-  }
-
-  const filtered = matches.filter((item) => {
-    const content = String(item?.content || "").toLowerCase();
-    const metadata = JSON.stringify(item?.metadata || {}).toLowerCase();
-    const haystack = `${content} ${metadata}`;
-
-    const hitCount = terms.filter((term) => haystack.includes(term)).length;
-    return hitCount >= 1;
-  });
-
-  return filtered.slice(0, 3);
-}
-
-function formatKnowledgeContext(matches) {
-  if (!matches || matches.length === 0) {
-    return "No relevant knowledge found.";
-  }
-
-  return matches
-    .map((item, index) => {
-      const metadata = item.metadata ? JSON.stringify(item.metadata) : "{}";
-      return `Source ${index + 1}:
-Content: ${item.content}
-Metadata: ${metadata}`;
-    })
-    .join("\n\n");
-}
-
-/* =========================================================
-   5. RESPONSE PARSING + WEB SOURCES
-========================================================= */
-
-function extractResponseText(data) {
-  if (typeof data?.output_text === "string" && data.output_text.trim()) {
-    return data.output_text.trim();
-  }
-
-  if (Array.isArray(data?.output)) {
-    const parts = [];
-
-    for (const item of data.output) {
-      if (!Array.isArray(item?.content)) continue;
-
-      for (const part of item.content) {
-        if (part?.type === "output_text" && typeof part.text === "string") {
-          parts.push(part.text);
-        }
-      }
-    }
-
-    const joined = parts.join("\n").trim();
-    if (joined) return joined;
-  }
-
-  return "";
-}
-
-function extractWebSources(data) {
-  const sources = [];
-
-  try {
-    for (const item of data?.output || []) {
-      if (
-        item?.type === "web_search_call" &&
-        Array.isArray(item?.action?.sources)
-      ) {
-        for (const src of item.action.sources) {
-          if (src?.url) {
-            sources.push({
-              title: src.title || "Source",
-              url: src.url
-            });
-          }
-        }
-      }
-    }
-  } catch (err) {
-    console.error("Web source extraction error:", err.message);
-  }
-
-  return sources.slice(0, 5);
-}
-
-/* =========================================================
-   6. LEARNING / SAVE TO KNOWLEDGE BASE
-========================================================= */
-
-async function saveLearnedKnowledge(question, answer, metadata = {}) {
-  if (!supabase) return;
-
-  try {
-    const content = `Question: ${question}\nAnswer: ${answer}`;
-    const embedding = await getEmbedding(content);
-
-    const { error } = await supabase.from("knowledge_base").insert([
-      {
-        content,
-        metadata: {
-          source_type: "learned_web_answer",
-          saved_at: new Date().toISOString(),
-          original_question: question,
-          ...metadata
-        },
-        embedding
-      }
-    ]);
-
-    if (error) {
-      console.error("Learned knowledge insert error:", error);
-    }
-  } catch (err) {
-    console.error("saveLearnedKnowledge error:", err.message);
-  }
-}
-
-/* =========================================================
-   7. BUILT-IN SMART ANSWERS
-========================================================= */
-
-function getSmartBuiltInAnswer(question) {
-  const q = cleanText(question);
-
-  if (isEVQuestion(question) && (q.includes("tow") || q.includes("towing"))) {
-    return "Most EVs should be transported on a flatbed because dragging the drive wheels can damage the drivetrain or create system issues. First confirm the exact make, model, drive type, and whether transport mode or tow mode is required before moving it. Do not assume the vehicle will roll freely just because it is powered off, and do not attach to unknown underbody components. If the exact manufacturer procedure is unclear, stop and verify it before towing. Follow company policy and local regulations.";
-  }
-
-  if (isLockoutQuestion(question)) {
-    return "Start with the least-damaging entry method and make sure the vehicle is secure before touching glass, trim, or seals. Protect the glass, weather stripping, trim, and paint during entry. If the exact method for that vehicle is uncertain, stop and verify before proceeding. Protect the vehicle first and follow company policy and local regulations.";
-  }
-
-  if (
-    q.includes("ditch") ||
-    q.includes("nose first") ||
-    q.includes("rear first") ||
-    q.includes("stuck in ditch")
-  ) {
-    return "Start by slowing the whole scene down and checking traffic exposure, shoulder stability, ditch depth, vehicle angle, ground condition, and whether the customer can stay safely inside or must move to a protected area. Stabilize the vehicle first if there is any chance of shifting, sliding, or rolling during hookup. Use the straightest and least-shocking pull possible, and avoid side-loading, sudden jerks, or attachment to weak or unknown components. Before pulling, confirm where the vehicle will travel, what will happen when it reaches the shoulder, and whether a winch-out, wheel-lift assist, dollies, or flatbed load is the safer finish. If the recovery angle, anchor point, or vehicle condition is uncertain, stop and reassess before continuing. Follow company policy and local regulations.";
-  }
-
-  if (
-    q.includes("winch") ||
-    q.includes("winching") ||
-    q.includes("pull out")
-  ) {
-    return "Set up for the straightest pull you can, and reduce side-load on the cable, vehicle, and casualty unit as much as possible. Inspect the scene, ground condition, vehicle condition, and likely travel path before loading the line. Keep people clear of the danger zone, remove slack carefully, and use controlled tension instead of shock loading. If the vehicle may bind, shift, or climb unpredictably, stop and reset the plan before continuing. Follow company policy and local regulations.";
-  }
-
-  if (
-    q.includes("rollover") ||
-    q.includes("on side") ||
-    q.includes("upside down")
-  ) {
-    return "Treat rollover work as a high-risk recovery from the start. Control the scene, check for occupant, fuel, battery, cargo, and stability hazards, and make sure the vehicle is not going to shift unexpectedly during setup. Build the recovery plan before applying force, control the roll path, and avoid rushing the lift or rotation. If stabilization, traffic exposure, or attachment strategy is uncertain, stop and reassess before proceeding. Follow company policy and local regulations.";
-  }
-
-  if (
-    q.includes("snow") ||
-    q.includes("mud") ||
-    q.includes("soft shoulder") ||
-    q.includes("soft ground")
-  ) {
-    return "Check traction, sink depth, ground firmness, and whether the casualty vehicle can roll once it starts moving. Use the least aggressive recovery that will work, and avoid spinning tires, digging deeper, or shock loading the vehicle. Keep the pull as straight and controlled as possible, and think through where the vehicle will go once it breaks free. If the ground, angle, or attachment plan is uncertain, stop and reassess before continuing. Follow company policy and local regulations.";
-  }
-
-  if (q.includes("flat tire") || q.includes("spare tire")) {
-    return "First confirm the vehicle is in a safe location and properly secured before lifting or moving it. Check whether the vehicle has a spare, inflator kit, run-flat tires, or manufacturer restrictions before choosing the next step. On newer vehicles, especially EVs and hybrids, verify approved lifting and jacking points before service. Follow company policy and local regulations.";
-  }
-
-  if (
-    q.includes("jump start") ||
-    q.includes("jump-start") ||
-    q.includes("battery")
-  ) {
-    return "Confirm the vehicle type first, because EVs, hybrids, and newer vehicles can have different low-voltage support procedures than older gas vehicles. Use the correct connection points, protect modules from reverse polarity, and verify whether the issue is a low 12-volt system or a deeper fault before continuing. Follow company policy and local regulations.";
-  }
-
-  if (q.includes("tow points") || q.includes("hook points")) {
-    return "Do not guess tow points from appearance alone. Confirm approved recovery or tie-down points for that exact vehicle before loading or pulling, and never attach to suspension, steering, battery protection, or unknown underbody parts. Follow company policy and local regulations.";
-  }
-  if (
-     q.includes("rear first ditch") ||
-    (q.includes("ditch") && q.includes("rear"))
-) {
-    return "Start by checking traffic exposure, ditch angle, rear overhang, and whether the vehicle is hung up or just sitting in the ditch. Watch for bumper, exhaust, or frame contact that could catch during the pull. Stabilize the vehicle if there is any chance of shifting or sliding during hookup. Use the straightest pull possible and avoid dragging the rear deeper or lifting in a way that increases damage. Plan where the front of the vehicle will travel as it comes out, and be ready to adjust once it reaches the shoulder. If the vehicle is binding, hung up, or the pull angle is poor, stop and reassess before continuing. Follow company policy and local regulations.";
-}
-   if (
-  q.includes("snow") ||
-  q.includes("ice") ||
-  q.includes("slippery") ||
-  q.includes("stuck in snow")
-) {
-  return "Start by checking how deep the vehicle is stuck and whether it will roll once it breaks free. Clear snow around the drive wheels if needed and confirm the path the vehicle will take when it starts moving. Use a controlled pull and avoid spinning tires or shock loading, which can dig the vehicle in deeper or cause sudden movement. Keep the pull as straight as possible and watch for sideways slide on ice. Be ready for the vehicle to gain momentum quickly once it releases. If traction, angle, or control is uncertain, stop and reassess before continuing. Follow company policy and local regulations.";
-}
-   if (
-  q.includes("soft shoulder") ||
-  q.includes("off road") ||
-  q.includes("edge of road") ||
-  q.includes("soft ground")
-) {
-  return "Check the ground condition first and make sure your truck is not at risk of sinking or sliding toward the ditch. Position for the safest and most stable pull, even if it means taking more time to set up. Avoid driving too close to the edge and watch for collapse under load. Use a controlled, straight pull and avoid sudden jerks that can shift both vehicles. Plan the recovery so the casualty vehicle comes up onto solid ground without pulling you into the soft area. If ground stability or positioning is questionable, stop and reassess before continuing. Follow company policy and local regulations.";
-}
-   if (
-  q.includes("won't roll") ||
-  q.includes("wont roll") ||
-  q.includes("locked wheel") ||
-  q.includes("parking brake stuck")
-) {
-  return "Confirm why the vehicle is not rolling before forcing movement. Check for parking brake engagement, seized brakes, transmission lock, or wheel damage. Do not drag the vehicle without understanding the cause, as this can create further damage. Use dollies, skates, or a lift method if the wheels cannot rotate safely. Keep the movement controlled and avoid shock loading the drivetrain or suspension. If the cause of the lock-up is unclear, stop and verify before continuing. Follow company policy and local regulations.";
-}
-   if (
-  q.includes("flatbed") ||
-  q.includes("rollback") ||
-  q.includes("loading angle") ||
-  q.includes("low car") ||
-  q.includes("scrape")
-) {
-  return "Check the vehicle’s ground clearance and approach angle before loading. Reduce the loading angle using ramps, blocks, or tilt adjustments to prevent front-end or underbody contact. Load slowly and watch the front bumper, exhaust, and undercarriage as the vehicle transitions onto the deck. Keep the pull straight and controlled to avoid shifting or scraping. If the vehicle risks bottoming out or hanging up, stop and adjust your setup before continuing. Follow company policy and local regulations.";
-}
-   /* =========================
-   ADVANCED OPERATOR SCENARIOS
-========================= */
-
-/* 1. Accident – damaged vehicle */
-if (
-  q.includes("accident") ||
-  q.includes("collision") ||
-  q.includes("crash") ||
-  q.includes("damaged vehicle")
-) {
-  return "Treat the vehicle as unstable until proven otherwise. Check for fluid leaks, broken suspension, loose panels, and shifting weight before touching it. Do not assume wheels will roll or steer correctly. Choose the safest loading method, often a flatbed, and control the vehicle during movement to prevent further damage. If anything looks compromised or unpredictable, stop and reassess before continuing. Follow company policy and local regulations.";
-}
-
-/* 2. EV won’t go into neutral */
-if (
-  q.includes("ev") &&
-  (q.includes("neutral") || q.includes("won't move") || q.includes("wont move"))
-) {
-  return "Confirm the vehicle state first, as many EVs require specific steps to enter transport or tow mode. Do not force movement if the drivetrain is locked. Use dollies or a flatbed if the wheels cannot rotate freely. Avoid dragging the vehicle, as this can damage the drive system or create electrical issues. If the correct procedure is unknown for that model, stop and verify before continuing. Follow company policy and local regulations.";
-}
-
-/* 3. Underground parking / low clearance tow */
-if (
-  q.includes("underground") ||
-  q.includes("parking garage") ||
-  q.includes("low clearance")
-) {
-  return "Check height clearance, ramp angles, and tight turning space before committing your truck. Use low-clearance equipment and plan your exit path before starting. Avoid getting into a position where you cannot safely load or exit. Move slowly and control every step, especially on ramps. If space, height, or angle is too tight for safe operation, stop and reassess before continuing. Follow company policy and local regulations.";
-}
-
-/* 4. Tight space / confined tow */
-if (
-  q.includes("tight space") ||
-  q.includes("tight area") ||
-  q.includes("narrow") ||
-  q.includes("confined")
-) {
-  return "Slow the operation down and plan every movement before starting. Watch clearances on all sides including mirrors, doors, and surrounding vehicles. Use the smallest movement possible to gain position and avoid sudden adjustments. Keep the vehicle controlled at all times and avoid oversteering or binding. If positioning becomes unsafe or too tight to control properly, stop and reassess before continuing. Follow company policy and local regulations.";
-}
-
-/* 5. Broken suspension */
-if (
-  q.includes("broken suspension") ||
-  q.includes("wheel collapsed") ||
-  q.includes("wheel bent") ||
-  q.includes("control arm")
-) {
-  return "Do not attempt to roll or drag the vehicle without assessing the damage. A collapsed suspension can cause further structural damage if forced. Use dollies or a flatbed to support the damaged corner and keep the vehicle stable. Move slowly and watch for shifting or binding. If the vehicle cannot be safely supported, stop and reassess before continuing. Follow company policy and local regulations.";
-}
-
-/* 6. Vehicle stuck on curb / high center */
-if (
-  q.includes("high centered") ||
-  q.includes("on curb") ||
-  q.includes("stuck on curb") ||
-  q.includes("bottomed out")
-) {
-  return "Check where the vehicle is contacting and what is supporting its weight. Avoid pulling in a way that drags or tears underbody components. Reduce the load on the contact point if possible and use controlled movement to free the vehicle. Keep the pull straight and avoid sudden force that could cause damage. If the vehicle is hung up in a way that could shift suddenly, stop and reassess before continuing. Follow company policy and local regulations.";
-}
-
-/* 7. Wheel lift vs flatbed decision */
-if (
-  q.includes("wheel lift") ||
-  q.includes("flatbed or wheel lift") ||
-  q.includes("which tow method")
-) {
-  return "Choose the method based on vehicle condition, drivetrain, and damage. If the vehicle is damaged, not rolling, or an EV or AWD with uncertainty, a flatbed is usually the safest option. Wheel lift can be used when the vehicle is stable, rolling freely, and appropriate for that drivetrain. Always confirm you are not causing drivetrain or structural damage. If unsure, default to the safest method. Follow company policy and local regulations.";
-}
-
-/* 8. Steep driveway / angle pull */
-if (
-  q.includes("steep driveway") ||
-  q.includes("steep angle") ||
-  q.includes("incline") ||
-  q.includes("hill recovery")
-) {
-  return "Check the slope and how the vehicle weight will shift during movement. Control the pull to prevent rollback or sudden acceleration. Use the straightest path possible and avoid side load on the vehicle or equipment. Be ready to stop and secure if the vehicle starts to move unpredictably. If traction or control is uncertain, stop and reassess before continuing. Follow company policy and local regulations.";
-}
-
-/* 9. Frozen brakes / seized wheels */
-if (
-  q.includes("frozen brakes") ||
-  q.includes("seized") ||
-  q.includes("wheel stuck")
-) {
-  return "Confirm the cause of the wheel lock before forcing movement. Do not drag the vehicle if the wheels cannot rotate, as this can cause damage. Use dollies or lift methods to move the vehicle safely. Apply controlled movement and avoid shock loading. If the condition cannot be safely managed, stop and reassess before continuing. Follow company policy and local regulations.";
-}
-
-/* 10. Highway recovery / live traffic */
-if (
-  q.includes("highway") ||
-  q.includes("live traffic") ||
-  q.includes("shoulder recovery")
-) {
-  return "Your first priority is traffic control and visibility. Position your truck to protect the scene and create a safe work area. Stay aware of traffic flow at all times and minimize time exposed to live lanes. Set up quickly but safely, and avoid turning your back to traffic. If the scene becomes unsafe or traffic conditions change, stop and reassess immediately. Follow company policy and local regulations.";
-}
-   
-  return "";
-}
-
-function buildFallbackAnswer(question) {
-  const builtIn = getSmartBuiltInAnswer(question);
-
-  if (builtIn) {
-    return builtIn;
-  }
-
-  return "I don’t have a strong answer on that yet. The safest move is to slow down, verify the vehicle details, and confirm the right procedure before continuing. Follow company policy and local regulations.";
-}
-
-function shouldUseWebFallback(answer) {
-  if (!answer) return true;
-
-  const a = answer.toLowerCase().trim();
-
-  if (a.length < 80) return true;
-
-  const weakPhrases = [
-    "i don't have a strong answer",
-    "i dont have a strong answer",
-    "i'm not sure",
-    "i am not sure",
-    "not certain",
-    "may vary",
-    "depends on the model",
-    "depends on trim",
-    "check the owner",
-    "check the manual",
-    "not enough information",
-    "unclear from the information"
-  ];
-
-  return weakPhrases.some((phrase) => a.includes(phrase));
-}
-
-/* =========================================================
-   8. PROMPTS
-========================================================= */
-
-function buildChatPrompt(question, knowledgeContext) {
-  return `You are TARA (Tow Awareness and Response Assistant).
-
-You are speaking to a tow operator, dispatcher, roadside tech, or fleet user.
-
-Style:
-- sound natural, practical, and human
-- do not sound robotic
-- answer like an experienced towing professional
-- for simple questions, give a direct answer first
-- for recovery questions, give a practical high-level field procedure
-- do not refuse just because exact vehicle details are missing; give the standard safe approach first, then say what must be verified
-
-Rules:
-- stay focused on towing, roadside, recovery, EV service, dispatch, and vehicle disablement
-- use the knowledge context if it is relevant
-- do not invent exact OEM attachment points or unsafe recovery instructions
-- if the exact make/model procedure may vary, say what is typical first, then say what should be verified
-- do not mention internal source files
-- do not mention AAA or CAA
-- if the user asks outside your scope, say exactly: Sorry, I can only answer towing and roadside safety questions.
-- Keep answers easy to scan in the field
-- Prefer short paragraphs or step-style flow
-- Avoid long blocks of text when possible
-
-Knowledge base context:
-${knowledgeContext}
-
-User question:
-${question}`;
-}
-
-function buildCameraPrompt(sceneQuestion, knowledgeContext) {
-  return `You are TARA Vision, a towing and roadside scene assistant.
-
-How you speak:
-- short
-- clear
-- human
-- safety-first
-- not robotic
-
-Rules:
-- focus on what is visible, what is risky, and what should be verified next
-- do not guess exact OEM hook points from limited information
-- do not claim hidden areas are safe
-- never advise attaching to suspension, steering, or unknown underbody parts
-- if information is missing, say so clearly
-- use practical field language
-
-Knowledge base context:
-${knowledgeContext}
-
-Scene question or scene details:
-${sceneQuestion}`;
-}
-
-function buildWebSearchPrompt(question, mode, knowledgeContext) {
-  return mode === "camera"
-    ? buildCameraPrompt(question, knowledgeContext)
-    : buildChatPrompt(question, knowledgeContext);
-}
-
-/* =========================================================
-   9. MAIN AI CHAT ROUTE
+   3. AI ROUTES
 ========================================================= */
 
 app.post("/ask", async (req, res) => {
-  const question = String(req.body.question || "").trim();
-  const mode = String(req.body.mode || "chat").trim().toLowerCase();
-  const modeUsed = mode === "camera" ? "camera" : "chat";
-
-  if (!question) {
-    return res.json({
-      answer: "Please enter a towing or roadside safety question.",
-      sourcesUsed: 0,
-      modeUsed
-    });
-  }
-
-  if (!isTowingQuestion(question)) {
-    return res.json({
-      answer: "Sorry, I can only answer towing and roadside safety questions.",
-      sourcesUsed: 0,
-      modeUsed
-    });
-  }
-
   try {
-    const rawMatches = await searchKnowledgeBase(question, 5);
-    const matches = filterKnowledgeMatches(question, rawMatches);
-    const knowledgeContext = formatKnowledgeContext(matches);
-    const builtInAnswer = getSmartBuiltInAnswer(question);
+    const question = String(req.body.question || "").trim();
+    const mode = String(req.body.mode || "chat").trim().toLowerCase();
+    const proMode = Boolean(req.body.proMode);
 
-    /* ------------------------
-       STEP 1: FIRST PASS
-    ------------------------- */
-    const firstPass = await openai.responses.create({
-      model: "gpt-5-mini",
-      instructions:
-        modeUsed === "camera"
-          ? buildCameraPrompt(question, knowledgeContext)
-          : buildChatPrompt(question, knowledgeContext),
-      input: question,
-      max_output_tokens: 350
+    const result = await handleAsk({
+      openai,
+      supabase,
+      question,
+      mode,
+      proMode
     });
 
-    let answer = extractResponseText(firstPass).replace(/\n\s+/g, "\n").trim();
-
-    /* ------------------------
-       STEP 2: UPGRADE WEAK ANSWERS
-    ------------------------- */
-    if ((!answer || shouldUseWebFallback(answer)) && builtInAnswer) {
-      answer = builtInAnswer;
-    }
-
-    /* ------------------------
-       STEP 3: WEB FALLBACK
-    ------------------------- */
-    let webSources = [];
-
-    if (shouldUseWebFallback(answer)) {
-      const webResult = await openai.responses.create({
-        model: "gpt-5-mini",
-        tools: [{ type: "web_search" }],
-        include: ["web_search_call.action.sources"],
-        instructions: buildWebSearchPrompt(question, modeUsed, knowledgeContext),
-        input: question,
-        max_output_tokens: 400
-      });
-
-      const webAnswer = extractResponseText(webResult).trim();
-
-      if (webAnswer && webAnswer.length > 60) {
-        answer = webAnswer;
-        webSources = extractWebSources(webResult);
-
-        await saveLearnedKnowledge(question, webAnswer, {
-          mode_used: modeUsed,
-          web_sources: webSources
-        });
-      }
-    }
-
-    /* ------------------------
-       STEP 4: FINAL FALLBACK
-    ------------------------- */
-    if (!answer) {
-      answer = buildFallbackAnswer(question);
-    }
-
-    return res.json({
-      answer,
-      sourcesUsed: matches.length,
-      modeUsed,
-      webSources
-    });
+    return res.json(result);
   } catch (err) {
     console.error("OpenAI / ask route error:", err);
+
+    const mode = String(req.body.mode || "chat").trim().toLowerCase();
+    const modeUsed = mode === "camera" ? "camera" : "chat";
 
     return res.json({
       answer: "TARA could not connect to AI right now.",
@@ -746,74 +87,14 @@ app.post("/ask", async (req, res) => {
   }
 });
 
-/* =========================================================
-   10. TOW AI VISION ROUTE
-========================================================= */
-
 app.post("/tow-ai", async (req, res) => {
   try {
-    const imageDataUrl = req.body?.imageDataUrl;
-
-    if (!imageDataUrl || typeof imageDataUrl !== "string") {
-      return res.status(400).json({
-        answer: "No image was uploaded."
-      });
-    }
-
-    const response = await openai.responses.create({
-      model: "gpt-4.1-mini",
-      input: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: `You are TARA Vision, a towing and roadside safety scene assistant.
-
-Analyze this towing recovery scene image and give safe, practical, high-level guidance.
-
-Rules:
-- Safety comes first
-- Do NOT guess exact OEM hook points from one image
-- Do NOT claim hidden areas are safe
-- Do NOT provide exact dangerous recovery instructions that depend on unseen underbody points
-- Separate what is observed from what is inferred
-- If information is missing, say so clearly
-- Focus on scene type, hazards, likely recovery category, and verification steps
-- Never tell the user to attach to suspension, steering, or unknown underbody components
-- Mention EV, battery, or structural uncertainty if relevant
-- Keep the answer practical, short, and field-usable
-
-Use this exact structure:
-
-1. What I see
-2. Main hazards
-3. Likely recovery category
-4. Verify before recovery
-5. Do not do this
-6. Next best question`
-            },
-            {
-              type: "input_image",
-              image_url: imageDataUrl,
-              detail: "low"
-            }
-          ]
-        }
-      ],
-      max_output_tokens: 450
+    const result = await analyzeTowImage({
+      openai,
+      imageDataUrl: req.body?.imageDataUrl
     });
 
-    const answer = extractResponseText(response);
-
-    if (!answer) {
-      return res.json({
-        answer:
-          "TARA Vision received the image, but the model returned no readable text."
-      });
-    }
-
-    return res.json({ answer });
+    return res.status(result.status).json(result.body);
   } catch (err) {
     console.error("Tow AI route error:", err);
     return res.status(500).json({
@@ -823,43 +104,19 @@ Use this exact structure:
 });
 
 /* =========================================================
-   11. KNOWLEDGE MANAGEMENT ROUTES
+   4. KNOWLEDGE MANAGEMENT ROUTES
 ========================================================= */
 
 app.post("/knowledge", async (req, res) => {
-  const { content, metadata = {} } = req.body;
-
-  if (!supabase) {
-    return res.status(500).json({ error: "Supabase not configured" });
-  }
-
-  if (!content || !content.trim()) {
-    return res.status(400).json({ error: "Content is required" });
-  }
-
   try {
-    const embedding = await getEmbedding(content.trim());
-
-    const { data, error } = await supabase
-      .from("knowledge_base")
-      .insert([
-        {
-          content: content.trim(),
-          metadata,
-          embedding
-        }
-      ])
-      .select();
-
-    if (error) {
-      console.error("Knowledge insert error:", error);
-      return res.status(500).json({ error: "Failed to save knowledge" });
-    }
-
-    return res.json({
-      status: "Knowledge saved",
-      data
+    const result = await insertKnowledge({
+      openai,
+      supabase,
+      content: req.body.content,
+      metadata: req.body.metadata || {}
     });
+
+    return res.status(result.status).json(result.body);
   } catch (err) {
     console.error("Knowledge route error:", err.message);
     return res.status(500).json({ error: "Failed to create embedding" });
@@ -867,52 +124,14 @@ app.post("/knowledge", async (req, res) => {
 });
 
 app.post("/knowledge/bulk", async (req, res) => {
-  const { entries } = req.body;
-
-  if (!supabase) {
-    return res.status(500).json({ error: "Supabase not configured" });
-  }
-
-  if (!Array.isArray(entries) || entries.length === 0) {
-    return res.status(400).json({ error: "Entries array is required" });
-  }
-
   try {
-    const rowsToInsert = [];
-
-    for (const entry of entries) {
-      const content = entry?.content?.trim();
-      const metadata = entry?.metadata || {};
-
-      if (!content) continue;
-
-      const embedding = await getEmbedding(content);
-
-      rowsToInsert.push({
-        content,
-        metadata,
-        embedding
-      });
-    }
-
-    if (rowsToInsert.length === 0) {
-      return res.status(400).json({ error: "No valid entries to insert" });
-    }
-
-    const { data, error } = await supabase
-      .from("knowledge_base")
-      .insert(rowsToInsert)
-      .select();
-
-    if (error) {
-      console.error("Bulk insert error:", error);
-      return res.status(500).json({ error: "Bulk insert failed" });
-    }
-
-    return res.json({
-      status: "Bulk knowledge saved",
-      inserted: data.length
+    const result = await bulkInsertKnowledge({
+      openai,
+      supabase,
+      entries: req.body.entries
     });
+
+    return res.status(result.status).json(result.body);
   } catch (err) {
     console.error("Bulk knowledge route error:", err.message);
     return res.status(500).json({ error: "Failed to process bulk knowledge" });
@@ -920,46 +139,13 @@ app.post("/knowledge/bulk", async (req, res) => {
 });
 
 app.post("/backfill-embeddings", async (req, res) => {
-  if (!supabase) {
-    return res.status(500).json({ error: "Supabase not configured" });
-  }
-
   try {
-    const { data: rows, error } = await supabase
-      .from("knowledge_base")
-      .select("id, content, embedding");
-
-    if (error) {
-      console.error("Read error:", error);
-      return res.status(500).json({ error: "Failed to read knowledge base" });
-    }
-
-    let updated = 0;
-
-    for (const row of rows) {
-      if (row.embedding) continue;
-      if (!row.content) continue;
-
-      const embedding = await getEmbedding(row.content);
-
-      const { error: updateError } = await supabase
-        .from("knowledge_base")
-        .update({ embedding })
-        .eq("id", row.id);
-
-      if (updateError) {
-        console.error(`Failed on row ${row.id}:`, updateError);
-        continue;
-      }
-
-      updated++;
-      console.log(`Embedded row ${row.id}`);
-    }
-
-    return res.json({
-      status: "Backfill complete",
-      updated
+    const result = await backfillEmbeddings({
+      openai,
+      supabase
     });
+
+    return res.status(result.status).json(result.body);
   } catch (err) {
     console.error("Backfill error:", err.message);
     return res.status(500).json({ error: "Backfill failed" });
@@ -967,7 +153,7 @@ app.post("/backfill-embeddings", async (req, res) => {
 });
 
 /* =========================================================
-   12. EMERGENCY ALERT ROUTE
+   5. EMERGENCY ALERT ROUTE
 ========================================================= */
 
 app.post("/emergency", async (req, res) => {
@@ -1031,7 +217,7 @@ Immediate response required.`;
 });
 
 /* =========================================================
-   13. ALERT + DRIVER LOCATION ROUTES
+   6. ALERT + DRIVER LOCATION ROUTES
 ========================================================= */
 
 app.get("/alerts", async (req, res) => {
@@ -1114,7 +300,7 @@ app.get("/driver-locations", async (req, res) => {
 });
 
 /* =========================================================
-   14. HEALTH CHECK
+   7. HEALTH CHECK
 ========================================================= */
 
 app.get("/health", (req, res) => {
@@ -1125,7 +311,7 @@ app.get("/health", (req, res) => {
 });
 
 /* =========================================================
-   15. START SERVER
+   8. START SERVER
 ========================================================= */
 
 const PORT = process.env.PORT || 3000;
