@@ -21,17 +21,28 @@ function resizeImage(file, maxWidth = 1280, quality = 0.75) {
         canvas.height = height;
 
         const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Canvas could not start"));
+          return;
+        }
+
         ctx.drawImage(img, 0, 0, width, height);
 
         const dataUrl = canvas.toDataURL("image/jpeg", quality);
         resolve(dataUrl);
       };
 
-      img.onerror = reject;
+      img.onerror = function () {
+        reject(new Error("Image could not be loaded"));
+      };
+
       img.src = reader.result;
     };
 
-    reader.onerror = reject;
+    reader.onerror = function () {
+      reject(new Error("File could not be read"));
+    };
+
     reader.readAsDataURL(file);
   });
 }
@@ -56,7 +67,9 @@ export function openCamera(dom) {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ imageDataUrl })
+        body: JSON.stringify({
+          imageDataUrl
+        })
       });
 
       const data = await res.json();
@@ -65,7 +78,8 @@ export function openCamera(dom) {
         throw new Error(data.answer || "Tow AI server error");
       }
 
-      const answer = data.answer || "TARA Vision could not analyze that image.";
+      const answer =
+        data.answer || "TARA Vision could not analyze that image.";
 
       addStatus(
         dom.chatBox,
@@ -74,8 +88,11 @@ export function openCamera(dom) {
 
       speak(answer);
     } catch (err) {
-      console.log("Camera analysis failed:", err);
-      addStatus(dom.chatBox, `TARA Vision failed: ${err.message}`);
+      console.error("Camera analysis failed:", err);
+      addStatus(
+        dom.chatBox,
+        `<span style="color:red;">TARA Vision failed: ${err.message}</span>`
+      );
     }
   };
 
