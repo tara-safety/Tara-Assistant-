@@ -73,6 +73,7 @@ function isTowingQuestion(question) {
     "flat tire",
     "spare tire",
     "ev",
+    "electric",
     "electric vehicle",
     "tow truck",
     "carrier",
@@ -268,11 +269,10 @@ function formatProAnswerFromSections(titleMap) {
    4. BUILT-IN SMART ANSWERS - PRO MODE
 ========================================================= */
 
-function getSmartBuiltInAnswer(combinedQuestion, proMode);
+function getSmartBuiltInProAnswer(question) {
   const q = cleanText(question);
-  const combinedQuestion = historyContext + " " + normalizedQuestion;
-  
-   if (isLoadingQuestion(question)) {
+
+  if (isLoadingQuestion(question)) {
     return formatProAnswerFromSections({
       "Scene Setup": [
         "Position the truck as straight as possible to the casualty vehicle",
@@ -1045,7 +1045,13 @@ Scene question or scene details:
 ${sceneQuestion}`;
 }
 
-function buildWebSearchPrompt(question, mode, knowledgeContext, proMode = false, historyContext = "") {
+function buildWebSearchPrompt(
+  question,
+  mode,
+  knowledgeContext,
+  proMode = false,
+  historyContext = ""
+) {
   if (mode === "camera") {
     return buildCameraPrompt(question, knowledgeContext);
   }
@@ -1133,7 +1139,13 @@ Metadata: ${metadata}`;
     .join("\n\n");
 }
 
-async function saveLearnedKnowledge(openai, supabase, question, answer, metadata = {}) {
+async function saveLearnedKnowledge(
+  openai,
+  supabase,
+  question,
+  answer,
+  metadata = {}
+) {
   if (!supabase) return;
 
   try {
@@ -1220,7 +1232,8 @@ export async function handleAsk({
     ? buildHistoryContext(history)
     : "Conversation memory is currently disabled.";
 
-  const builtInAnswer = getSmartBuiltInAnswer(normalizedQuestion, proMode);
+  const combinedQuestion = `${historyContext}\n\n${normalizedQuestion}`;
+  const builtInAnswer = getSmartBuiltInAnswer(combinedQuestion, proMode);
 
   if (builtInAnswer) {
     if (useChatMemory) {
@@ -1242,15 +1255,23 @@ export async function handleAsk({
       modeUsed === "camera"
         ? buildCameraPrompt(normalizedQuestion, knowledgeContext)
         : proMode
-          ? buildProChatPrompt(normalizedQuestion, knowledgeContext, historyContext)
-          : buildChatPrompt(normalizedQuestion, knowledgeContext, historyContext),
+          ? buildProChatPrompt(
+              normalizedQuestion,
+              knowledgeContext,
+              historyContext
+            )
+          : buildChatPrompt(
+              normalizedQuestion,
+              knowledgeContext,
+              historyContext
+            ),
     input: `
 Previous conversation:
 ${historyContext}
 
 Current question:
 ${normalizedQuestion}
-`
+`,
     max_output_tokens: 350
   });
 
@@ -1275,7 +1296,7 @@ ${historyContext}
 
 Current question:
 ${normalizedQuestion}
-`
+`,
       max_output_tokens: 400
     });
 
@@ -1286,17 +1307,23 @@ ${normalizedQuestion}
       webSources = extractWebSources(webResult);
 
       if (useStoredKnowledge && useLearningLog) {
-        await saveLearnedKnowledge(openai, supabase, normalizedQuestion, webAnswer, {
-          mode_used: modeUsed,
-          pro_mode: proMode,
-          web_sources: webSources
-        });
+        await saveLearnedKnowledge(
+          openai,
+          supabase,
+          normalizedQuestion,
+          webAnswer,
+          {
+            mode_used: modeUsed,
+            pro_mode: proMode,
+            web_sources: webSources
+          }
+        );
       }
     }
   }
 
   if (!answer) {
-    answer = buildFallbackAnswer(normalizedQuestion, proMode);
+    answer = buildFallbackAnswer(combinedQuestion, proMode);
   }
 
   if (useChatMemory) {
@@ -1372,7 +1399,8 @@ Use this exact structure:
     return {
       status: 200,
       body: {
-        answer: "TARA Vision received the image, but the model returned no readable text."
+        answer:
+          "TARA Vision received the image, but the model returned no readable text."
       }
     };
   }
@@ -1383,7 +1411,12 @@ Use this exact structure:
   };
 }
 
-export async function insertKnowledge({ openai, supabase, content, metadata = {} }) {
+export async function insertKnowledge({
+  openai,
+  supabase,
+  content,
+  metadata = {}
+}) {
   if (!supabase) {
     return { status: 500, body: { error: "Supabase not configured" } };
   }
