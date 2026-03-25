@@ -1188,39 +1188,38 @@ export async function handleAsk({
     };
   }
 
-  const history = featureFlags.useChatMemory !== false
-  ? getSessionHistory(sessionId, 8)
-  : [];
+  const history = useChatMemory ? getSessionHistory(sessionId, 8) : [];
+  const hasHistory = history.length > 0;
 
-const hasHistory = history && history.length > 0;
-
-if (!isTowingQuestion(normalizedQuestion) && !hasHistory) {
-  return {
-    answer: "Sorry, I can only answer towing and roadside safety questions.",
-    sourcesUsed: 0,
-    modeUsed,
-    webSources: []
-  };
-}
+  if (!isTowingQuestion(normalizedQuestion) && !hasHistory) {
+    return {
+      answer: "Sorry, I can only answer towing and roadside safety questions.",
+      sourcesUsed: 0,
+      modeUsed,
+      webSources: []
+    };
+  }
 
   let matches = [];
   let knowledgeContext = "Stored knowledge is currently disabled.";
 
   if (useStoredKnowledge) {
-    const rawMatches = await searchKnowledgeBase(openai, supabase, normalizedQuestion, 5);
+    const rawMatches = await searchKnowledgeBase(
+      openai,
+      supabase,
+      normalizedQuestion,
+      5
+    );
     matches = filterKnowledgeMatches(normalizedQuestion, rawMatches);
     knowledgeContext = formatKnowledgeContext(matches);
   }
 
-  const history = useChatMemory ? getSessionHistory(sessionId, 8) : [];
   const historyContext = useChatMemory
     ? buildHistoryContext(history)
     : "Conversation memory is currently disabled.";
 
-  /* ---------------------------------------------------------
-     BUILT-IN EXPERT ANSWER FIRST
-  --------------------------------------------------------- */
   const builtInAnswer = getSmartBuiltInAnswer(normalizedQuestion, proMode);
+
   if (builtInAnswer) {
     if (useChatMemory) {
       saveSessionMessage(sessionId, "user", normalizedQuestion);
@@ -1235,26 +1234,19 @@ if (!isTowingQuestion(normalizedQuestion) && !hasHistory) {
     };
   }
 
-  /* ---------------------------------------------------------
-     FIRST PASS AI
-  --------------------------------------------------------- */
   const firstPass = await openai.responses.create({
     model: "gpt-5-mini",
     instructions:
       modeUsed === "camera"
         ? buildCameraPrompt(normalizedQuestion, knowledgeContext)
         : proMode
-        ? buildProChatPrompt(normalizedQuestion, knowledgeContext, historyContext)
-        : buildChatPrompt(normalizedQuestion, knowledgeContext, historyContext),
+          ? buildProChatPrompt(normalizedQuestion, knowledgeContext, historyContext)
+          : buildChatPrompt(normalizedQuestion, knowledgeContext, historyContext),
     input: normalizedQuestion,
     max_output_tokens: 350
   });
 
   let answer = extractResponseText(firstPass).replace(/\n\s+/g, "\n").trim();
-
-  /* ---------------------------------------------------------
-     WEB FALLBACK
-  --------------------------------------------------------- */
   let webSources = [];
 
   if (shouldUseWebFallback(answer)) {
@@ -1289,9 +1281,6 @@ if (!isTowingQuestion(normalizedQuestion) && !hasHistory) {
     }
   }
 
-  /* ---------------------------------------------------------
-     FINAL FALLBACK
-  --------------------------------------------------------- */
   if (!answer) {
     answer = buildFallbackAnswer(normalizedQuestion, proMode);
   }
