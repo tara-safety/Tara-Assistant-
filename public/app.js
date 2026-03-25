@@ -42,10 +42,6 @@ function getOrCreateSessionId() {
   return id;
 }
 
-function getProModeState() {
-  return Boolean(state.proMode);
-}
-
 document.addEventListener("DOMContentLoaded", function () {
   console.log("TARA System Booting");
 
@@ -69,6 +65,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   try {
     setupMenu(dom.menuBtn, dom.menu);
+    console.log("Menu setup complete");
   } catch (err) {
     console.error("setupMenu failed:", err);
   }
@@ -167,9 +164,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (state.towModeActive) {
           startVoiceSystem(state, dom, sendQuestion);
+          dom.towModeBtn.textContent = "Tow Mode ON";
           addStatus(dom.chatBox, "🚚 Tow Mode Activated");
         } else {
           stopVoiceSystem(state);
+          dom.towModeBtn.textContent = "Tow Mode OFF";
           addStatus(dom.chatBox, "🚚 Tow Mode Disabled");
         }
       } catch (err) {
@@ -200,6 +199,24 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   } else {
     console.warn("towCameraBtn not found");
+  }
+
+  if (dom.proModeBtn) {
+    dom.proModeBtn.addEventListener("click", function () {
+      console.log("Pro mode button clicked");
+
+      state.proMode = !state.proMode;
+
+      if (state.proMode) {
+        dom.proModeBtn.textContent = "PRO MODE ON";
+        addStatus(dom.chatBox, "🧠 Pro Mode Activated");
+      } else {
+        dom.proModeBtn.textContent = "PRO MODE OFF";
+        addStatus(dom.chatBox, "🧠 Pro Mode Disabled");
+      }
+    });
+  } else {
+    console.warn("proModeBtn not found");
   }
 
   try {
@@ -251,7 +268,7 @@ document.addEventListener("DOMContentLoaded", function () {
           question: text,
           mode: "chat",
           sessionId,
-          proMode: getProModeState()
+          proMode: state.proMode
         })
       });
 
