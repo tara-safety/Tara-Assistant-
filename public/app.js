@@ -26,14 +26,36 @@ import {
   setupEmergencyFailSafe
 } from "./emergency.js";
 
+/* =========================================================
+   SESSION HELPERS
+========================================================= */
+
+function getOrCreateSessionId() {
+  const key = "tara_session_id";
+  let id = localStorage.getItem(key);
+
+  if (!id) {
+    id = `tara-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    localStorage.setItem(key, id);
+  }
+
+  return id;
+}
+
+function getProModeState() {
+  return Boolean(state.proMode);
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   console.log("TARA System Booting");
 
   let dom;
+  const sessionId = getOrCreateSessionId();
 
   try {
     dom = getDOM();
     console.log("DOM loaded:", dom);
+    console.log("TARA session:", sessionId);
   } catch (err) {
     console.error("DOM setup failed:", err);
     return;
@@ -227,7 +249,9 @@ document.addEventListener("DOMContentLoaded", function () {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: text,
-          mode: "chat"
+          mode: "chat",
+          sessionId,
+          proMode: getProModeState()
         })
       });
 
@@ -243,6 +267,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const answer = data.answer || "No response returned.";
       addTaraMessage(dom.chatBox, answer);
+
+      if (data.brain) {
+        const memoryOn = data.brain.chatMemory === true;
+        const storedKnowledgeOn = data.brain.storedKnowledge === true;
+
+        if (memoryOn && !storedKnowledgeOn) {
+          addStatus(dom.chatBox, "🧠 Memory On | Stored Knowledge Off");
+        }
+      }
 
       if (state.voiceEnabled) {
         try {
