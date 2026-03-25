@@ -1,5 +1,5 @@
 export const DRIVER_NAME = "Tow Operator";
-export const COMPANY = "TARA Safety";
+export const COMPANY = "TARA Safety Intelligence";
 
 export const IMPACT_LIMIT = 30;
 export const INACTIVITY_LIMIT = 8 * 60 * 1000;
