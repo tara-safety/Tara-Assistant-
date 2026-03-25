@@ -30,17 +30,41 @@ const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, "public")));
 
 /* =========================================================
-   2. CLIENT SETUP
+   2. FEATURE FLAGS
+========================================================= */
+
+const USE_STORED_KNOWLEDGE = process.env.USE_STORED_KNOWLEDGE === "true";
+const USE_CHAT_MEMORY = process.env.USE_CHAT_MEMORY !== "false";
+const USE_LEARNING_LOG = process.env.USE_LEARNING_LOG !== "false";
+const ALLOW_KNOWLEDGE_WRITE = process.env.ALLOW_KNOWLEDGE_WRITE === "true";
+const ALLOW_EMBEDDING_BACKFILL = process.env.ALLOW_EMBEDDING_BACKFILL === "true";
+
+/* =========================================================
+   3. CLIENT SETUP
 ========================================================= */
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
+const twilioReady =
+  !!process.env.TWILIO_ACCOUNT_SID &&
+  !!process.env.TWILIO_AUTH_TOKEN &&
+  !!process.env.TWILIO_PHONE_NUMBER &&
+  !!process.env.ALERT_PHONE_NUMBER;
+
+const twilioClient = twilioReady
+  ? twilio(
+      process.env.TWILIO_ACCOUNT_SID,
+      process.env.TWILIO_AUTH_TOKEN
+    )
+  : null;
+
+if (twilioReady) {
+  console.log("Twilio connected");
+} else {
+  console.warn("Twilio environment variables missing or incomplete");
+}
 
 let supabase = null;
 
@@ -55,34 +79,80 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 /* =========================================================
-   3. AI ROUTES
+   4. HELPERS
+========================================================= */
+
+function normalizeMode(value) {
+  const mode = String(value || "chat").trim().toLowerCase();
+  return mode === "camera" ? "camera" : "chat";
+}
+
+function isValidCoordinate(value) {
+  const num = Number(value);
+  return Number.isFinite(num);
+}
+
+/* =========================================================
+   5. AI ROUTES
 ========================================================= */
 
 app.post("/ask", async (req, res) => {
   try {
-    const question = String(req.body.question || "").trim();
-    const mode = String(req.body.mode || "chat").trim().toLowerCase();
-    const proMode = Boolean(req.body.proMode);
+    const question = String(req.body?.question || "").trim();
+    const mode = normalizeMode(req.body?.mode);
+    const proMode = Boolean(req.body?.proMode);
+    const sessionId = String(
+      req.body?.sessionId ||
+      req.headers["x-session-id"] ||
+      req.ip ||
+      "default"
+    );
+
+    if (!question) {
+      return res.status(400).json({
+        answer: "Please enter a question for TARA.",
+        sourcesUsed: 0,
+        modeUsed: mode
+      });
+    }
 
     const result = await handleAsk({
       openai,
       supabase,
       question,
       mode,
-      proMode
+      proMode,
+      sessionId,
+      featureFlags: {
+        useStoredKnowledge: USE_STORED_KNOWLEDGE,
+        useChatMemory: USE_CHAT_MEMORY,
+        useLearningLog: USE_LEARNING_LOG
+      }
     });
 
-    return res.json(result);
-  } catch (err) {
-    console.error("OpenAI / ask route error:", err);
-
-    const mode = String(req.body.mode || "chat").trim().toLowerCase();
-    const modeUsed = mode === "camera" ? "camera" : "chat";
-
     return res.json({
+      ...result,
+      modeUsed: result?.modeUsed || mode,
+      brain: {
+        storedKnowledge: USE_STORED_KNOWLEDGE,
+        chatMemory: USE_CHAT_MEMORY,
+        learningLog: USE_LEARNING_LOG
+      }
+    });
+  } catch (err) {
+    console.error("OpenAI /ask route error:", err);
+
+    const mode = normalizeMode(req.body?.mode);
+
+    return res.status(500).json({
       answer: "TARA could not connect to AI right now.",
       sourcesUsed: 0,
-      modeUsed
+      modeUsed: mode,
+      brain: {
+        storedKnowledge: USE_STORED_KNOWLEDGE,
+        chatMemory: USE_CHAT_MEMORY,
+        learningLog: USE_LEARNING_LOG
+      }
     });
   }
 });
@@ -104,16 +174,29 @@ app.post("/tow-ai", async (req, res) => {
 });
 
 /* =========================================================
-   4. KNOWLEDGE MANAGEMENT ROUTES
+   6. KNOWLEDGE MANAGEMENT ROUTES
+   TEMPORARILY DISABLED UNLESS ENV TURNS THEM ON
 ========================================================= */
 
 app.post("/knowledge", async (req, res) => {
   try {
+    if (!ALLOW_KNOWLEDGE_WRITE) {
+      return res.status(403).json({
+        error: "Knowledge write is temporarily disabled while TARA brain is being rebuilt."
+      });
+    }
+
+    if (!supabase) {
+      return res.status(500).json({
+        error: "Supabase not configured"
+      });
+    }
+
     const result = await insertKnowledge({
       openai,
       supabase,
-      content: req.body.content,
-      metadata: req.body.metadata || {}
+      content: req.body?.content,
+      metadata: req.body?.metadata || {}
     });
 
     return res.status(result.status).json(result.body);
@@ -125,10 +208,22 @@ app.post("/knowledge", async (req, res) => {
 
 app.post("/knowledge/bulk", async (req, res) => {
   try {
+    if (!ALLOW_KNOWLEDGE_WRITE) {
+      return res.status(403).json({
+        error: "Bulk knowledge upload is temporarily disabled while TARA brain is being rebuilt."
+      });
+    }
+
+    if (!supabase) {
+      return res.status(500).json({
+        error: "Supabase not configured"
+      });
+    }
+
     const result = await bulkInsertKnowledge({
       openai,
       supabase,
-      entries: req.body.entries
+      entries: req.body?.entries
     });
 
     return res.status(result.status).json(result.body);
@@ -140,6 +235,18 @@ app.post("/knowledge/bulk", async (req, res) => {
 
 app.post("/backfill-embeddings", async (req, res) => {
   try {
+    if (!ALLOW_EMBEDDING_BACKFILL) {
+      return res.status(403).json({
+        error: "Embedding backfill is temporarily disabled while TARA brain is being rebuilt."
+      });
+    }
+
+    if (!supabase) {
+      return res.status(500).json({
+        error: "Supabase not configured"
+      });
+    }
+
     const result = await backfillEmbeddings({
       openai,
       supabase
@@ -153,19 +260,30 @@ app.post("/backfill-embeddings", async (req, res) => {
 });
 
 /* =========================================================
-   5. EMERGENCY ALERT ROUTE
+   7. EMERGENCY ALERT ROUTE
 ========================================================= */
 
 app.post("/emergency", async (req, res) => {
-  const { lat, lon, driver = "Unknown Driver" } = req.body;
+  const lat = req.body?.lat;
+  const lon = req.body?.lon;
+  const driver = String(req.body?.driver || "Unknown Driver").trim();
 
-  if (!lat || !lon || !driver) {
+  if (!isValidCoordinate(lat) || !isValidCoordinate(lon) || !driver) {
     return res.status(400).json({
-      error: "Missing emergency data"
+      error: "Missing or invalid emergency data"
     });
   }
 
-  const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
+  if (!twilioClient) {
+    return res.status(500).json({
+      error: "Emergency messaging is not configured"
+    });
+  }
+
+  const latitude = Number(lat);
+  const longitude = Number(lon);
+
+  const mapLink = `https://maps.google.com/?q=${latitude},${longitude}`;
 
   const message = `${driver} has sent an EMERGENCY ALERT.
 
@@ -191,8 +309,8 @@ Immediate response required.`;
       const { error } = await supabase.from("alerts").insert([
         {
           driver,
-          latitude: lat,
-          longitude: lon,
+          latitude,
+          longitude,
           alert_type: "emergency",
           map_link: mapLink
         }
@@ -217,7 +335,7 @@ Immediate response required.`;
 });
 
 /* =========================================================
-   6. ALERT + DRIVER LOCATION ROUTES
+   8. ALERT + DRIVER LOCATION ROUTES
 ========================================================= */
 
 app.get("/alerts", async (req, res) => {
@@ -240,7 +358,7 @@ app.get("/alerts", async (req, res) => {
       });
     }
 
-    return res.json(data);
+    return res.json(data || []);
   } catch (err) {
     console.error("Alerts route error:", err);
 
@@ -275,7 +393,7 @@ app.get("/driver-locations", async (req, res) => {
     const latestByDriver = [];
     const seenDrivers = new Set();
 
-    for (const row of data) {
+    for (const row of data || []) {
       const driverName = row.driver || "Unknown Driver";
 
       if (seenDrivers.has(driverName)) continue;
@@ -300,21 +418,29 @@ app.get("/driver-locations", async (req, res) => {
 });
 
 /* =========================================================
-   7. HEALTH CHECK
+   9. HEALTH CHECK
 ========================================================= */
 
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
-    supabase: !!supabase
+    supabase: !!supabase,
+    twilio: !!twilioClient,
+    brain: {
+      storedKnowledge: USE_STORED_KNOWLEDGE,
+      chatMemory: USE_CHAT_MEMORY,
+      learningLog: USE_LEARNING_LOG,
+      knowledgeWriteEnabled: ALLOW_KNOWLEDGE_WRITE,
+      embeddingBackfillEnabled: ALLOW_EMBEDDING_BACKFILL
+    }
   });
 });
 
 /* =========================================================
-   8. START SERVER
+   10. START SERVER
 ========================================================= */
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`TARA server running on port ${PORT}`);
