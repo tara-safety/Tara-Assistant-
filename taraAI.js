@@ -132,6 +132,7 @@ function isEVQuestion(question) {
   const q = cleanText(question);
   return (
     q.includes("ev") ||
+    q.includes("electric") ||
     q.includes("electric vehicle") ||
     q.includes("tesla") ||
     q.includes("hybrid") ||
