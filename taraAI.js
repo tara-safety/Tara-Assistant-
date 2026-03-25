@@ -1188,14 +1188,20 @@ export async function handleAsk({
     };
   }
 
-  if (!isTowingQuestion(normalizedQuestion)) {
-    return {
-      answer: "Sorry, I can only answer towing and roadside safety questions.",
-      sourcesUsed: 0,
-      modeUsed,
-      webSources: []
-    };
-  }
+  const history = featureFlags.useChatMemory !== false
+  ? getSessionHistory(sessionId, 8)
+  : [];
+
+const hasHistory = history && history.length > 0;
+
+if (!isTowingQuestion(normalizedQuestion) && !hasHistory) {
+  return {
+    answer: "Sorry, I can only answer towing and roadside safety questions.",
+    sourcesUsed: 0,
+    modeUsed,
+    webSources: []
+  };
+}
 
   let matches = [];
   let knowledgeContext = "Stored knowledge is currently disabled.";
