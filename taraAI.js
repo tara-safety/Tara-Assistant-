@@ -268,10 +268,11 @@ function formatProAnswerFromSections(titleMap) {
    4. BUILT-IN SMART ANSWERS - PRO MODE
 ========================================================= */
 
-function getSmartBuiltInProAnswer(question) {
+function getSmartBuiltInAnswer(combinedQuestion, proMode);
   const q = cleanText(question);
-
-  if (isLoadingQuestion(question)) {
+  const combinedQuestion = historyContext + " " + normalizedQuestion;
+  
+   if (isLoadingQuestion(question)) {
     return formatProAnswerFromSections({
       "Scene Setup": [
         "Position the truck as straight as possible to the casualty vehicle",
@@ -1243,7 +1244,13 @@ export async function handleAsk({
         : proMode
           ? buildProChatPrompt(normalizedQuestion, knowledgeContext, historyContext)
           : buildChatPrompt(normalizedQuestion, knowledgeContext, historyContext),
-    input: normalizedQuestion,
+    input: `
+Previous conversation:
+${historyContext}
+
+Current question:
+${normalizedQuestion}
+`
     max_output_tokens: 350
   });
 
@@ -1262,7 +1269,13 @@ export async function handleAsk({
         proMode,
         historyContext
       ),
-      input: normalizedQuestion,
+      input: `
+Previous conversation:
+${historyContext}
+
+Current question:
+${normalizedQuestion}
+`
       max_output_tokens: 400
     });
 
