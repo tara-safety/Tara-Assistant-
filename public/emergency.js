@@ -39,21 +39,24 @@ async function startHighRiskSiren(state) {
 
     osc.type = "sawtooth";
     osc.frequency.setValueAtTime(740, ctx.currentTime);
-
     gain.gain.setValueAtTime(0.16, ctx.currentTime);
 
     osc.connect(gain);
     gain.connect(ctx.destination);
-
     osc.start();
 
     let high = false;
+
     state.sirenInterval = setInterval(function () {
       if (!state.sirenOscillator) return;
+
       high = !high;
+
       try {
         osc.frequency.setValueAtTime(high ? 1040 : 740, ctx.currentTime);
-      } catch (e) {}
+      } catch (err) {
+        console.log("Siren frequency change failed:", err);
+      }
     }, 220);
 
     state.sirenOscillator = osc;
@@ -120,10 +123,7 @@ export function stopAlarm(state) {
 /* ============================= */
 
 export function setupEmergencyButton(state, dom, startEmergencyCountdown) {
-  const buttons = [
-    document.getElementById("emergencyBtn"),
-    document.getElementById("emergencyMiniBtn")
-  ].filter(Boolean);
+  const buttons = [dom?.emergencyBtn, dom?.emergencyMiniBtn].filter(Boolean);
 
   buttons.forEach(function (btn) {
     btn.addEventListener("mousedown", function (e) {
@@ -152,6 +152,7 @@ export function setupEmergencyButton(state, dom, startEmergencyCountdown) {
 
     btn.addEventListener("touchend", function () {
       cancelHold(state);
+
       setTimeout(function () {
         state.touchStarted = false;
       }, 50);
@@ -190,6 +191,61 @@ function cancelHold(state) {
   }
 }
 
+/* ============================= */
+/* COUNTDOWN UI */
+/* ============================= */
+
+function createEmergencyOverlay() {
+  const wrap = document.createElement("div");
+  wrap.id = "taraEmergencyOverlay";
+
+  wrap.style.position = "fixed";
+  wrap.style.inset = "0";
+  wrap.style.background = "rgba(0, 0, 0, 0.55)";
+  wrap.style.zIndex = "9998";
+  wrap.style.display = "flex";
+  wrap.style.flexDirection = "column";
+  wrap.style.alignItems = "center";
+  wrap.style.justifyContent = "flex-end";
+  wrap.style.padding = "24px";
+
+  const countdown = document.createElement("div");
+  countdown.id = "taraEmergencyCountdown";
+  countdown.style.marginBottom = "18px";
+  countdown.style.background = "#111";
+  countdown.style.color = "#fff";
+  countdown.style.padding = "14px 20px";
+  countdown.style.borderRadius = "14px";
+  countdown.style.fontSize = "22px";
+  countdown.style.fontWeight = "bold";
+  countdown.style.boxShadow = "0 8px 22px rgba(0,0,0,0.4)";
+  countdown.textContent = `Emergency in ${EMERGENCY_COUNTDOWN}`;
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.innerText = "CANCEL EMERGENCY";
+  cancelBtn.style.background = "#c62828";
+  cancelBtn.style.color = "#ffffff";
+  cancelBtn.style.border = "3px solid #ffffff";
+  cancelBtn.style.borderRadius = "16px";
+  cancelBtn.style.padding = "20px 30px";
+  cancelBtn.style.fontSize = "22px";
+  cancelBtn.style.fontWeight = "bold";
+  cancelBtn.style.boxShadow = "0 8px 22px rgba(0,0,0,0.4)";
+  cancelBtn.style.minWidth = "280px";
+  cancelBtn.style.minHeight = "78px";
+  cancelBtn.style.textAlign = "center";
+
+  wrap.appendChild(countdown);
+  wrap.appendChild(cancelBtn);
+  document.body.appendChild(wrap);
+
+  return { wrap, countdown, cancelBtn };
+}
+
+/* ============================= */
+/* START EMERGENCY COUNTDOWN */
+/* ============================= */
+
 export function startEmergencyCountdown(state, dom) {
   if (state.emergencyRunning) return;
 
@@ -209,41 +265,24 @@ export function startEmergencyCountdown(state, dom) {
   }
 
   let count = EMERGENCY_COUNTDOWN;
-
-  const cancelBtn = document.createElement("button");
-  cancelBtn.innerText = "CANCEL EMERGENCY";
-
-  cancelBtn.style.position = "fixed";
-  cancelBtn.style.bottom = "120px";
-  cancelBtn.style.left = "50%";
-  cancelBtn.style.transform = "translateX(-50%)";
-  cancelBtn.style.zIndex = "9999";
-  cancelBtn.style.background = "#c62828";
-  cancelBtn.style.color = "#ffffff";
-  cancelBtn.style.border = "3px solid #ffffff";
-  cancelBtn.style.borderRadius = "16px";
-  cancelBtn.style.padding = "20px 30px";
-  cancelBtn.style.fontSize = "22px";
-  cancelBtn.style.fontWeight = "bold";
-  cancelBtn.style.boxShadow = "0 8px 22px rgba(0,0,0,0.4)";
-  cancelBtn.style.minWidth = "280px";
-  cancelBtn.style.minHeight = "78px";
-  cancelBtn.style.textAlign = "center";
-
-  document.body.appendChild(cancelBtn);
+  const overlay = createEmergencyOverlay();
 
   function cancelEmergencyCountdown() {
     clearInterval(timer);
     stopAlarm(state);
     stopSafetyVoiceListener(state);
-    cancelBtn.remove();
-    addStatus(dom.chatBox, "Emergency cancelled");
+
+    if (overlay.wrap) {
+      overlay.wrap.remove();
+    }
+
+    addStatus(dom.chatBox, "✅ Emergency cancelled");
     state.emergencyRunning = false;
     state.emergencyActive = false;
     state.holdTimer = null;
   }
 
-  cancelBtn.onclick = function () {
+  overlay.cancelBtn.onclick = function () {
     cancelEmergencyCountdown();
   };
 
@@ -253,6 +292,10 @@ export function startEmergencyCountdown(state, dom) {
 
   const timer = setInterval(function () {
     count--;
+
+    if (overlay.countdown) {
+      overlay.countdown.textContent = `Emergency in ${count}`;
+    }
 
     if (count === 20) {
       forceSpeak("Emergency in twenty seconds. Say cancel emergency to stop.");
@@ -265,7 +308,11 @@ export function startEmergencyCountdown(state, dom) {
     if (count <= 0) {
       clearInterval(timer);
       stopSafetyVoiceListener(state);
-      cancelBtn.remove();
+
+      if (overlay.wrap) {
+        overlay.wrap.remove();
+      }
+
       triggerEmergency(state, dom);
     }
   }, 1000);
@@ -279,6 +326,7 @@ export function triggerEmergency(state, dom) {
   if (state.emergencyActive) return;
 
   state.emergencyActive = true;
+  addStatus(dom.chatBox, "📍 Collecting emergency location...");
 
   if (!navigator.geolocation) {
     addStatus(dom.chatBox, "⚠️ Geolocation not supported");
@@ -372,20 +420,17 @@ export async function queueAndSendEmergency(state, dom, lat, lon) {
 
 async function sendQueuedPayload(payload) {
   try {
-    const res = await fetch(
-      "https://tara-assistant-dwhg.onrender.com/emergency",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          driver: payload.driver,
-          company: payload.company,
-          time: payload.time,
-          lat: payload.lat,
-          lon: payload.lon
-        })
-      }
-    );
+    const res = await fetch("/emergency", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        driver: payload.driver,
+        company: payload.company,
+        time: payload.time,
+        lat: payload.lat,
+        lon: payload.lon
+      })
+    });
 
     if (!res.ok) {
       throw new Error("server error");
@@ -415,6 +460,7 @@ export function setupEmergencyFailSafe(dom) {
 
       if (sent) {
         removeFromEmergencyQueue(payload.id);
+
         if (dom && dom.chatBox) {
           addStatus(dom.chatBox, "✅ Queued emergency delivered");
         }
