@@ -20,11 +20,11 @@ import { playAlarm, stopAlarm } from "./emergency.js";
 import { startSoundWatch, stopSoundWatch } from "./soundwatch.js";
 
 const ROADSIDE_WARNING_TIME = 12000;
-const WARNING_CLEAR_DELAY = 2500;
-const WARNING_CLEAR_THRESHOLD = 10;
-const WARNING_CLEAR_HITS_REQUIRED = 3;
-const MEANINGFUL_IMPACT_RESET = 7;
-const MEANINGFUL_MOTION_RESET = 3.2;
+const WARNING_CLEAR_DELAY = 3000;
+const WARNING_CLEAR_THRESHOLD = 14;
+const WARNING_CLEAR_HITS_REQUIRED = 4;
+const MEANINGFUL_IMPACT_RESET = 10;
+const MEANINGFUL_MOTION_RESET = 4.8;
 const WARNING_RETRIGGER_COOLDOWN = 5000;
 
 const REMINDER_MS = 30 * 60 * 1000;
