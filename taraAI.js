@@ -12,6 +12,10 @@ function cleanText(text = "") {
     .trim();
 }
 
+function hasAny(text, terms = []) {
+  return terms.some((term) => text.includes(term));
+}
+
 function isTowingQuestion(question) {
   const q = cleanText(question);
 
@@ -63,7 +67,23 @@ function isTowingQuestion(question) {
     "rollback",
     "j-hook",
     "tie down",
-    "move over"
+    "move over",
+    "neutral",
+    "parking brake",
+    "wheel straps",
+    "t-hook",
+    "soft strap",
+    "snatch block",
+    "control arm",
+    "loading angle",
+    "securement",
+    "non-roller",
+    "doesn't roll",
+    "wont roll",
+    "won't roll",
+    "seized",
+    "scrape",
+    "low clearance"
   ];
 
   return keywords.some((word) => q.includes(word));
@@ -90,6 +110,21 @@ function isEVQuestion(question) {
     q.includes("plug in") ||
     q.includes("battery electric")
   );
+}
+
+function isLoadingQuestion(question) {
+  const q = cleanText(question);
+  return hasAny(q, [
+    "load",
+    "loading",
+    "flatbed",
+    "rollback",
+    "deck",
+    "wheel straps",
+    "securement",
+    "tie down",
+    "tie-down"
+  ]);
 }
 
 function getImportantQuestionTerms(question) {
@@ -201,28 +236,72 @@ function formatProAnswerFromSections(titleMap) {
 }
 
 /* =========================================================
-   4. BUILT-IN SMART ANSWERS
+   4. BUILT-IN SMART ANSWERS - PRO MODE
 ========================================================= */
 
 function getSmartBuiltInProAnswer(question) {
   const q = cleanText(question);
 
-  if (isEVQuestion(question) && (q.includes("tow") || q.includes("towing"))) {
+  if (isLoadingQuestion(question)) {
+    return formatProAnswerFromSections({
+      "Scene Setup": [
+        "Position the truck as straight as possible to the casualty vehicle",
+        "Check traffic exposure, ground stability, and loading angle",
+        "Lower the bed fully and reduce the angle before starting the pull"
+      ],
+      "Common Equipment": [
+        "Winch line",
+        "J-hooks or T-hooks when appropriate for the vehicle",
+        "Soft straps when approved for the setup",
+        "Wheel straps for final securement",
+        "Dollies or skates if the vehicle does not roll"
+      ],
+      "Hookup": [
+        "Use approved tow or loading points only",
+        "Never attach to suspension, steering, brake lines, or unknown underbody components",
+        "Take slack out slowly and confirm the hookup is tracking straight"
+      ],
+      "Loading": [
+        "Keep the pull straight and controlled",
+        "Watch bumper, underbody, exhaust, air dams, and transition points",
+        "Stop immediately if the vehicle starts to scrape, shift, bind, or climb poorly"
+      ],
+      "Securement": [
+        "Use a proper 4-point securement minimum for transport",
+        "Secure each wheel correctly and evenly",
+        "Recheck strap tension after the vehicle settles on the deck"
+      ],
+      "Final Check": [
+        "Confirm the casualty is stable before transport",
+        "Check for loose parts, hanging damage, and clearance issues"
+      ]
+    });
+  }
+
+  if (
+    isEVQuestion(question) &&
+    hasAny(q, ["tow", "towing", "transport", "load", "loading"])
+  ) {
     return formatProAnswerFromSections({
       "Best Practice": [
-        "Use a flatbed whenever possible"
+        "Use a flatbed whenever possible for EV towing and transport"
       ],
       "Check First": [
         "Confirm make, model, and drive type",
         "Check whether transport mode or tow mode is required",
-        "Confirm whether the vehicle will roll freely"
+        "Confirm whether the vehicle will free-roll before moving it"
+      ],
+      "Equipment": [
+        "Flatbed",
+        "Wheel straps",
+        "Dollies if the wheels cannot rotate safely"
       ],
       "Do Not Do": [
-        "Do not drag drive wheels unless approved",
-        "Do not attach to unknown underbody components"
+        "Do not drag drive wheels unless the OEM procedure allows it",
+        "Do not hook unknown underbody or battery protection areas"
       ],
-      "Final Check": [
-        "If the OEM procedure is unclear, stop and verify before towing"
+      "Critical Risk": [
+        "Dragging or incorrect hookup can damage the drivetrain or create system faults"
       ]
     });
   }
@@ -256,8 +335,8 @@ function getSmartBuiltInProAnswer(question) {
     return formatProAnswerFromSections({
       "Scene Check": [
         "Check traffic exposure",
-        "Check shoulder stability and ditch depth",
-        "Check vehicle angle and ground condition"
+        "Check shoulder stability, ditch depth, slope, and ground condition",
+        "Check vehicle angle and risk of rollover"
       ],
       "Stabilize": [
         "Stabilize the vehicle if there is any chance of shifting or rolling",
@@ -268,8 +347,11 @@ function getSmartBuiltInProAnswer(question) {
         "Avoid side-loading and sudden jerks",
         "Plan where the vehicle will travel once it reaches the shoulder"
       ],
-      "Safer Finish": [
-        "Decide whether winch-out, wheel-lift assist, dollies, or flatbed load is the safest finish"
+      "Equipment": [
+        "Winch line",
+        "Recovery straps",
+        "Snatch block if the angle requires a cleaner pull",
+        "Wheel-lift assist, dollies, or flatbed as needed for the finish"
       ],
       "Stop If": [
         "Stop and reassess if the angle, anchor point, or vehicle condition is uncertain"
@@ -278,10 +360,62 @@ function getSmartBuiltInProAnswer(question) {
   }
 
   if (
+    q.includes("winch") ||
+    q.includes("winching") ||
+    q.includes("pull out")
+  ) {
+    return formatProAnswerFromSections({
+      "Setup": [
+        "Align for the straightest pull possible",
+        "Inspect the line, hook point, and path of travel before tension"
+      ],
+      "Equipment": [
+        "Winch line",
+        "Appropriate hook point or approved strap",
+        "Snatch block if needed for angle correction"
+      ],
+      "Operation": [
+        "Take slack slowly",
+        "Use controlled tension instead of shock loading",
+        "Watch for bind, climb, or sudden shift"
+      ],
+      "Safety": [
+        "Keep people out of the line of pull and danger zone",
+        "Stop if the casualty starts moving unpredictably"
+      ]
+    });
+  }
+
+  if (
+    q.includes("rollover") ||
+    q.includes("on side") ||
+    q.includes("upside down")
+  ) {
+    return formatProAnswerFromSections({
+      "Scene Check": [
+        "Treat rollover work as high risk from the start",
+        "Check for occupant, fuel, battery, cargo, and stability hazards"
+      ],
+      "Setup": [
+        "Build the recovery plan before applying force",
+        "Control the roll path and vehicle movement"
+      ],
+      "Do Not Do": [
+        "Do not rush the lift or rotation",
+        "Do not apply force before stabilization is understood"
+      ],
+      "Stop If": [
+        "Stop and reassess if stabilization, exposure, or attachment strategy is uncertain"
+      ]
+    });
+  }
+
+  if (
     q.includes("snow") ||
     q.includes("ice") ||
     q.includes("slippery") ||
-    q.includes("stuck in snow")
+    q.includes("stuck in snow") ||
+    q.includes("mud")
   ) {
     return formatProAnswerFromSections({
       "Scene Check": [
@@ -297,7 +431,7 @@ function getSmartBuiltInProAnswer(question) {
         "Be ready for quick release once traction returns"
       ],
       "Do Not Do": [
-        "Do not spin tires deeper into snow",
+        "Do not spin tires deeper into snow or mud",
         "Do not use sudden jerks if control is poor"
       ]
     });
@@ -332,7 +466,10 @@ function getSmartBuiltInProAnswer(question) {
     q.includes("won't roll") ||
     q.includes("wont roll") ||
     q.includes("locked wheel") ||
-    q.includes("parking brake stuck")
+    q.includes("parking brake stuck") ||
+    q.includes("doesn't roll") ||
+    q.includes("doesnt roll") ||
+    q.includes("non-roller")
   ) {
     return formatProAnswerFromSections({
       "Check First": [
@@ -352,30 +489,6 @@ function getSmartBuiltInProAnswer(question) {
   }
 
   if (
-    q.includes("flatbed") ||
-    q.includes("rollback") ||
-    q.includes("loading angle") ||
-    q.includes("low car") ||
-    q.includes("scrape")
-  ) {
-    return formatProAnswerFromSections({
-      "Check First": [
-        "Check ground clearance and approach angle"
-      ],
-      "Setup": [
-        "Reduce loading angle with ramps, blocks, or tilt adjustment",
-        "Keep the pull straight and controlled"
-      ],
-      "Watch For": [
-        "Watch bumper, underbody, exhaust, and transition points"
-      ],
-      "Stop If": [
-        "Stop and adjust if the vehicle starts to bottom out or hang up"
-      ]
-    });
-  }
-
-  if (
     q.includes("accident") ||
     q.includes("collision") ||
     q.includes("crash") ||
@@ -383,7 +496,7 @@ function getSmartBuiltInProAnswer(question) {
   ) {
     return formatProAnswerFromSections({
       "Scene Check": [
-        "Check for fluid leaks, broken suspension, and shifting weight",
+        "Check for fluid leaks, broken suspension, loose panels, and shifting weight",
         "Treat the vehicle as unstable until proven otherwise"
       ],
       "Best Practice": [
@@ -399,7 +512,7 @@ function getSmartBuiltInProAnswer(question) {
   }
 
   if (
-    q.includes("ev") &&
+    isEVQuestion(question) &&
     (q.includes("neutral") || q.includes("won't move") || q.includes("wont move"))
   ) {
     return formatProAnswerFromSections({
@@ -513,7 +626,8 @@ function getSmartBuiltInProAnswer(question) {
   if (
     q.includes("wheel lift") ||
     q.includes("flatbed or wheel lift") ||
-    q.includes("which tow method")
+    q.includes("which tow method") ||
+    q.includes("which method")
   ) {
     return formatProAnswerFromSections({
       "Choose Flatbed When": [
@@ -599,8 +713,36 @@ function getSmartBuiltInProAnswer(question) {
     });
   }
 
+  if (
+    q.includes("equipment") ||
+    q.includes("what is the equipment called") ||
+    q.includes("equipment names")
+  ) {
+    return formatProAnswerFromSections({
+      "Common Loading Equipment": [
+        "Winch line: pulls the casualty onto the deck",
+        "J-hook or T-hook: attachment hardware for approved connection points",
+        "Soft strap: non-metal attachment option when approved",
+        "Wheel straps: transport securement around the tires",
+        "Dollies or skates: move vehicles that do not roll freely"
+      ],
+      "Support Equipment": [
+        "Snatch block: changes winch angle or doubles line advantage",
+        "Chain: heavy-duty securement or recovery use when appropriate",
+        "Control strap: helps manage movement during recovery"
+      ],
+      "Important Reminder": [
+        "The right tool depends on vehicle condition, approved hookup points, and the recovery plan"
+      ]
+    });
+  }
+
   return "";
 }
+
+/* =========================================================
+   5. BUILT-IN SMART ANSWERS - NORMAL MODE
+========================================================= */
 
 function getSmartBuiltInAnswer(question, proMode = false) {
   if (proMode) {
@@ -609,8 +751,15 @@ function getSmartBuiltInAnswer(question, proMode = false) {
 
   const q = cleanText(question);
 
-  if (isEVQuestion(question) && (q.includes("tow") || q.includes("towing"))) {
+  if (
+    isEVQuestion(question) &&
+    hasAny(q, ["tow", "towing", "transport", "load", "loading"])
+  ) {
     return "Most EVs should be transported on a flatbed because dragging the drive wheels can damage the drivetrain or create system issues. First confirm the exact make, model, drive type, and whether transport mode or tow mode is required before moving it. Do not assume the vehicle will roll freely just because it is powered off, and do not attach to unknown underbody components. If the exact manufacturer procedure is unclear, stop and verify before towing. Follow company policy and local regulations.";
+  }
+
+  if (isLoadingQuestion(question)) {
+    return "Start by positioning the truck as straight as possible to the casualty vehicle and reducing the loading angle. Use the correct equipment for the setup, such as the winch line, approved hooks or straps, wheel straps, and dollies if the vehicle will not roll. Use approved tow or loading points only, take slack out slowly, and keep the pull straight and controlled while watching bumper, underbody, and transition clearance. Once loaded, use proper 4-point securement minimum and recheck tension after the vehicle settles. Follow company policy and local regulations.";
   }
 
   if (isLockoutQuestion(question)) {
@@ -624,6 +773,85 @@ function getSmartBuiltInAnswer(question, proMode = false) {
     q.includes("stuck in ditch")
   ) {
     return "Start by slowing the whole scene down and checking traffic exposure, shoulder stability, ditch depth, vehicle angle, ground condition, and whether the customer can stay safely inside or must move to a protected area. Stabilize the vehicle first if there is any chance of shifting, sliding, or rolling during hookup. Use the straightest and least-shocking pull possible, and avoid side-loading, sudden jerks, or attachment to weak or unknown components. Before pulling, confirm where the vehicle will travel, what will happen when it reaches the shoulder, and whether a winch-out, wheel-lift assist, dollies, or flatbed load is the safer finish. If the recovery angle, anchor point, or vehicle condition is uncertain, stop and reassess before continuing. Follow company policy and local regulations.";
+  }
+
+  if (
+    q.includes("winch") ||
+    q.includes("winching") ||
+    q.includes("pull out")
+  ) {
+    return "Set up for the straightest pull you can, and reduce side-load on the cable, vehicle, and casualty unit as much as possible. Inspect the scene, ground condition, vehicle condition, and likely travel path before loading the line. Keep people clear of the danger zone, remove slack carefully, and use controlled tension instead of shock loading. If the vehicle may bind, shift, or climb unpredictably, stop and reset the plan before continuing. Follow company policy and local regulations.";
+  }
+
+  if (
+    q.includes("rollover") ||
+    q.includes("on side") ||
+    q.includes("upside down")
+  ) {
+    return "Treat rollover work as a high-risk recovery from the start. Control the scene, check for occupant, fuel, battery, cargo, and stability hazards, and make sure the vehicle is not going to shift unexpectedly during setup. Build the recovery plan before applying force, control the roll path, and avoid rushing the lift or rotation. If stabilization, traffic exposure, or attachment strategy is uncertain, stop and reassess before proceeding. Follow company policy and local regulations.";
+  }
+
+  if (
+    q.includes("snow") ||
+    q.includes("ice") ||
+    q.includes("slippery") ||
+    q.includes("stuck in snow") ||
+    q.includes("mud")
+  ) {
+    return "Start by checking how deep the vehicle is stuck and whether it will roll once it breaks free. Clear the path if needed and confirm where the vehicle will travel once it starts moving. Use a controlled pull and avoid spinning tires or shock loading, which can dig the vehicle in deeper or cause sudden movement. Keep the pull as straight as possible and watch for sideways slide on low traction surfaces. If traction, angle, or control is uncertain, stop and reassess before continuing. Follow company policy and local regulations.";
+  }
+
+  if (
+    q.includes("soft shoulder") ||
+    q.includes("off road") ||
+    q.includes("edge of road") ||
+    q.includes("soft ground")
+  ) {
+    return "Check the ground condition first and make sure your truck is not at risk of sinking or sliding toward the ditch. Position for the safest and most stable pull, even if it means taking more time to set up. Avoid driving too close to the edge and watch for collapse under load. Use a controlled, straight pull and avoid sudden jerks that can shift both vehicles. If ground stability or positioning is questionable, stop and reassess before continuing. Follow company policy and local regulations.";
+  }
+
+  if (
+    q.includes("won't roll") ||
+    q.includes("wont roll") ||
+    q.includes("locked wheel") ||
+    q.includes("parking brake stuck") ||
+    q.includes("doesn't roll") ||
+    q.includes("doesnt roll") ||
+    q.includes("non-roller")
+  ) {
+    return "Confirm why the vehicle is not rolling before forcing movement. Check for parking brake engagement, seized brakes, transmission lock, or wheel damage. Do not drag the vehicle without understanding the cause, as this can create further damage. Use dollies, skates, or a lift method if the wheels cannot rotate safely. Keep the movement controlled and avoid shock loading the drivetrain or suspension. If the cause of the lock-up is unclear, stop and verify before continuing. Follow company policy and local regulations.";
+  }
+
+  if (
+    q.includes("accident") ||
+    q.includes("collision") ||
+    q.includes("crash") ||
+    q.includes("damaged vehicle")
+  ) {
+    return "Treat the vehicle as unstable until proven otherwise. Check for fluid leaks, broken suspension, loose panels, and shifting weight before touching it. Do not assume wheels will roll or steer correctly. Choose the safest loading method, often a flatbed, and control the vehicle during movement to prevent further damage. If anything looks compromised or unpredictable, stop and reassess before continuing. Follow company policy and local regulations.";
+  }
+
+  if (
+    isEVQuestion(question) &&
+    (q.includes("neutral") || q.includes("won't move") || q.includes("wont move"))
+  ) {
+    return "Confirm the vehicle state first, as many EVs require specific steps to enter transport or tow mode. Do not force movement if the drivetrain is locked. Use dollies or a flatbed if the wheels cannot rotate freely. Avoid dragging the vehicle, as this can damage the drive system or create electrical issues. If the correct procedure is unknown for that model, stop and verify before continuing. Follow company policy and local regulations.";
+  }
+
+  if (
+    q.includes("tow points") ||
+    q.includes("hook points") ||
+    q.includes("where do i hook")
+  ) {
+    return "Do not guess tow points from appearance alone. Confirm approved recovery or tie-down points for that exact vehicle before loading or pulling, and never attach to suspension, steering, battery protection, or unknown underbody parts. Follow company policy and local regulations.";
+  }
+
+  if (
+    q.includes("equipment") ||
+    q.includes("what is the equipment called") ||
+    q.includes("equipment names")
+  ) {
+    return "Common towing and loading equipment includes the winch line, J-hooks or T-hooks for approved connection points, soft straps when appropriate, wheel straps for final securement, dollies or skates for non-rollers, chains for heavy securement or recovery use when appropriate, and snatch blocks for changing line angle or improving pull setup. The right equipment depends on the casualty condition, approved hookup points, and the recovery plan.";
   }
 
   return "";
@@ -655,14 +883,14 @@ function buildFallbackAnswer(question, proMode = false) {
 function shouldUseWebFallback(answer) {
   if (!answer) return true;
 
-  const a = answer.toLowerCase().trim();
+  const a = cleanText(answer);
 
   if (a.length < 80) return true;
 
   const weakPhrases = [
-    "i don't have a strong answer",
+    "i don t have a strong answer",
     "i dont have a strong answer",
-    "i'm not sure",
+    "i m not sure",
     "i am not sure",
     "not certain",
     "may vary",
@@ -678,7 +906,7 @@ function shouldUseWebFallback(answer) {
 }
 
 /* =========================================================
-   5. PROMPTS
+   6. PROMPTS
 ========================================================= */
 
 function buildChatPrompt(question, knowledgeContext) {
@@ -698,7 +926,7 @@ Style:
 - avoid long blocks of text when possible
 
 Rules:
-- stay focused on towing, roadside, recovery, EV service, dispatch, and vehicle disablement
+- stay focused on towing, roadside, recovery, EV service, dispatch, loading, securement, and vehicle disablement
 - use the knowledge context if it is relevant
 - do not invent exact OEM attachment points or unsafe recovery instructions
 - if the exact make/model procedure may vary, say what is typical first, then say what should be verified
@@ -728,10 +956,11 @@ Style:
 
 Rules:
 - answer like an experienced towing professional
-- for recovery questions, give a high-level field procedure
+- for recovery and loading questions, give a high-level field procedure
+- include equipment names when useful
 - do not invent exact OEM attachment points or unsafe recovery instructions
 - if exact model steps vary, state the standard safe approach first, then what must be verified
-- stay focused on towing, roadside, recovery, EV service, dispatch, and vehicle disablement
+- stay focused on towing, roadside, recovery, EV service, dispatch, loading, securement, and vehicle disablement
 - do not mention internal source files
 - do not mention AAA or CAA
 - if the user asks outside your scope, say exactly: Sorry, I can only answer towing and roadside safety questions.
@@ -781,7 +1010,7 @@ function buildWebSearchPrompt(question, mode, knowledgeContext, proMode = false)
 }
 
 /* =========================================================
-   6. KNOWLEDGE SEARCH + LEARNING
+   7. KNOWLEDGE SEARCH + LEARNING
 ========================================================= */
 
 async function getEmbedding(openai, text) {
@@ -885,13 +1114,20 @@ async function saveLearnedKnowledge(openai, supabase, question, answer, metadata
 }
 
 /* =========================================================
-   7. PUBLIC AI HELPERS
+   8. PUBLIC AI HELPERS
 ========================================================= */
 
-export async function handleAsk({ openai, supabase, question, mode = "chat", proMode = false }) {
+export async function handleAsk({
+  openai,
+  supabase,
+  question,
+  mode = "chat",
+  proMode = false
+}) {
+  const normalizedQuestion = String(question || "").trim();
   const modeUsed = mode === "camera" ? "camera" : "chat";
 
-  if (!question) {
+  if (!normalizedQuestion) {
     return {
       answer: "Please enter a towing or roadside safety question.",
       sourcesUsed: 0,
@@ -899,7 +1135,7 @@ export async function handleAsk({ openai, supabase, question, mode = "chat", pro
     };
   }
 
-  if (!isTowingQuestion(question)) {
+  if (!isTowingQuestion(normalizedQuestion)) {
     return {
       answer: "Sorry, I can only answer towing and roadside safety questions.",
       sourcesUsed: 0,
@@ -907,29 +1143,43 @@ export async function handleAsk({ openai, supabase, question, mode = "chat", pro
     };
   }
 
-  const rawMatches = await searchKnowledgeBase(openai, supabase, question, 5);
-  const matches = filterKnowledgeMatches(question, rawMatches);
+  const rawMatches = await searchKnowledgeBase(openai, supabase, normalizedQuestion, 5);
+  const matches = filterKnowledgeMatches(normalizedQuestion, rawMatches);
   const knowledgeContext = formatKnowledgeContext(matches);
-  const builtInAnswer = getSmartBuiltInAnswer(question, proMode);
 
+  /* ---------------------------------------------------------
+     BUILT-IN EXPERT ANSWER FIRST
+  --------------------------------------------------------- */
+  const builtInAnswer = getSmartBuiltInAnswer(normalizedQuestion, proMode);
+  if (builtInAnswer) {
+    return {
+      answer: builtInAnswer,
+      sourcesUsed: matches.length,
+      modeUsed,
+      webSources: []
+    };
+  }
+
+  /* ---------------------------------------------------------
+     FIRST PASS AI
+  --------------------------------------------------------- */
   const firstPass = await openai.responses.create({
     model: "gpt-5-mini",
     instructions:
       modeUsed === "camera"
-        ? buildCameraPrompt(question, knowledgeContext)
+        ? buildCameraPrompt(normalizedQuestion, knowledgeContext)
         : proMode
-        ? buildProChatPrompt(question, knowledgeContext)
-        : buildChatPrompt(question, knowledgeContext),
-    input: question,
+        ? buildProChatPrompt(normalizedQuestion, knowledgeContext)
+        : buildChatPrompt(normalizedQuestion, knowledgeContext),
+    input: normalizedQuestion,
     max_output_tokens: 350
   });
 
   let answer = extractResponseText(firstPass).replace(/\n\s+/g, "\n").trim();
 
-  if ((!answer || shouldUseWebFallback(answer)) && builtInAnswer) {
-    answer = builtInAnswer;
-  }
-
+  /* ---------------------------------------------------------
+     WEB FALLBACK
+  --------------------------------------------------------- */
   let webSources = [];
 
   if (shouldUseWebFallback(answer)) {
@@ -937,8 +1187,13 @@ export async function handleAsk({ openai, supabase, question, mode = "chat", pro
       model: "gpt-5-mini",
       tools: [{ type: "web_search" }],
       include: ["web_search_call.action.sources"],
-      instructions: buildWebSearchPrompt(question, modeUsed, knowledgeContext, proMode),
-      input: question,
+      instructions: buildWebSearchPrompt(
+        normalizedQuestion,
+        modeUsed,
+        knowledgeContext,
+        proMode
+      ),
+      input: normalizedQuestion,
       max_output_tokens: 400
     });
 
@@ -948,7 +1203,7 @@ export async function handleAsk({ openai, supabase, question, mode = "chat", pro
       answer = webAnswer;
       webSources = extractWebSources(webResult);
 
-      await saveLearnedKnowledge(openai, supabase, question, webAnswer, {
+      await saveLearnedKnowledge(openai, supabase, normalizedQuestion, webAnswer, {
         mode_used: modeUsed,
         pro_mode: proMode,
         web_sources: webSources
@@ -956,8 +1211,11 @@ export async function handleAsk({ openai, supabase, question, mode = "chat", pro
     }
   }
 
+  /* ---------------------------------------------------------
+     FINAL FALLBACK
+  --------------------------------------------------------- */
   if (!answer) {
-    answer = buildFallbackAnswer(question, proMode);
+    answer = buildFallbackAnswer(normalizedQuestion, proMode);
   }
 
   return {
