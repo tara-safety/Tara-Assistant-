@@ -3,60 +3,89 @@ let analyser = null;
 let microphone = null;
 let soundLoop = null;
 let mediaStream = null;
-let loudHits = 0;
-let lastPeakTime = 0;
+
+let ambientRms = 10;
+let lastSpikeTime = 0;
+let spikeHits = 0;
+let lastTriggerTime = 0;
+
+const SPIKE_WINDOW_MS = 2500;
+const TRIGGER_COOLDOWN_MS = 9000;
 
 export async function startSoundWatch(state, dom, onDanger) {
   if (state.soundWatchActive) return;
   state.soundWatchActive = true;
 
   try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false
+      }
+    });
 
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
     microphone = audioContext.createMediaStreamSource(mediaStream);
     analyser = audioContext.createAnalyser();
-    analyser.fftSize = 512;
+    analyser.fftSize = 1024;
+    analyser.smoothingTimeConstant = 0.2;
 
     microphone.connect(analyser);
 
-    const data = new Uint8Array(analyser.frequencyBinCount);
+    const timeData = new Uint8Array(analyser.fftSize);
 
     function checkAudio() {
       if (!state.soundWatchActive || !analyser) return;
 
-      analyser.getByteFrequencyData(data);
+      analyser.getByteTimeDomainData(timeData);
 
-      let sum = 0;
-      let peak = 0;
+      let peakDeviation = 0;
+      let squareSum = 0;
 
-      for (let i = 0; i < data.length; i++) {
-        sum += data[i];
-        if (data[i] > peak) peak = data[i];
+      for (let i = 0; i < timeData.length; i++) {
+        const deviation = Math.abs(timeData[i] - 128);
+        if (deviation > peakDeviation) peakDeviation = deviation;
+        squareSum += deviation * deviation;
       }
 
-      const avg = sum / data.length;
+      const rms = Math.sqrt(squareSum / timeData.length);
       const now = Date.now();
 
-      const roadsideArmed =
-        state.highRiskMode ||
-        state.contextMode === "working" ||
-        state.contextMode === "walking";
+      const suddenSpike =
+        peakDeviation > 58 &&
+        rms > ambientRms * 1.9 + 6;
 
-      if (roadsideArmed) {
-        if (peak > 210 || avg > 90) {
-          if (now - lastPeakTime > 1200) {
-            loudHits += 1;
-            lastPeakTime = now;
+      const mediumSpike =
+        peakDeviation > 48 &&
+        rms > ambientRms * 2.2 + 8;
+
+      const isHazardSpike = suddenSpike || mediumSpike;
+
+      if (isHazardSpike) {
+        if (now - lastSpikeTime > 600) {
+          if (now - lastSpikeTime > SPIKE_WINDOW_MS) {
+            spikeHits = 0;
           }
-        }
 
-        if (loudHits >= 2) {
-          loudHits = 0;
-          onDanger("loud_sound");
+          spikeHits += 1;
+          lastSpikeTime = now;
         }
       } else {
-        loudHits = 0;
+        ambientRms = ambientRms * 0.95 + rms * 0.05;
+
+        if (now - lastSpikeTime > SPIKE_WINDOW_MS) {
+          spikeHits = 0;
+        }
+      }
+
+      if (
+        spikeHits >= 2 &&
+        now - lastTriggerTime > TRIGGER_COOLDOWN_MS
+      ) {
+        spikeHits = 0;
+        lastTriggerTime = now;
+        onDanger("hazard_sound");
       }
 
       soundLoop = requestAnimationFrame(checkAudio);
@@ -65,22 +94,25 @@ export async function startSoundWatch(state, dom, onDanger) {
     checkAudio();
 
     if (dom.soundText) {
-      dom.soundText.textContent = "Sound Watch: On";
+      dom.soundText.textContent = "Hazard Watch: On";
     }
   } catch (err) {
-    console.error("Sound watch failed:", err);
+    console.error("Hazard watch failed:", err);
     state.soundWatchActive = false;
 
     if (dom.soundText) {
-      dom.soundText.textContent = "Sound Watch: Unavailable";
+      dom.soundText.textContent = "Hazard Watch: Unavailable";
     }
   }
 }
 
 export function stopSoundWatch(state, dom) {
   state.soundWatchActive = false;
-  loudHits = 0;
-  lastPeakTime = 0;
+
+  ambientRms = 10;
+  lastSpikeTime = 0;
+  spikeHits = 0;
+  lastTriggerTime = 0;
 
   if (soundLoop) {
     cancelAnimationFrame(soundLoop);
@@ -93,7 +125,7 @@ export function stopSoundWatch(state, dom) {
   }
 
   if (mediaStream) {
-    mediaStream.getTracks().forEach(track => track.stop());
+    mediaStream.getTracks().forEach((track) => track.stop());
     mediaStream = null;
   }
 
@@ -105,6 +137,6 @@ export function stopSoundWatch(state, dom) {
   analyser = null;
 
   if (dom.soundText) {
-    dom.soundText.textContent = "Sound Watch: Off";
+    dom.soundText.textContent = "Hazard Watch: Off";
   }
 }
