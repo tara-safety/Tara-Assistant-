@@ -155,33 +155,6 @@ document.addEventListener("DOMContentLoaded", function () {
     console.warn("voiceBtn not found");
   }
 
-  if (dom.towModeBtn) {
-    dom.towModeBtn.addEventListener("click", function () {
-      console.log("Tow mode button clicked");
-
-      try {
-        state.towModeActive = !state.towModeActive;
-
-        if (state.towModeActive) {
-          startVoiceSystem(state, dom, sendQuestion);
-          dom.towModeBtn.textContent = "Tow Mode ON";
-          addStatus(dom.chatBox, "🚚 Tow Mode Activated");
-        } else {
-          stopVoiceSystem(state);
-          dom.towModeBtn.textContent = "Tow Mode OFF";
-          addStatus(dom.chatBox, "🚚 Tow Mode Disabled");
-        }
-      } catch (err) {
-        console.error("Tow mode failed:", err);
-        addStatus(
-          dom.chatBox,
-          `<span style="color:red;">Tow Mode failed: ${err.message}</span>`
-        );
-      }
-    });
-  } else {
-    console.warn("towModeBtn not found");
-  }
 
   if (dom.towCameraBtn) {
     dom.towCameraBtn.addEventListener("click", function () {
