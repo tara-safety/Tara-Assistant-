@@ -1,6 +1,34 @@
 import OpenAI from "openai";
 
 /* =========================================================
+   0. SIMPLE SESSION MEMORY
+========================================================= */
+
+const sessionStore = new Map();
+
+function getSessionHistory(sessionId = "default", maxTurns = 8) {
+  const history = sessionStore.get(sessionId) || [];
+  return history.slice(-maxTurns);
+}
+
+function saveSessionMessage(sessionId = "default", role, content) {
+  if (!sessionId || !role || !content) return;
+
+  const history = sessionStore.get(sessionId) || [];
+  history.push({
+    role,
+    content: String(content).trim()
+  });
+
+  const trimmed = history.slice(-12);
+  sessionStore.set(sessionId, trimmed);
+}
+
+function clearSessionHistory(sessionId = "default") {
+  sessionStore.delete(sessionId);
+}
+
+/* =========================================================
    1. TEXT + QUESTION HELPERS
 ========================================================= */
 
@@ -256,17 +284,17 @@ function getSmartBuiltInProAnswer(question) {
         "Wheel straps for final securement",
         "Dollies or skates if the vehicle does not roll"
       ],
-      "Hookup": [
+      Hookup: [
         "Use approved tow or loading points only",
         "Never attach to suspension, steering, brake lines, or unknown underbody components",
         "Take slack out slowly and confirm the hookup is tracking straight"
       ],
-      "Loading": [
+      Loading: [
         "Keep the pull straight and controlled",
         "Watch bumper, underbody, exhaust, air dams, and transition points",
         "Stop immediately if the vehicle starts to scrape, shift, bind, or climb poorly"
       ],
-      "Securement": [
+      Securement: [
         "Use a proper 4-point securement minimum for transport",
         "Secure each wheel correctly and evenly",
         "Recheck strap tension after the vehicle settles on the deck"
@@ -291,7 +319,7 @@ function getSmartBuiltInProAnswer(question) {
         "Check whether transport mode or tow mode is required",
         "Confirm whether the vehicle will free-roll before moving it"
       ],
-      "Equipment": [
+      Equipment: [
         "Flatbed",
         "Wheel straps",
         "Dollies if the wheels cannot rotate safely"
@@ -338,7 +366,7 @@ function getSmartBuiltInProAnswer(question) {
         "Check shoulder stability, ditch depth, slope, and ground condition",
         "Check vehicle angle and risk of rollover"
       ],
-      "Stabilize": [
+      Stabilize: [
         "Stabilize the vehicle if there is any chance of shifting or rolling",
         "Confirm where the customer should safely stand or wait"
       ],
@@ -347,7 +375,7 @@ function getSmartBuiltInProAnswer(question) {
         "Avoid side-loading and sudden jerks",
         "Plan where the vehicle will travel once it reaches the shoulder"
       ],
-      "Equipment": [
+      Equipment: [
         "Winch line",
         "Recovery straps",
         "Snatch block if the angle requires a cleaner pull",
@@ -365,21 +393,21 @@ function getSmartBuiltInProAnswer(question) {
     q.includes("pull out")
   ) {
     return formatProAnswerFromSections({
-      "Setup": [
+      Setup: [
         "Align for the straightest pull possible",
         "Inspect the line, hook point, and path of travel before tension"
       ],
-      "Equipment": [
+      Equipment: [
         "Winch line",
         "Appropriate hook point or approved strap",
         "Snatch block if needed for angle correction"
       ],
-      "Operation": [
+      Operation: [
         "Take slack slowly",
         "Use controlled tension instead of shock loading",
         "Watch for bind, climb, or sudden shift"
       ],
-      "Safety": [
+      Safety: [
         "Keep people out of the line of pull and danger zone",
         "Stop if the casualty starts moving unpredictably"
       ]
@@ -396,7 +424,7 @@ function getSmartBuiltInProAnswer(question) {
         "Treat rollover work as high risk from the start",
         "Check for occupant, fuel, battery, cargo, and stability hazards"
       ],
-      "Setup": [
+      Setup: [
         "Build the recovery plan before applying force",
         "Control the roll path and vehicle movement"
       ],
@@ -422,7 +450,7 @@ function getSmartBuiltInProAnswer(question) {
         "Check depth of sink and available traction",
         "Confirm the path the vehicle will take once it breaks free"
       ],
-      "Setup": [
+      Setup: [
         "Keep the pull as straight as possible",
         "Use controlled movement instead of shock loading"
       ],
@@ -448,7 +476,7 @@ function getSmartBuiltInProAnswer(question) {
         "Make sure your truck is not at risk of sinking or sliding",
         "Avoid loading the edge of the shoulder"
       ],
-      "Setup": [
+      Setup: [
         "Position for the safest and most stable pull",
         "Use a controlled straight pull"
       ],
@@ -542,7 +570,7 @@ function getSmartBuiltInProAnswer(question) {
       "Check First": [
         "Check height clearance, ramp angle, and turning space"
       ],
-      "Setup": [
+      Setup: [
         "Use low-clearance equipment",
         "Plan your exit path before loading"
       ],
@@ -562,7 +590,7 @@ function getSmartBuiltInProAnswer(question) {
     q.includes("confined")
   ) {
     return formatProAnswerFromSections({
-      "Plan": [
+      Plan: [
         "Slow the operation down and plan every movement first"
       ],
       "Watch For": [
@@ -656,7 +684,7 @@ function getSmartBuiltInProAnswer(question) {
       "Check First": [
         "Check slope and how weight will shift during movement"
       ],
-      "Setup": [
+      Setup: [
         "Use the straightest path possible",
         "Control rollback and sudden movement"
       ],
@@ -699,7 +727,7 @@ function getSmartBuiltInProAnswer(question) {
       "First Priority": [
         "Traffic control and visibility"
       ],
-      "Setup": [
+      Setup: [
         "Position the truck to protect the scene",
         "Create the safest work area possible"
       ],
@@ -909,7 +937,17 @@ function shouldUseWebFallback(answer) {
    6. PROMPTS
 ========================================================= */
 
-function buildChatPrompt(question, knowledgeContext) {
+function buildHistoryContext(history = []) {
+  if (!Array.isArray(history) || history.length === 0) {
+    return "No recent conversation history.";
+  }
+
+  return history
+    .map((item) => `${item.role.toUpperCase()}: ${item.content}`)
+    .join("\n");
+}
+
+function buildChatPrompt(question, knowledgeContext, historyContext = "") {
   return `You are TARA (Tow Awareness and Response Assistant).
 
 You are speaking to a tow operator, dispatcher, roadside tech, or fleet user.
@@ -928,11 +966,15 @@ Style:
 Rules:
 - stay focused on towing, roadside, recovery, EV service, dispatch, loading, securement, and vehicle disablement
 - use the knowledge context if it is relevant
+- use recent conversation context if relevant
 - do not invent exact OEM attachment points or unsafe recovery instructions
 - if the exact make/model procedure may vary, say what is typical first, then say what should be verified
 - do not mention internal source files
 - do not mention AAA or CAA
 - if the user asks outside your scope, say exactly: Sorry, I can only answer towing and roadside safety questions.
+
+Recent conversation:
+${historyContext}
 
 Knowledge base context:
 ${knowledgeContext}
@@ -941,7 +983,7 @@ User question:
 ${question}`;
 }
 
-function buildProChatPrompt(question, knowledgeContext) {
+function buildProChatPrompt(question, knowledgeContext, historyContext = "") {
   return `You are TARA (Tow Awareness and Response Assistant) in Pro Mode.
 
 You are speaking to a tow operator, dispatcher, roadside tech, or fleet user.
@@ -961,9 +1003,13 @@ Rules:
 - do not invent exact OEM attachment points or unsafe recovery instructions
 - if exact model steps vary, state the standard safe approach first, then what must be verified
 - stay focused on towing, roadside, recovery, EV service, dispatch, loading, securement, and vehicle disablement
+- use recent conversation context if relevant
 - do not mention internal source files
 - do not mention AAA or CAA
 - if the user asks outside your scope, say exactly: Sorry, I can only answer towing and roadside safety questions.
+
+Recent conversation:
+${historyContext}
 
 Knowledge base context:
 ${knowledgeContext}
@@ -997,16 +1043,16 @@ Scene question or scene details:
 ${sceneQuestion}`;
 }
 
-function buildWebSearchPrompt(question, mode, knowledgeContext, proMode = false) {
+function buildWebSearchPrompt(question, mode, knowledgeContext, proMode = false, historyContext = "") {
   if (mode === "camera") {
     return buildCameraPrompt(question, knowledgeContext);
   }
 
   if (proMode) {
-    return buildProChatPrompt(question, knowledgeContext);
+    return buildProChatPrompt(question, knowledgeContext, historyContext);
   }
 
-  return buildChatPrompt(question, knowledgeContext);
+  return buildChatPrompt(question, knowledgeContext, historyContext);
 }
 
 /* =========================================================
@@ -1122,16 +1168,23 @@ export async function handleAsk({
   supabase,
   question,
   mode = "chat",
-  proMode = false
+  proMode = false,
+  sessionId = "default",
+  featureFlags = {}
 }) {
   const normalizedQuestion = String(question || "").trim();
   const modeUsed = mode === "camera" ? "camera" : "chat";
+
+  const useStoredKnowledge = featureFlags.useStoredKnowledge === true;
+  const useChatMemory = featureFlags.useChatMemory !== false;
+  const useLearningLog = featureFlags.useLearningLog === true;
 
   if (!normalizedQuestion) {
     return {
       answer: "Please enter a towing or roadside safety question.",
       sourcesUsed: 0,
-      modeUsed
+      modeUsed,
+      webSources: []
     };
   }
 
@@ -1139,19 +1192,35 @@ export async function handleAsk({
     return {
       answer: "Sorry, I can only answer towing and roadside safety questions.",
       sourcesUsed: 0,
-      modeUsed
+      modeUsed,
+      webSources: []
     };
   }
 
-  const rawMatches = await searchKnowledgeBase(openai, supabase, normalizedQuestion, 5);
-  const matches = filterKnowledgeMatches(normalizedQuestion, rawMatches);
-  const knowledgeContext = formatKnowledgeContext(matches);
+  let matches = [];
+  let knowledgeContext = "Stored knowledge is currently disabled.";
+
+  if (useStoredKnowledge) {
+    const rawMatches = await searchKnowledgeBase(openai, supabase, normalizedQuestion, 5);
+    matches = filterKnowledgeMatches(normalizedQuestion, rawMatches);
+    knowledgeContext = formatKnowledgeContext(matches);
+  }
+
+  const history = useChatMemory ? getSessionHistory(sessionId, 8) : [];
+  const historyContext = useChatMemory
+    ? buildHistoryContext(history)
+    : "Conversation memory is currently disabled.";
 
   /* ---------------------------------------------------------
      BUILT-IN EXPERT ANSWER FIRST
   --------------------------------------------------------- */
   const builtInAnswer = getSmartBuiltInAnswer(normalizedQuestion, proMode);
   if (builtInAnswer) {
+    if (useChatMemory) {
+      saveSessionMessage(sessionId, "user", normalizedQuestion);
+      saveSessionMessage(sessionId, "assistant", builtInAnswer);
+    }
+
     return {
       answer: builtInAnswer,
       sourcesUsed: matches.length,
@@ -1169,8 +1238,8 @@ export async function handleAsk({
       modeUsed === "camera"
         ? buildCameraPrompt(normalizedQuestion, knowledgeContext)
         : proMode
-        ? buildProChatPrompt(normalizedQuestion, knowledgeContext)
-        : buildChatPrompt(normalizedQuestion, knowledgeContext),
+        ? buildProChatPrompt(normalizedQuestion, knowledgeContext, historyContext)
+        : buildChatPrompt(normalizedQuestion, knowledgeContext, historyContext),
     input: normalizedQuestion,
     max_output_tokens: 350
   });
@@ -1191,7 +1260,8 @@ export async function handleAsk({
         normalizedQuestion,
         modeUsed,
         knowledgeContext,
-        proMode
+        proMode,
+        historyContext
       ),
       input: normalizedQuestion,
       max_output_tokens: 400
@@ -1203,11 +1273,13 @@ export async function handleAsk({
       answer = webAnswer;
       webSources = extractWebSources(webResult);
 
-      await saveLearnedKnowledge(openai, supabase, normalizedQuestion, webAnswer, {
-        mode_used: modeUsed,
-        pro_mode: proMode,
-        web_sources: webSources
-      });
+      if (useStoredKnowledge && useLearningLog) {
+        await saveLearnedKnowledge(openai, supabase, normalizedQuestion, webAnswer, {
+          mode_used: modeUsed,
+          pro_mode: proMode,
+          web_sources: webSources
+        });
+      }
     }
   }
 
@@ -1216,6 +1288,11 @@ export async function handleAsk({
   --------------------------------------------------------- */
   if (!answer) {
     answer = buildFallbackAnswer(normalizedQuestion, proMode);
+  }
+
+  if (useChatMemory) {
+    saveSessionMessage(sessionId, "user", normalizedQuestion);
+    saveSessionMessage(sessionId, "assistant", answer);
   }
 
   return {
@@ -1426,3 +1503,5 @@ export async function backfillEmbeddings({ openai, supabase }) {
     }
   };
 }
+
+export { clearSessionHistory };
