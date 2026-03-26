@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Near Miss Report</title>
+
+<style>
+body { font-family: Arial; padding:20px; max-width:600px; margin:auto; }
+input, textarea, button {
+  width:100%; margin:10px 0; padding:10px;
+}
+button {
+  background:#1e9f4f;
+  color:#fff;
+  border:none;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Near Miss Reporting</h1>
+
+<form id="reportForm">
+  <input type="text" placeholder="Name" id="name" required>
+  <input type="text" placeholder="Company" id="company">
+  <input type="text" placeholder="Location" id="location">
+  <textarea placeholder="Describe the near miss..." id="details" required></textarea>
+  <button type="submit">Submit Report</button>
+</form>
+
+<script>
+document.getElementById("reportForm").addEventListener("submit", function(e){
+  e.preventDefault();
+
+  const report = {
+    name: document.getElementById("name").value,
+    company: document.getElementById("company").value,
+    location: document.getElementById("location").value,
+    details: document.getElementById("details").value,
+    date: new Date().toISOString()
+  };
+
+  console.log("Report:", report);
+
+  alert("Report submitted (local test)");
+
+  this.reset();
+});
+</script>
+
+</body>
+</html>
