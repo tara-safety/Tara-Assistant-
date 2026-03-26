@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TARA | How It Works</title>
+  <link rel="stylesheet" href="app.css?v=3" />
+</head>
+<body>
+
+  <div class="header">
+    <button id="menuBtn">☰</button>
+    <span>T.A.R.A SAFETY</span>
+  </div>
+
+  <div class="menu">
+    <a href="/">TARA App</a>
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/dispatcher.html">Dispatcher</a>
+    <a href="/faq.html">How TARA Works</a>
+  </div>
+
+  <div class="main">
+    <section class="taraHeroCard">
+      <div class="taraHeroEyebrow">TARA SAFETY INTELLIGENCE</div>
+      <h1 class="taraHeroTitle">How TARA Works</h1>
+      <p class="taraHeroText">
+        TARA is a roadside safety system built to protect workers, improve awareness,
+        support emergency response, and provide towing-specific AI guidance in one place.
+      </p>
+      <p class="taraHeroText">
+        This page explains what each function does, how the system behaves, and what the
+        user should expect when using it in the field.
+      </p>
+    </section>
+
+    <section class="taraInfoCard">
+      <h2>What TARA Is</h2>
+      <p>
+        TARA is not just a chat tool. It is a roadside safety platform designed for tow
+        operators and roadside workers who may be exposed to traffic, impact risk, and
+        fast-changing danger at the scene.
+      </p>
+      <p>
+        TARA combines emergency activation, worker protection, hazard awareness, and
+        towing-focused AI support into one mobile system.
+      </p>
+    </section>
+
+    <section class="taraGrid">
+      <article class="taraFeatureCard">
+        <div class="taraFeatureIcon">🚨</div>
+        <h3>Emergency Button</h3>
+        <p>
+          The emergency button is a hold-to-activate feature. When held for 3 seconds,
+          TARA starts an emergency countdown, gives the user a chance to cancel, and
+          then sends an alert with GPS location if not stopped in time.
+        </p>
+      </article>
+
+      <article class="taraFeatureCard">
+        <div class="taraFeatureIcon">🦺</div>
+        <h3>Roadside Protection</h3>
+        <p>
+          Roadside Protection is designed for workers who are outside the truck and
+          actively exposed to roadside danger. It watches for impact or unsafe no-response
+          situations, starts a driver check, and escalates to emergency only if the user
+          does not respond.
+        </p>
+      </article>
+
+      <article class="taraFeatureCard">
+        <div class="taraFeatureIcon">⚠️</div>
+        <h3>Hazard Watch</h3>
+        <p>
+          Hazard Watch listens for abnormal nearby danger and warns the worker. It is
+          meant to improve awareness on scene. It does not trigger emergency alerts on
+          its own. It is a warning layer, not an emergency layer.
+        </p>
+      </article>
+
+      <article class="taraFeatureCard">
+        <div class="taraFeatureIcon">🤖</div>
+        <h3>Towing AI Assistant</h3>
+        <p>
+          TARA includes a towing and roadside safety AI assistant that answers towing
+          questions, supports field decision-making, and provides practical safety-focused
+          guidance based on the situation.
+        </p>
+      </article>
+    </section>
+
+    <section class="taraInfoCard">
+      <h2>System Behavior</h2>
+
+      <div class="taraStepBlock">
+        <div class="taraStepNumber">1</div>
+        <div class="taraStepContent">
+          <h3>Emergency Activation</h3>
+          <p>
+            If the emergency button is held for 3 seconds, TARA starts a visible emergency
+            countdown, plays an alarm, and gives the user a cancel option.
+          </p>
+        </div>
+      </div>
+
+      <div class="taraStepBlock">
+        <div class="taraStepNumber">2</div>
+        <div class="taraStepContent">
+          <h3>Roadside Protection Check</h3>
+          <p>
+            When Roadside Protection is active, TARA watches for impact and worker-response
+            conditions. If a serious event is detected, it starts a driver check before
+            escalating further.
+          </p>
+        </div>
+      </div>
+
+      <div class="taraStepBlock">
+        <div class="taraStepNumber">3</div>
+        <div class="taraStepContent">
+          <h3>Hazard Watch Warning</h3>
+          <p>
+            When Hazard Watch is active, TARA listens for abnormal nearby danger and warns
+            the worker. This warning is intended to improve awareness and does not go
+            directly into emergency alerting.
+          </p>
+        </div>
+      </div>
+
+      <div class="taraStepBlock">
+        <div class="taraStepNumber">4</div>
+        <div class="taraStepContent">
+          <h3>Emergency Alert and GPS</h3>
+          <p>
+            If the user does not respond during an active emergency check, TARA sends an
+            emergency alert with available GPS location information.
+          </p>
+        </div>
+      </div>
+
+      <div class="taraStepBlock">
+        <div class="taraStepNumber">5</div>
+        <div class="taraStepContent">
+          <h3>Fail-Safe Queue</h3>
+          <p>
+            If delivery cannot happen immediately, TARA can queue the alert and retry
+            later when connection becomes available again.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="taraInfoCard">
+      <h2>Frequently Asked Questions</h2>
+
+      <div class="taraFaqItem">
+        <h3>What is TARA?</h3>
+        <p>
+          TARA is a towing and roadside safety system that combines emergency protection,
+          worker monitoring, hazard awareness, and AI support into one mobile platform.
+        </p>
+      </div>
+
+      <div class="taraFaqItem">
+        <h3>What does the emergency button do?</h3>
+        <p>
+          It starts a hold-to-activate emergency sequence. If the user does not cancel
+          the countdown, TARA sends an emergency alert and GPS location to the configured
+          contact system.
+        </p>
+      </div>
+
+      <div class="taraFaqItem">
+        <h3>What is Roadside Protection?</h3>
+        <p>
+          Roadside Protection is the worker protection mode. It is meant for use when the
+          operator is out on scene and exposed to roadside risk. It can detect possible
+          impact events and run a driver check before emergency escalation.
+        </p>
+      </div>
+
+      <div class="taraFaqItem">
+        <h3>What is Hazard Watch?</h3>
+        <p>
+          Hazard Watch is a warning-only awareness feature. It listens for abnormal nearby
+          danger and warns the worker, but it does not automatically send emergency alerts.
+        </p>
+      </div>
+
+      <div class="taraFaqItem">
+        <h3>Should Hazard Watch be used by itself?</h3>
+        <p>
+          It can be used by itself, but it works best with Roadside Protection turned on.
+          Hazard Watch improves awareness. Roadside Protection adds worker-response and
+          emergency escalation.
+        </p>
+      </div>
+
+      <div class="taraFaqItem">
+        <h3>Does TARA send GPS location?</h3>
+        <p>
+          Yes. During emergency activation, TARA can send available GPS location data as
+          part of the alert process.
+        </p>
+      </div>
+
+      <div class="taraFaqItem">
+        <h3>What happens if there is weak signal?</h3>
+        <p>
+          TARA includes fail-safe queue logic. If an alert cannot be delivered immediately,
+          it can remain queued and retry when connection becomes available.
+        </p>
+      </div>
+
+      <div class="taraFaqItem">
+        <h3>Does Hazard Watch trigger emergency automatically?</h3>
+        <p>
+          No. Hazard Watch is designed to warn the worker only. Emergency escalation is
+          handled through the emergency flow and Roadside Protection logic.
+        </p>
+      </div>
+
+      <div class="taraFaqItem">
+        <h3>Can TARA answer general questions?</h3>
+        <p>
+          TARA is designed to stay focused on towing, roadside work, and safety-related
+          topics.
+        </p>
+      </div>
+
+      <div class="taraFaqItem">
+        <h3>Why is this useful for towing companies?</h3>
+        <p>
+          TARA helps improve worker protection, increases roadside awareness, supports
+          emergency response, and gives operators access to safety-focused towing guidance
+          in the field.
+        </p>
+      </div>
+    </section>
+
+    <section class="taraInfoCard">
+      <h2>What TARA Is Designed To Do</h2>
+      <ul class="taraList">
+        <li>Protect workers who are exposed on roadside calls</li>
+        <li>Warn the worker of possible nearby danger</li>
+        <li>Support emergency alerting with location</li>
+        <li>Provide towing-specific AI support and guidance</li>
+        <li>Help companies improve field safety and response readiness</li>
+      </ul>
+    </section>
+  </div>
+
+  <script type="module">
+    const menuBtn = document.getElementById("menuBtn");
+    const menu = document.querySelector(".menu");
+
+    if (menuBtn && menu) {
+      menuBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        menu.classList.toggle("open");
+      });
+
+      document.addEventListener("click", function (e) {
+        if (
+          menu.classList.contains("open") &&
+          !menu.contains(e.target) &&
+          e.target !== menuBtn
+        ) {
+          menu.classList.remove("open");
+        }
+      });
+    }
+  </script>
+</body>
+</html>
