@@ -1,7 +1,7 @@
 export const DRIVER_NAME = "Tow Operator";
 export const COMPANY = "TARA Safety Intelligence";
 
-export const IMPACT_LIMIT = 24;
+export const IMPACT_LIMIT = 38;
 export const INACTIVITY_LIMIT = 8 * 60 * 1000;
 export const IMPACT_COOLDOWN = 8000;
 export const EMERGENCY_COUNTDOWN = 30;
