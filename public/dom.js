@@ -12,12 +12,6 @@ export function getDOM() {
     menuBtn: document.getElementById("menuBtn"),
     menu: document.querySelector(".menu"),
     questionInput: document.getElementById("question"),
-    chatBox: document.getElementById("chatBox"),
-    contextText: document.getElementById("contextText"),
-    riskText: document.getElementById("riskText"),
-    soundText: document.getElementById("soundText"),
-    driverMinderText: document.getElementById("driverMinderText"),
-    contextBadge: document.getElementById("contextBadge"),
-    motionDebug: document.getElementById("motionDebug")
+    chatBox: document.getElementById("chatBox")
   };
 }
