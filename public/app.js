@@ -1,3 +1,7 @@
+// ================================
+// TARA CORE APP CONTROLLER (UPGRADED SAFE)
+// ================================
+
 import { state } from "./state.js";
 import { getDOM } from "./dom.js";
 import {
@@ -44,6 +48,14 @@ function getOrCreateSessionId() {
 
 document.addEventListener("DOMContentLoaded", function () {
   console.log("TARA System Booting");
+
+  // ================================
+  // 🔐 USER AGREEMENT (NEW)
+  // ================================
+  if (localStorage.getItem("tara_agreed") !== "true") {
+    window.location.href = "/agreement.html";
+    return;
+  }
 
   let dom;
   const sessionId = getOrCreateSessionId();
@@ -119,11 +131,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   if (dom.askBtn) {
     dom.askBtn.addEventListener("click", function () {
-      console.log("Ask button clicked");
       sendQuestion();
     });
-  } else {
-    console.warn("askBtn not found");
   }
 
   if (dom.questionInput) {
@@ -133,51 +142,36 @@ document.addEventListener("DOMContentLoaded", function () {
         sendQuestion();
       }
     });
-  } else {
-    console.warn("questionInput not found");
   }
 
   if (dom.voiceBtn) {
     dom.voiceBtn.addEventListener("click", function () {
-      console.log("Voice button clicked");
-
       try {
         startSingleVoiceInput(dom, sendQuestion);
       } catch (err) {
-        console.error("startSingleVoiceInput failed:", err);
         addStatus(
           dom.chatBox,
           `<span style="color:red;">Voice input failed: ${err.message}</span>`
         );
       }
     });
-  } else {
-    console.warn("voiceBtn not found");
   }
-
 
   if (dom.towCameraBtn) {
     dom.towCameraBtn.addEventListener("click", function () {
-      console.log("Camera button clicked");
-
       try {
         openCamera(dom);
       } catch (err) {
-        console.error("openCamera failed:", err);
         addStatus(
           dom.chatBox,
           `<span style="color:red;">Camera failed: ${err.message}</span>`
         );
       }
     });
-  } else {
-    console.warn("towCameraBtn not found");
   }
 
   if (dom.proModeBtn) {
     dom.proModeBtn.addEventListener("click", function () {
-      console.log("Pro mode button clicked");
-
       state.proMode = !state.proMode;
 
       if (state.proMode) {
@@ -188,25 +182,19 @@ document.addEventListener("DOMContentLoaded", function () {
         addStatus(dom.chatBox, "🧠 Pro Mode Disabled");
       }
     });
-  } else {
-    console.warn("proModeBtn not found");
   }
 
   try {
     setupDriverMinder(state, dom, function () {
       startEmergencyCountdown(state, dom);
     });
-  } catch (err) {
-    console.error("setupDriverMinder failed:", err);
-  }
+  } catch (err) {}
 
   try {
     setupEmergencyButton(state, dom, function () {
       startEmergencyCountdown(state, dom);
     });
-  } catch (err) {
-    console.error("setupEmergencyButton failed:", err);
-  }
+  } catch (err) {}
 
   function toggleMiniSOS() {
     if (!emergencyMiniBtn) return;
@@ -222,6 +210,9 @@ document.addEventListener("DOMContentLoaded", function () {
   window.addEventListener("resize", toggleMiniSOS);
   toggleMiniSOS();
 
+  // ================================
+  // 💬 CHAT SYSTEM
+  // ================================
   async function sendQuestion() {
     if (!dom.questionInput || !dom.chatBox) return;
 
@@ -245,41 +236,19 @@ document.addEventListener("DOMContentLoaded", function () {
         })
       });
 
-      if (!res.ok) {
-        throw new Error(`Server returned ${res.status}`);
-      }
-
       const data = await res.json();
 
-      if (thinking && typeof thinking.remove === "function") {
-        thinking.remove();
-      }
+      thinking?.remove();
 
       const answer = data.answer || "No response returned.";
       addTaraMessage(dom.chatBox, answer);
 
-      if (data.brain) {
-        const memoryOn = data.brain.chatMemory === true;
-        const storedKnowledgeOn = data.brain.storedKnowledge === true;
-
-        if (memoryOn && !storedKnowledgeOn) {
-          addStatus(dom.chatBox, "🧠 Memory On | Stored Knowledge Off");
-        }
-      }
-
       if (state.voiceEnabled) {
-        try {
-          speak(answer, state);
-        } catch (err) {
-          console.error("speak failed:", err);
-        }
+        speak(answer, state);
       }
-    } catch (err) {
-      console.error("Ask error:", err);
 
-      if (thinking && typeof thinking.remove === "function") {
-        thinking.remove();
-      }
+    } catch (err) {
+      thinking?.remove();
 
       addStatus(
         dom.chatBox,
@@ -287,4 +256,34 @@ document.addEventListener("DOMContentLoaded", function () {
       );
     }
   }
+
+  // ================================
+  // 📊 NEAR MISS SYSTEM (NEW)
+  // ================================
+  const reportForm = document.getElementById("reportForm");
+
+  if (reportForm) {
+    reportForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const report = {
+        name: document.getElementById("name")?.value || "",
+        company: document.getElementById("company")?.value || "",
+        location: document.getElementById("location")?.value || "",
+        details: document.getElementById("details")?.value || "",
+        date: new Date().toISOString()
+      };
+
+      let reports = JSON.parse(localStorage.getItem("tara_reports") || "[]");
+      reports.push(report);
+      localStorage.setItem("tara_reports", JSON.stringify(reports));
+
+      alert("Near miss report submitted");
+
+      reportForm.reset();
+    });
+  }
+
+  console.log("TARA READY");
+
 });
