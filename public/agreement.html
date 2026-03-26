@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TARA User Agreement</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #071a22;
+  color: #fff;
+  padding: 20px;
+}
+
+.container {
+  max-width: 700px;
+  margin: auto;
+}
+
+h1 {
+  color: #00ff99;
+}
+
+.box {
+  background: #0e2c38;
+  padding: 20px;
+  border-radius: 10px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+button {
+  margin-top: 20px;
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: bold;
+  background: #00ff99;
+  color: #000;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>T.A.R.A User Agreement</h1>
+
+  <div class="box">
+    <p><strong>IMPORTANT SAFETY NOTICE</strong></p>
+
+    <p>
+    T.A.R.A (Towing Awareness & Response App) is designed to assist with roadside safety awareness,
+    emergency communication, and towing-related guidance. It is NOT a replacement for proper training,
+    judgment, or professional safety procedures.
+    </p>
+
+    <p><strong>By using this application, you agree:</strong></p>
+
+    <ul>
+      <li>You are responsible for your own safety and actions</li>
+      <li>TARA does NOT guarantee hazard detection or prevention</li>
+      <li>Emergency alerts depend on device, signal, and system availability</li>
+      <li>You will NOT rely solely on TARA in life-threatening situations</li>
+      <li>TARA is a support tool — not a safety system replacement</li>
+    </ul>
+
+    <p><strong>Limitation of Liability:</strong></p>
+    <p>
+    Safety Buzz Alerts and T.A.R.A are NOT liable for any injury, damage,
+    loss, or incident resulting from use, misuse, or failure of this system.
+    </p>
+
+    <p><strong>Use of Data:</strong></p>
+    <p>
+    Data such as location, alerts, and reports may be used to improve safety intelligence
+    and system performance.
+    </p>
+
+    <p>
+    If you do not agree, do not use this application.
+    </p>
+  </div>
+
+  <button onclick="agree()">I AGREE</button>
+</div>
+
+<script>
+function agree() {
+  localStorage.setItem("tara_agreed", "true");
+  window.location.href = "/";
+}
+
+// Auto skip if already agreed
+if (localStorage.getItem("tara_agreed") === "true") {
+  window.location.href = "/";
+}
+</script>
+
+</body>
+</html>
