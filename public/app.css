@@ -347,3 +347,152 @@ button:active {
       0 0 8px red;
   }
 }
+
+.taraHeroCard,
+.taraInfoCard,
+.taraFeatureCard {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 22px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.taraHeroCard {
+  padding: 24px;
+}
+
+.taraHeroEyebrow {
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  color: #e8fff1;
+  margin-bottom: 10px;
+}
+
+.taraHeroTitle {
+  margin: 0 0 12px 0;
+  font-size: 34px;
+  line-height: 1.1;
+  color: #ffffff;
+}
+
+.taraHeroText {
+  margin: 0 0 12px 0;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #f3fff8;
+}
+
+.taraInfoCard {
+  padding: 22px;
+}
+
+.taraInfoCard h2 {
+  margin-top: 0;
+  margin-bottom: 14px;
+  font-size: 28px;
+  color: #ffffff;
+}
+
+.taraInfoCard h3 {
+  margin-bottom: 8px;
+  color: #ffffff;
+}
+
+.taraInfoCard p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #f3fff8;
+}
+
+.taraGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.taraFeatureCard {
+  padding: 20px;
+}
+
+.taraFeatureIcon {
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.taraFeatureCard h3 {
+  margin: 0 0 10px 0;
+  font-size: 22px;
+  color: #ffffff;
+}
+
+.taraFeatureCard p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #f3fff8;
+}
+
+.taraStepBlock {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.taraStepNumber {
+  min-width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #1e9f4f;
+  color: #000;
+  font-weight: bold;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.taraStepContent h3 {
+  margin: 2px 0 8px 0;
+}
+
+.taraStepContent p {
+  margin: 0;
+}
+
+.taraFaqItem {
+  padding: 14px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.taraFaqItem:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.taraFaqItem h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+}
+
+.taraFaqItem p {
+  margin: 0;
+}
+
+.taraList {
+  margin: 0;
+  padding-left: 22px;
+  color: #f3fff8;
+}
+
+.taraList li {
+  margin-bottom: 10px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+@media (min-width: 760px) {
+  .taraGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
