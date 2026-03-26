@@ -12,6 +12,12 @@
 </head>
 <body>
 
+<script>
+if (localStorage.getItem("tara_agreed") !== "true") {
+  window.location.href = "/agreement.html";
+}
+</script>
+  
   <div class="header">
     <button id="menuBtn">☰</button>
     <span>T.A.R.A SAFETY</span>
@@ -22,6 +28,8 @@
   <a href="/dashboard.html">Dashboard</a>
   <a href="/dispatcher.html">Dispatcher</a>
   <a href="/faq.html">How TARA Works</a>
+  <a href="/near-miss-report.html">Report Near Miss</a>
+  <a href="/legal-readme.html">Legal</a>
 </div>
 
   
