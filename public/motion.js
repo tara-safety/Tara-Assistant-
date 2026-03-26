@@ -151,7 +151,9 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
     const y = Math.abs(acc.y || 0);
     const z = Math.abs(acc.z || 0);
 
-    const impact = x + y + z;
+    const magnitude = Math.sqrt(x * x + y * y + z * z);
+    const impact = Math.abs(magnitude - (state.lastMagnitude || magnitude));
+    state.lastMagnitude = magnitude;
     const motionLevel = x * 0.35 + y * 0.35 + z * 0.2;
 
     if (impact > IMPACT_LIMIT) {
