@@ -206,8 +206,11 @@ textarea {
   background: #7fb89e;
   border-radius: 20px;
   padding: 15px;
-  min-height: 180px;
+
+  height: 140px;            /* 🔥 smaller default */
+  max-height: 180px;        /* prevents it growing too big */
   overflow-y: auto;
+
   font-size: 15px;
   line-height: 1.4;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
