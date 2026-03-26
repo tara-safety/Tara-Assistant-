@@ -5,11 +5,15 @@ export function setupContextAwareness(state, dom) {
     state.contextMode = "idle";
   }
 
-  updateContextUI(state, dom);
-  startSpeedWatch(state, dom);
+  // No UI updates anymore — silent system
+  startSpeedWatch(state);
 }
 
-function startSpeedWatch(state, dom) {
+/* ============================= */
+/* SPEED WATCH (BACKGROUND ONLY) */
+/* ============================= */
+
+function startSpeedWatch(state) {
   if (!navigator.geolocation) {
     console.log("Geolocation watch not supported");
     return;
@@ -26,7 +30,7 @@ function startSpeedWatch(state, dom) {
         speed !== undefined &&
         speed > DRIVING_SPEED_MPS
       ) {
-        forceContextMode(state, dom, "driving");
+        state.contextMode = "driving";
       }
     },
     function (err) {
@@ -40,11 +44,16 @@ function startSpeedWatch(state, dom) {
   );
 }
 
+/* ============================= */
+/* MOTION CONTEXT (BACKGROUND) */
+/* ============================= */
+
 export function updateMotionContext(state, motionLevel) {
   const now = Date.now();
 
   state.lastMotionLevel = motionLevel;
 
+  // simplified scoring (kept for internal logic)
   if (motionLevel > 11) {
     state.motionActivityScore = 20;
   } else if (motionLevel > 5) {
@@ -59,39 +68,24 @@ export function updateMotionContext(state, motionLevel) {
     state.lastMovementTime = now;
   }
 
-  let candidate = "idle";
-
+  // still track internally (NO UI)
   if (motionLevel > 11) {
-    candidate = "driving";
+    state.contextMode = "driving";
   } else if (motionLevel > 5) {
-    candidate = "working";
+    state.contextMode = "working";
   } else if (motionLevel > 2.2) {
-    candidate = "walking";
-  }
-
-  if (state.pendingContext !== candidate) {
-    state.pendingContext = candidate;
-    state.pendingContextSince = now;
-    return;
-  }
-
-  const holdTime = candidate === "driving" ? 2500 : 4000;
-  const canSwitch =
-    !state.lastContextChangeAt ||
-    now - state.lastContextChangeAt > 3000;
-
-  if (
-    canSwitch &&
-    state.contextMode !== candidate &&
-    now - state.pendingContextSince >= holdTime
-  ) {
-    state.contextMode = candidate;
-    state.lastContextChangeAt = now;
-    updateContextUI(state);
+    state.contextMode = "walking";
+  } else {
+    state.contextMode = "idle";
   }
 }
 
+/* ============================= */
+/* INACTIVITY LOGIC (UPDATED) */
+/* ============================= */
+
 export function shouldPauseInactivityForDriving(state) {
+  // still needed for safety logic
   return state.contextMode === "driving";
 }
 
@@ -100,87 +94,10 @@ export function getContextInactivityLimit(state) {
     return null;
   }
 
-  if (state.highRiskMode) {
-    if (state.contextMode === "working") {
-      return 25000;
-    }
-
-    if (state.contextMode === "walking") {
-      return 35000;
-    }
-
-    return 60000;
-  }
-
-  if (state.contextMode === "working") {
-    return 120000;
-  }
-
-  if (state.contextMode === "walking") {
-    return 180000;
+  if (state.driverMinderActive) {
+    // Roadside Protection active
+    return 30000; // 30 seconds (adjust later)
   }
 
   return 8 * 60 * 1000;
-}
-
-function forceContextMode(state, dom, mode) {
-  if (state.contextMode === mode) return;
-
-  state.contextMode = mode;
-  state.pendingContext = mode;
-  state.pendingContextSince = Date.now();
-  state.lastContextChangeAt = Date.now();
-
-  updateContextUI(state, dom);
-}
-
-function updateContextUI(state, dom) {
-  const contextText =
-    (dom && dom.contextText) || document.getElementById("contextText");
-  const riskText =
-    (dom && dom.riskText) || document.getElementById("riskText");
-  const soundText =
-    (dom && dom.soundText) || document.getElementById("soundText");
-  const badge =
-    (dom && dom.contextBadge) || document.getElementById("contextBadge");
-  const debug =
-    (dom && dom.motionDebug) || document.getElementById("motionDebug");
-
-  if (contextText) {
-    contextText.textContent =
-      `Context: ${capitalize(state.contextMode || "idle")}`;
-  }
-
-  if (riskText) {
-    riskText.textContent = state.highRiskMode ? "Risk: High" : "Risk: Normal";
-  }
-
-  if (soundText) {
-    soundText.textContent = state.soundWatchActive
-      ? "Sound Watch: On"
-      : "Sound Watch: Off";
-  }
-
-  if (badge) {
-    if (state.contextMode === "driving") {
-      badge.innerText = "🟢 DRIVING";
-    } else if (state.contextMode === "working") {
-      badge.innerText = "🟡 WORKING";
-    } else if (state.contextMode === "walking") {
-      badge.innerText = "🚶 WALKING";
-    } else {
-      badge.innerText = "⚪ IDLE";
-    }
-  }
-
-  if (debug) {
-    debug.innerText =
-      `Motion: ${(state.lastMotionLevel || 0).toFixed(2)} | ` +
-      `Score: ${state.motionActivityScore || 0} | ` +
-      `Mode: ${(state.contextMode || "idle").toUpperCase()}`;
-  }
-}
-
-function capitalize(text) {
-  return text.charAt(0).toUpperCase() + text.slice(1);
 }
