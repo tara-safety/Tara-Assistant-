@@ -15,16 +15,14 @@ import {
 } from "./taraAI.js";
 
 /* =========================================================
-   FIX ENV LOADING (VERY IMPORTANT)
+   0. PATH + ENV
 ========================================================= */
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Force load .env from same folder as server.js
 dotenv.config({ path: path.join(__dirname, ".env") });
 
-// Debug check (you can remove later)
 console.log("ENV CHECK - OPENAI:", !!process.env.OPENAI_API_KEY);
 
 /* =========================================================
@@ -34,26 +32,80 @@ console.log("ENV CHECK - OPENAI:", !!process.env.OPENAI_API_KEY);
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "12mb" }));
-
 app.use(express.static(path.join(__dirname, "public")));
 
 /* =========================================================
-   2. FEATURE FLAGS
+   2. HELPERS
 ========================================================= */
 
-const USE_STORED_KNOWLEDGE = process.env.USE_STORED_KNOWLEDGE === "true";
-const USE_CHAT_MEMORY = process.env.USE_CHAT_MEMORY !== "false";
-const USE_LEARNING_LOG = process.env.USE_LEARNING_LOG !== "false";
-const ALLOW_KNOWLEDGE_WRITE = process.env.ALLOW_KNOWLEDGE_WRITE === "true";
-const ALLOW_EMBEDDING_BACKFILL = process.env.ALLOW_EMBEDDING_BACKFILL === "true";
+function normalizeMode(value) {
+  const mode = String(value || "chat").trim().toLowerCase();
+  return mode === "camera" ? "camera" : "chat";
+}
+
+function isValidCoordinate(value) {
+  const num = Number(value);
+  return Number.isFinite(num);
+}
+
+function parseBoolean(value, defaultValue = false) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const v = value.trim().toLowerCase();
+    if (v === "true") return true;
+    if (v === "false") return false;
+  }
+  if (typeof value === "number") return value !== 0;
+  return defaultValue;
+}
 
 /* =========================================================
-   3. CLIENT SETUP
+   3. FEATURE FLAGS
 ========================================================= */
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+const USE_STORED_KNOWLEDGE = parseBoolean(
+  process.env.USE_STORED_KNOWLEDGE,
+  true
+);
+const USE_CHAT_MEMORY = parseBoolean(
+  process.env.USE_CHAT_MEMORY,
+  true
+);
+const USE_LEARNING_LOG = parseBoolean(
+  process.env.USE_LEARNING_LOG,
+  false
+);
+const ALLOW_KNOWLEDGE_WRITE = parseBoolean(
+  process.env.ALLOW_KNOWLEDGE_WRITE,
+  false
+);
+const ALLOW_EMBEDDING_BACKFILL = parseBoolean(
+  process.env.ALLOW_EMBEDDING_BACKFILL,
+  false
+);
+
+console.log("TARA FLAGS:", {
+  USE_STORED_KNOWLEDGE,
+  USE_CHAT_MEMORY,
+  USE_LEARNING_LOG,
+  ALLOW_KNOWLEDGE_WRITE,
+  ALLOW_EMBEDDING_BACKFILL
 });
+
+/* =========================================================
+   4. CLIENT SETUP
+========================================================= */
+
+let openai = null;
+
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+  console.log("OpenAI connected");
+} else {
+  console.warn("OpenAI not configured");
+}
 
 const twilioReady =
   !!process.env.TWILIO_ACCOUNT_SID &&
@@ -86,42 +138,55 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 /* =========================================================
-   4. HELPERS
-========================================================= */
-
-function normalizeMode(value) {
-  const mode = String(value || "chat").trim().toLowerCase();
-  return mode === "camera" ? "camera" : "chat";
-}
-
-function isValidCoordinate(value) {
-  const num = Number(value);
-  return Number.isFinite(num);
-}
-
-/* =========================================================
    5. AI ROUTES
 ========================================================= */
 
 app.post("/ask", async (req, res) => {
+  const mode = normalizeMode(req.body?.mode);
+
   try {
+    if (!openai) {
+      return res.status(500).json({
+        answer: "TARA AI is not configured right now.",
+        sourcesUsed: 0,
+        modeUsed: mode,
+        brain: {
+          storedKnowledge: USE_STORED_KNOWLEDGE,
+          chatMemory: USE_CHAT_MEMORY,
+          learningLog: USE_LEARNING_LOG
+        }
+      });
+    }
+
     const question = String(req.body?.question || "").trim();
-    const mode = normalizeMode(req.body?.mode);
-    const proMode = Boolean(req.body?.proMode);
+    const proMode = parseBoolean(req.body?.proMode, false);
     const sessionId = String(
       req.body?.sessionId ||
       req.headers["x-session-id"] ||
       req.ip ||
       "default"
-    );
+    ).trim();
 
     if (!question) {
       return res.status(400).json({
         answer: "Please enter a question for TARA.",
         sourcesUsed: 0,
-        modeUsed: mode
+        modeUsed: mode,
+        brain: {
+          storedKnowledge: USE_STORED_KNOWLEDGE,
+          chatMemory: USE_CHAT_MEMORY,
+          learningLog: USE_LEARNING_LOG
+        }
       });
     }
+
+    console.log("ASK REQUEST:", {
+      question,
+      mode,
+      proMode,
+      sessionId,
+      storedKnowledge: USE_STORED_KNOWLEDGE
+    });
 
     const result = await handleAsk({
       openai,
@@ -147,14 +212,13 @@ app.post("/ask", async (req, res) => {
       }
     });
   } catch (err) {
-    console.error("OpenAI /ask route error:", err);
-
-    const mode = normalizeMode(req.body?.mode);
+    console.error("OpenAI /ask route error:", err?.message || err);
 
     return res.status(500).json({
-      answer: "TARA could not connect to AI right now.",
+      answer: "TARA could not complete that answer right now.",
       sourcesUsed: 0,
       modeUsed: mode,
+      error: err?.message || "Unknown /ask error",
       brain: {
         storedKnowledge: USE_STORED_KNOWLEDGE,
         chatMemory: USE_CHAT_MEMORY,
@@ -166,6 +230,12 @@ app.post("/ask", async (req, res) => {
 
 app.post("/tow-ai", async (req, res) => {
   try {
+    if (!openai) {
+      return res.status(500).json({
+        answer: "TARA Vision is not configured right now."
+      });
+    }
+
     const result = await analyzeTowImage({
       openai,
       imageDataUrl: req.body?.imageDataUrl
@@ -182,7 +252,6 @@ app.post("/tow-ai", async (req, res) => {
 
 /* =========================================================
    6. KNOWLEDGE MANAGEMENT ROUTES
-   TEMPORARILY DISABLED UNLESS ENV TURNS THEM ON
 ========================================================= */
 
 app.post("/knowledge", async (req, res) => {
@@ -190,6 +259,12 @@ app.post("/knowledge", async (req, res) => {
     if (!ALLOW_KNOWLEDGE_WRITE) {
       return res.status(403).json({
         error: "Knowledge write is temporarily disabled while TARA brain is being rebuilt."
+      });
+    }
+
+    if (!openai) {
+      return res.status(500).json({
+        error: "OpenAI not configured"
       });
     }
 
@@ -221,6 +296,12 @@ app.post("/knowledge/bulk", async (req, res) => {
       });
     }
 
+    if (!openai) {
+      return res.status(500).json({
+        error: "OpenAI not configured"
+      });
+    }
+
     if (!supabase) {
       return res.status(500).json({
         error: "Supabase not configured"
@@ -245,6 +326,12 @@ app.post("/backfill-embeddings", async (req, res) => {
     if (!ALLOW_EMBEDDING_BACKFILL) {
       return res.status(403).json({
         error: "Embedding backfill is temporarily disabled while TARA brain is being rebuilt."
+      });
+    }
+
+    if (!openai) {
+      return res.status(500).json({
+        error: "OpenAI not configured"
       });
     }
 
@@ -289,7 +376,6 @@ app.post("/emergency", async (req, res) => {
 
   const latitude = Number(lat);
   const longitude = Number(lon);
-
   const mapLink = `https://maps.google.com/?q=${latitude},${longitude}`;
 
   const message = `${driver} has sent an EMERGENCY ALERT.
@@ -431,6 +517,7 @@ app.get("/driver-locations", async (req, res) => {
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
+    openai: !!openai,
     supabase: !!supabase,
     twilio: !!twilioClient,
     brain: {
