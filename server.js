@@ -61,17 +61,16 @@ const twilioReady =
   !!process.env.TWILIO_PHONE_NUMBER &&
   !!process.env.ALERT_PHONE_NUMBER;
 
-const twilioClient = twilioReady
-  ? twilio(
-      process.env.TWILIO_ACCOUNT_SID,
-      process.env.TWILIO_AUTH_TOKEN
-    )
-  : null;
+let twilioClient = null;
 
 if (twilioReady) {
+  twilioClient = twilio(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_AUTH_TOKEN
+  );
   console.log("Twilio connected");
 } else {
-  console.warn("Twilio environment variables missing or incomplete");
+  console.warn("Twilio NOT loaded (missing env variables)");
 }
 
 let supabase = null;
