@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import fs from "fs";
+import path from "path";
 
 /* =========================================================
    0. SIMPLE SESSION MEMORY
@@ -26,6 +28,124 @@ function saveSessionMessage(sessionId = "default", role, content) {
 
 function clearSessionHistory(sessionId = "default") {
   sessionStore.delete(sessionId);
+}
+
+/* =========================================================
+   0.1 LOCAL KNOWLEDGE LOADER
+========================================================= */
+
+function loadLocalKnowledge() {
+  try {
+    const filePath = path.join(process.cwd(), "knowledge.json");
+
+    if (!fs.existsSync(filePath)) {
+      console.warn("knowledge.json not found for local fallback");
+      return [];
+    }
+
+    const raw = fs.readFileSync(filePath, "utf8");
+    const parsed = JSON.parse(raw);
+
+    if (!Array.isArray(parsed)) {
+      console.warn("knowledge.json is not an array");
+      return [];
+    }
+
+    return parsed;
+  } catch (err) {
+    console.error("Failed to load local knowledge:", err.message);
+    return [];
+  }
+}
+
+function scoreLocalKnowledgeEntry(question, entry) {
+  const q = cleanText(question);
+
+  const title = cleanText(entry?.title || "");
+  const keyword = cleanText(entry?.keyword || "");
+  const answer = cleanText(entry?.answer || "");
+  const rawText = cleanText(entry?.raw_text || "");
+  const tags = Array.isArray(entry?.tags)
+    ? entry.tags.map((tag) => cleanText(tag)).join(" ")
+    : "";
+
+  const haystack = `${title} ${keyword} ${tags} ${answer} ${rawText}`.trim();
+  if (!haystack) return 0;
+
+  let score = 0;
+
+  const importantTerms = getImportantQuestionTerms(question);
+
+  for (const term of importantTerms) {
+    if (title.includes(term)) score += 5;
+    if (keyword.includes(term)) score += 6;
+    if (tags.includes(term)) score += 4;
+    if (answer.includes(term)) score += 3;
+    if (rawText.includes(term)) score += 2;
+  }
+
+  if (keyword && q.includes(keyword)) score += 10;
+  if (title && q.includes(title)) score += 8;
+
+  if (
+    q.includes("parking brake") &&
+    haystack.includes("parking brake")
+  ) score += 8;
+
+  if (
+    q.includes("spare tire") &&
+    haystack.includes("spare tire")
+  ) score += 8;
+
+  if (
+    q.includes("lane keeping") &&
+    haystack.includes("lane keeping")
+  ) score += 8;
+
+  if (
+    q.includes("class 3") &&
+    haystack.includes("class 3")
+  ) score += 8;
+
+  return score;
+}
+
+function searchLocalKnowledge(question, maxResults = 4) {
+  const localKnowledge = loadLocalKnowledge();
+
+  if (!Array.isArray(localKnowledge) || localKnowledge.length === 0) {
+    return [];
+  }
+
+  const ranked = localKnowledge
+    .map((entry) => ({
+      ...entry,
+      local_score: scoreLocalKnowledgeEntry(question, entry)
+    }))
+    .filter((entry) => entry.local_score > 0)
+    .sort((a, b) => b.local_score - a.local_score)
+    .slice(0, maxResults);
+
+  return ranked;
+}
+
+function formatLocalKnowledgeContext(entries) {
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return "No relevant local knowledge found.";
+  }
+
+  return entries
+    .map((entry, index) => {
+      const tags = Array.isArray(entry.tags) ? entry.tags.join(", ") : "";
+      return `Local Source ${index + 1}:
+Title: ${entry.title || "Untitled"}
+Source ID: ${entry.source_id || "Unknown"}
+Category: ${entry.category || "Unknown"}
+Tags: ${tags}
+Answer: ${entry.answer || ""}
+Raw Text: ${entry.raw_text || ""}`;
+    })
+    .join("\n\n");
 }
 
 /* =========================================================
@@ -112,7 +232,14 @@ function isTowingQuestion(question) {
     "won't roll",
     "seized",
     "scrape",
-    "low clearance"
+    "low clearance",
+    "visibility",
+    "hi vis",
+    "high vis",
+    "lane keeping",
+    "class 3",
+    "class 2",
+    "class 1"
   ];
 
   return keywords.some((word) => q.includes(word));
@@ -949,7 +1076,12 @@ function buildHistoryContext(history = []) {
     .join("\n");
 }
 
-function buildChatPrompt(question, knowledgeContext, historyContext = "") {
+function buildChatPrompt(
+  question,
+  knowledgeContext,
+  historyContext = "",
+  builtInContext = ""
+) {
   return `You are TARA (Tow Awareness and Response Assistant).
 
 You are speaking to a tow operator, dispatcher, roadside tech, or fleet user.
@@ -969,6 +1101,9 @@ Rules:
 - stay focused on towing, roadside, recovery, EV service, dispatch, loading, securement, and vehicle disablement
 - use the knowledge context if it is relevant
 - use recent conversation context if relevant
+- use the built-in towing guidance if useful
+- when stored knowledge includes Safety Buzz style material, prioritize it for roadside safety answers
+- combine the best relevant points instead of copying one chunk
 - do not invent exact OEM attachment points or unsafe recovery instructions
 - if the exact make/model procedure may vary, say what is typical first, then say what should be verified
 - do not mention internal source files
@@ -978,6 +1113,9 @@ Rules:
 Recent conversation:
 ${historyContext}
 
+Built-in towing guidance:
+${builtInContext || "No built-in guidance provided."}
+
 Knowledge base context:
 ${knowledgeContext}
 
@@ -985,7 +1123,12 @@ User question:
 ${question}`;
 }
 
-function buildProChatPrompt(question, knowledgeContext, historyContext = "") {
+function buildProChatPrompt(
+  question,
+  knowledgeContext,
+  historyContext = "",
+  builtInContext = ""
+) {
   return `You are TARA (Tow Awareness and Response Assistant) in Pro Mode.
 
 You are speaking to a tow operator, dispatcher, roadside tech, or fleet user.
@@ -1002,6 +1145,8 @@ Rules:
 - answer like an experienced towing professional
 - for recovery and loading questions, give a high-level field procedure
 - include equipment names when useful
+- use the knowledge context and built-in guidance if relevant
+- combine the strongest matching safety points when multiple sources agree
 - do not invent exact OEM attachment points or unsafe recovery instructions
 - if exact model steps vary, state the standard safe approach first, then what must be verified
 - stay focused on towing, roadside, recovery, EV service, dispatch, loading, securement, and vehicle disablement
@@ -1012,6 +1157,9 @@ Rules:
 
 Recent conversation:
 ${historyContext}
+
+Built-in towing guidance:
+${builtInContext || "No built-in guidance provided."}
 
 Knowledge base context:
 ${knowledgeContext}
@@ -1034,7 +1182,7 @@ Rules:
 - focus on what is visible, what is risky, and what should be verified next
 - do not guess exact OEM hook points from limited information
 - do not claim hidden areas are safe
-- never advise attaching to suspension, steering, or unknown underbody parts
+- do not advise attaching to suspension, steering, or unknown underbody parts
 - if information is missing, say so clearly
 - use practical field language
 
@@ -1050,17 +1198,28 @@ function buildWebSearchPrompt(
   mode,
   knowledgeContext,
   proMode = false,
-  historyContext = ""
+  historyContext = "",
+  builtInContext = ""
 ) {
   if (mode === "camera") {
     return buildCameraPrompt(question, knowledgeContext);
   }
 
   if (proMode) {
-    return buildProChatPrompt(question, knowledgeContext, historyContext);
+    return buildProChatPrompt(
+      question,
+      knowledgeContext,
+      historyContext,
+      builtInContext
+    );
   }
 
-  return buildChatPrompt(question, knowledgeContext, historyContext);
+  return buildChatPrompt(
+    question,
+    knowledgeContext,
+    historyContext,
+    builtInContext
+  );
 }
 
 /* =========================================================
@@ -1086,10 +1245,10 @@ async function searchKnowledgeBase(openai, supabase, question, matchCount = 8) {
     const queryEmbedding = await getEmbedding(openai, question);
 
     const { data, error } = await supabase.rpc("match_knowledge_base", {
-  query_embedding: queryEmbedding,
-  match_count: matchCount,
-  match_threshold: 0.25
-});
+      query_embedding: queryEmbedding,
+      match_count: matchCount,
+      match_threshold: 0.25
+    });
 
     if (error) {
       console.error("Knowledge search error:", error);
@@ -1109,7 +1268,7 @@ function filterKnowledgeMatches(question, matches) {
   const terms = getImportantQuestionTerms(question);
 
   if (terms.length === 0) {
-    return matches.slice(0, 3);
+    return matches.slice(0, 5);
   }
 
   const filtered = matches.filter((item) => {
@@ -1121,22 +1280,34 @@ function filterKnowledgeMatches(question, matches) {
     return hitCount >= 1;
   });
 
-  return filtered.slice(0, 3);
+  return filtered.slice(0, 5);
 }
 
-function formatKnowledgeContext(matches) {
-  if (!matches || matches.length === 0) {
+function formatKnowledgeContext(vectorMatches = [], localMatches = []) {
+  const parts = [];
+
+  if (Array.isArray(vectorMatches) && vectorMatches.length > 0) {
+    parts.push(
+      vectorMatches
+        .map((item, index) => {
+          const metadata = item.metadata ? JSON.stringify(item.metadata) : "{}";
+          return `Vector Source ${index + 1}:
+Content: ${item.content}
+Metadata: ${metadata}`;
+        })
+        .join("\n\n")
+    );
+  }
+
+  if (Array.isArray(localMatches) && localMatches.length > 0) {
+    parts.push(formatLocalKnowledgeContext(localMatches));
+  }
+
+  if (parts.length === 0) {
     return "No relevant knowledge found.";
   }
 
-  return matches
-    .map((item, index) => {
-      const metadata = item.metadata ? JSON.stringify(item.metadata) : "{}";
-      return `Source ${index + 1}:
-Content: ${item.content}
-Metadata: ${metadata}`;
-    })
-    .join("\n\n");
+  return parts.join("\n\n");
 }
 
 async function saveLearnedKnowledge(
@@ -1214,7 +1385,8 @@ export async function handleAsk({
     };
   }
 
-  let matches = [];
+  let vectorMatches = [];
+  let localMatches = [];
   let knowledgeContext = "Stored knowledge is currently disabled.";
 
   if (useStoredKnowledge) {
@@ -1222,108 +1394,130 @@ export async function handleAsk({
       openai,
       supabase,
       normalizedQuestion,
-      5
+      8
     );
-    matches = filterKnowledgeMatches(normalizedQuestion, rawMatches);
-    knowledgeContext = formatKnowledgeContext(matches);
+
+    vectorMatches = filterKnowledgeMatches(normalizedQuestion, rawMatches);
+    localMatches = searchLocalKnowledge(normalizedQuestion, 4);
+    knowledgeContext = formatKnowledgeContext(vectorMatches, localMatches);
+  } else {
+    localMatches = searchLocalKnowledge(normalizedQuestion, 4);
+    knowledgeContext = formatKnowledgeContext([], localMatches);
   }
 
   const historyContext = useChatMemory
     ? buildHistoryContext(history)
     : "Conversation memory is currently disabled.";
 
-  const combinedQuestion = `${historyContext}\n\n${normalizedQuestion}`;
-  const builtInAnswer = getSmartBuiltInAnswer(combinedQuestion, proMode);
+  const builtInAnswer = getSmartBuiltInAnswer(normalizedQuestion, proMode);
+  const builtInContext = builtInAnswer || "No built-in guidance available.";
 
-  if (builtInAnswer) {
-    if (useChatMemory) {
-      saveSessionMessage(sessionId, "user", normalizedQuestion);
-      saveSessionMessage(sessionId, "assistant", builtInAnswer);
-    }
-
-    return {
-      answer: builtInAnswer,
-      sourcesUsed: matches.length,
-      modeUsed,
-      webSources: []
-    };
-  }
-
-  const firstPass = await openai.responses.create({
-    model: "gpt-5-mini",
-    instructions:
-      modeUsed === "camera"
-        ? buildCameraPrompt(normalizedQuestion, knowledgeContext)
-        : proMode
-          ? buildProChatPrompt(
-              normalizedQuestion,
-              knowledgeContext,
-              historyContext
-            )
-          : buildChatPrompt(
-              normalizedQuestion,
-              knowledgeContext,
-              historyContext
-            ),
-    input: `
-Previous conversation:
-${historyContext}
-
-Current question:
-${normalizedQuestion}
-`,
-    max_output_tokens: 350
-  });
-
-  let answer = extractResponseText(firstPass).replace(/\n\s+/g, "\n").trim();
+  let answer = "";
   let webSources = [];
 
-  if (shouldUseWebFallback(answer)) {
-    const webResult = await openai.responses.create({
+  try {
+    const firstPass = await openai.responses.create({
       model: "gpt-5-mini",
-      tools: [{ type: "web_search" }],
-      include: ["web_search_call.action.sources"],
-      instructions: buildWebSearchPrompt(
-        normalizedQuestion,
-        modeUsed,
-        knowledgeContext,
-        proMode,
-        historyContext
-      ),
+      instructions:
+        modeUsed === "camera"
+          ? buildCameraPrompt(normalizedQuestion, knowledgeContext)
+          : proMode
+            ? buildProChatPrompt(
+                normalizedQuestion,
+                knowledgeContext,
+                historyContext,
+                builtInContext
+              )
+            : buildChatPrompt(
+                normalizedQuestion,
+                knowledgeContext,
+                historyContext,
+                builtInContext
+              ),
       input: `
 Previous conversation:
 ${historyContext}
 
 Current question:
 ${normalizedQuestion}
+
+Built-in towing guidance:
+${builtInContext}
+
+Knowledge context:
+${knowledgeContext}
 `,
-      max_output_tokens: 400
+      max_output_tokens: 500
     });
 
-    const webAnswer = extractResponseText(webResult).trim();
+    answer = extractResponseText(firstPass).replace(/\n\s+/g, "\n").trim();
 
-    if (webAnswer && webAnswer.length > 60) {
-      answer = webAnswer;
-      webSources = extractWebSources(webResult);
-
-      if (useStoredKnowledge && useLearningLog) {
-        await saveLearnedKnowledge(
-          openai,
-          supabase,
+    if (shouldUseWebFallback(answer)) {
+      const webResult = await openai.responses.create({
+        model: "gpt-5-mini",
+        tools: [{ type: "web_search" }],
+        include: ["web_search_call.action.sources"],
+        instructions: buildWebSearchPrompt(
           normalizedQuestion,
-          webAnswer,
-          {
-            mode_used: modeUsed,
-            pro_mode: proMode,
-            web_sources: webSources
-          }
-        );
+          modeUsed,
+          knowledgeContext,
+          proMode,
+          historyContext,
+          builtInContext
+        ),
+        input: `
+Previous conversation:
+${historyContext}
+
+Current question:
+${normalizedQuestion}
+
+Built-in towing guidance:
+${builtInContext}
+
+Knowledge context:
+${knowledgeContext}
+`,
+        max_output_tokens: 550
+      });
+
+      const webAnswer = extractResponseText(webResult).trim();
+
+      if (webAnswer && webAnswer.length > 60) {
+        answer = webAnswer;
+        webSources = extractWebSources(webResult);
+
+        if (useStoredKnowledge && useLearningLog) {
+          await saveLearnedKnowledge(
+            openai,
+            supabase,
+            normalizedQuestion,
+            webAnswer,
+            {
+              mode_used: modeUsed,
+              pro_mode: proMode,
+              web_sources: webSources
+            }
+          );
+        }
       }
     }
+  } catch (err) {
+    console.error("handleAsk AI error:", err.message);
   }
 
-  if (!answer) {
-    answer = buildFallbackAnswer(combinedQuestion, proMode);
+  if (!answer || shouldUseWebFallback(answer)) {
+    if (localMatches.length > 0) {
+      const bestLocal = localMatches[0];
+      answer =
+        `${bestLocal.title ? bestLocal.title + "\n\n" : ""}` +
+        `${bestLocal.answer || bestLocal.raw_text || ""}` +
+        `${bestLocal.source_id ? `\n\nSource: ${bestLocal.source_id}` : ""}`;
+    } else if (builtInAnswer) {
+      answer = builtInAnswer;
+    } else {
+      answer = buildFallbackAnswer(normalizedQuestion, proMode);
+    }
   }
 
   if (useChatMemory) {
@@ -1333,7 +1527,7 @@ ${normalizedQuestion}
 
   return {
     answer,
-    sourcesUsed: matches.length,
+    sourcesUsed: vectorMatches.length + localMatches.length,
     modeUsed,
     webSources
   };
