@@ -14,7 +14,18 @@ import {
   backfillEmbeddings
 } from "./taraAI.js";
 
-dotenv.config();
+/* =========================================================
+   FIX ENV LOADING (VERY IMPORTANT)
+========================================================= */
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Force load .env from same folder as server.js
+dotenv.config({ path: path.join(__dirname, ".env") });
+
+// Debug check (you can remove later)
+console.log("ENV CHECK - OPENAI:", !!process.env.OPENAI_API_KEY);
 
 /* =========================================================
    1. APP SETUP
@@ -23,9 +34,6 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "12mb" }));
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 app.use(express.static(path.join(__dirname, "public")));
 
