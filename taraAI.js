@@ -1076,7 +1076,7 @@ async function getEmbedding(openai, text) {
   return response.data[0].embedding;
 }
 
-async function searchKnowledgeBase(openai, supabase, question, matchCount = 5) {
+async function searchKnowledgeBase(openai, supabase, question, matchCount = 8) {
   if (!supabase) {
     console.log("Supabase not configured for search");
     return [];
@@ -1086,10 +1086,10 @@ async function searchKnowledgeBase(openai, supabase, question, matchCount = 5) {
     const queryEmbedding = await getEmbedding(openai, question);
 
     const { data, error } = await supabase.rpc("match_knowledge_base", {
-      query_embedding: queryEmbedding,
-      match_count: matchCount,
-      match_threshold: 0.45
-    });
+  query_embedding: queryEmbedding,
+  match_count: matchCount,
+  match_threshold: 0.25
+});
 
     if (error) {
       console.error("Knowledge search error:", error);
