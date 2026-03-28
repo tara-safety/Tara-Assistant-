@@ -7,29 +7,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 
-// Load local knowledge.json
-let localKnowledge = [];
-
-try {
-  const filePath = path.join(__dirname, "knowledge.json");
-  const raw = fs.readFileSync(filePath, "utf8");
-  localKnowledge = JSON.parse(raw);
-  console.log(`Loaded ${localKnowledge.length} local knowledge entries`);
-} catch (err) {
-  console.warn("⚠️ knowledge.json not found or failed to load");
-}
-
-import OpenAI from "openai";
-import fs from "fs";
-import path from "path";
-
-import OpenAI from "openai";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Load local knowledge.json
 let localKnowledge = [];
@@ -43,9 +20,7 @@ try {
   console.warn("knowledge.json not found or failed to load");
 }
 
-/* =========================================================
-   0. SIMPLE SESSION MEMORY
-========================================================= */
+
 /* =========================================================
    0. SIMPLE SESSION MEMORY
 ========================================================= */
