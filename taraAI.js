@@ -6,21 +6,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
-
-// Load local knowledge.json
-let localKnowledge = [];
-
-try {
-  const filePath = path.join(__dirname, "knowledge.json");
-  const raw = fs.readFileSync(filePath, "utf8");
-  localKnowledge = JSON.parse(raw);
-  console.log(`Loaded ${localKnowledge.length} local knowledge entries`);
-} catch (err) {
-  console.warn("knowledge.json not found or failed to load");
-}
-
-
 /* =========================================================
    0. SIMPLE SESSION MEMORY
 ========================================================= */
@@ -106,25 +91,21 @@ function scoreLocalKnowledgeEntry(question, entry) {
   if (keyword && q.includes(keyword)) score += 10;
   if (title && q.includes(title)) score += 8;
 
-  if (
-    q.includes("parking brake") &&
-    haystack.includes("parking brake")
-  ) score += 8;
+  if (q.includes("parking brake") && haystack.includes("parking brake")) {
+    score += 8;
+  }
 
-  if (
-    q.includes("spare tire") &&
-    haystack.includes("spare tire")
-  ) score += 8;
+  if (q.includes("spare tire") && haystack.includes("spare tire")) {
+    score += 8;
+  }
 
-  if (
-    q.includes("lane keeping") &&
-    haystack.includes("lane keeping")
-  ) score += 8;
+  if (q.includes("lane keeping") && haystack.includes("lane keeping")) {
+    score += 8;
+  }
 
-  if (
-    q.includes("class 3") &&
-    haystack.includes("class 3")
-  ) score += 8;
+  if (q.includes("class 3") && haystack.includes("class 3")) {
+    score += 8;
+  }
 
   return score;
 }
@@ -136,7 +117,7 @@ function searchLocalKnowledge(question, maxResults = 4) {
     return [];
   }
 
-  const ranked = localKnowledge
+  return localKnowledge
     .map((entry) => ({
       ...entry,
       local_score: scoreLocalKnowledgeEntry(question, entry)
@@ -144,8 +125,6 @@ function searchLocalKnowledge(question, maxResults = 4) {
     .filter((entry) => entry.local_score > 0)
     .sort((a, b) => b.local_score - a.local_score)
     .slice(0, maxResults);
-
-  return ranked;
 }
 
 function formatLocalKnowledgeContext(entries) {
@@ -1293,16 +1272,15 @@ function filterKnowledgeMatches(question, matches) {
     return matches.slice(0, 5);
   }
 
-  const filtered = matches.filter((item) => {
-    const content = String(item?.content || "").toLowerCase();
-    const metadata = JSON.stringify(item?.metadata || {}).toLowerCase();
-    const haystack = `${content} ${metadata}`;
-
-    const hitCount = terms.filter((term) => haystack.includes(term)).length;
-    return hitCount >= 1;
-  });
-
-  return filtered.slice(0, 5);
+  return matches
+    .filter((item) => {
+      const content = String(item?.content || "").toLowerCase();
+      const metadata = JSON.stringify(item?.metadata || {}).toLowerCase();
+      const haystack = `${content} ${metadata}`;
+      const hitCount = terms.filter((term) => haystack.includes(term)).length;
+      return hitCount >= 1;
+    })
+    .slice(0, 5);
 }
 
 function formatKnowledgeContext(vectorMatches = [], localMatches = []) {
@@ -1408,31 +1386,32 @@ export async function handleAsk({
   }
 
   let vectorMatches = [];
-let localMatches = [];
-let knowledgeContext = "";
+  let localMatches = [];
+  let knowledgeContext = "No relevant knowledge found.";
 
-// 1. ALWAYS search local knowledge first
-localMatches = searchLocalKnowledge(normalizedQuestion, 4);
+  // 1. Supabase first
+  if (useStoredKnowledge) {
+    const rawMatches = await searchKnowledgeBase(
+      openai,
+      supabase,
+      normalizedQuestion,
+      8
+    );
 
-// 2. Search Supabase too if enabled
-if (useStoredKnowledge) {
-  const rawMatches = await searchKnowledgeBase(
-    openai,
-    supabase,
-    normalizedQuestion,
-    8
-  );
+    vectorMatches = filterKnowledgeMatches(normalizedQuestion, rawMatches);
+  }
 
-  vectorMatches = filterKnowledgeMatches(normalizedQuestion, rawMatches);
-}
+  // 2. Local fallback only if Supabase found nothing useful
+  if (vectorMatches.length === 0) {
+    localMatches = searchLocalKnowledge(normalizedQuestion, 4);
+  }
 
-// 3. Build combined context, preferring local brain content
-knowledgeContext = formatKnowledgeContext(vectorMatches, localMatches);
+  // 3. Build final knowledge context
+  knowledgeContext = formatKnowledgeContext(vectorMatches, localMatches);
 
-// 4. Final fallback
-if (!knowledgeContext || knowledgeContext.trim() === "") {
-  knowledgeContext = "No relevant knowledge found.";
-}
+  if (!knowledgeContext || !knowledgeContext.trim()) {
+    knowledgeContext = "No relevant knowledge found.";
+  }
 
   const historyContext = useChatMemory
     ? buildHistoryContext(history)
@@ -1539,7 +1518,7 @@ ${knowledgeContext}
     if (localMatches.length > 0) {
       const bestLocal = localMatches[0];
       answer =
-        `${bestLocal.title ? bestLocal.title + "\n\n" : ""}` +
+        `${bestLocal.title ? `${bestLocal.title}\n\n` : ""}` +
         `${bestLocal.answer || bestLocal.raw_text || ""}` +
         `${bestLocal.source_id ? `\n\nSource: ${bestLocal.source_id}` : ""}`;
     } else if (builtInAnswer) {
