@@ -6,17 +6,6 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load local knowledge.json
-let localKnowledge = [];
-
-try {
-  const filePath = path.join(__dirname, "knowledge.json");
-  const raw = fs.readFileSync(filePath, "utf8");
-  localKnowledge = JSON.parse(raw);
-  console.log(`Loaded ${localKnowledge.length} local knowledge entries`);
-} catch (err) {
-  console.warn("⚠️ knowledge.json not found or failed to load");
-}
 
 // Load local knowledge.json
 let localKnowledge = [];
