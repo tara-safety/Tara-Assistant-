@@ -1424,24 +1424,31 @@ export async function handleAsk({
   }
 
   let vectorMatches = [];
-  let localMatches = [];
-  let knowledgeContext = "Stored knowledge is currently disabled.";
+let localMatches = [];
+let knowledgeContext = "";
 
-  if (useStoredKnowledge) {
-    const rawMatches = await searchKnowledgeBase(
-      openai,
-      supabase,
-      normalizedQuestion,
-      8
-    );
+// 1. ALWAYS search local knowledge first
+localMatches = searchLocalKnowledge(normalizedQuestion, 4);
 
-    vectorMatches = filterKnowledgeMatches(normalizedQuestion, rawMatches);
-    localMatches = searchLocalKnowledge(normalizedQuestion, 4);
-    knowledgeContext = formatKnowledgeContext(vectorMatches, localMatches);
-  } else {
-    localMatches = searchLocalKnowledge(normalizedQuestion, 4);
-    knowledgeContext = formatKnowledgeContext([], localMatches);
-  }
+// 2. Search Supabase too if enabled
+if (useStoredKnowledge) {
+  const rawMatches = await searchKnowledgeBase(
+    openai,
+    supabase,
+    normalizedQuestion,
+    8
+  );
+
+  vectorMatches = filterKnowledgeMatches(normalizedQuestion, rawMatches);
+}
+
+// 3. Build combined context, preferring local brain content
+knowledgeContext = formatKnowledgeContext(vectorMatches, localMatches);
+
+// 4. Final fallback
+if (!knowledgeContext || knowledgeContext.trim() === "") {
+  knowledgeContext = "No relevant knowledge found.";
+}
 
   const historyContext = useChatMemory
     ? buildHistoryContext(history)
