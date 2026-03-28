@@ -17,15 +17,7 @@ import {
 /* =========================================================
    0. PATH + ENV
 ========================================================= */
-import fs from "fs";
-import path from "path";
 
-console.log("WORKING DIR:", process.cwd());
-console.log("ROOT FILES:", fs.readdirSync(process.cwd()));
-
-const knowledgePath = path.join(process.cwd(), "knowledge.json");
-console.log("KNOWLEDGE PATH:", knowledgePath);
-console.log("KNOWLEDGE EXISTS:", fs.existsSync(knowledgePath));
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
