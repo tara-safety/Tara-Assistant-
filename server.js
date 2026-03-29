@@ -541,7 +541,7 @@ app.get("/admin/knowledge", async (req, res) => {
 
     let query = supabase
       .from("knowledge_base")
-      .select("id, content, metadata, created_at")
+      .select("id, content, metadata")
       .order("id", { ascending: false })
       .limit(limit);
 
