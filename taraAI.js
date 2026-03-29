@@ -1304,8 +1304,7 @@ ${item.content}`;
     : "No relevant knowledge found.";
 }
 
-  return parts.join("\n\n");
-}
+ 
 
 async function saveLearnedKnowledge(
   openai,
