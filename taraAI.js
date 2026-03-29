@@ -144,7 +144,7 @@ Answer: ${entry.answer || ""}
 Raw Text: ${entry.raw_text || ""}`;
     })
     .join("\n\n");
-
+}
 
 /* =========================================================
    1. TEXT + QUESTION HELPERS
@@ -1287,10 +1287,12 @@ function formatKnowledgeContext(vectorMatches = [], localMatches = []) {
   const parts = [];
 
   if (vectorMatches.length > 0) {
-    const cleaned = vectorMatches.map((item, i) => {
-      return `Source ${i + 1}:
+    const cleaned = vectorMatches
+      .map((item, i) => {
+        return `Source ${i + 1}:
 ${item.content}`;
-    }).join("\n\n");
+      })
+      .join("\n\n");
 
     parts.push(cleaned);
   }
@@ -1303,8 +1305,6 @@ ${item.content}`;
     ? parts.join("\n\n")
     : "No relevant knowledge found.";
 }
-
- 
 
 async function saveLearnedKnowledge(
   openai,
@@ -1385,7 +1385,6 @@ export async function handleAsk({
   let localMatches = [];
   let knowledgeContext = "No relevant knowledge found.";
 
-  // 1. Supabase first
   if (useStoredKnowledge) {
     const rawMatches = await searchKnowledgeBase(
       openai,
@@ -1397,12 +1396,10 @@ export async function handleAsk({
     vectorMatches = filterKnowledgeMatches(normalizedQuestion, rawMatches);
   }
 
-  // 2. Local fallback only if Supabase found nothing useful
   if (vectorMatches.length === 0) {
     localMatches = searchLocalKnowledge(normalizedQuestion, 4);
   }
 
-  // 3. Build final knowledge context
   knowledgeContext = formatKnowledgeContext(vectorMatches, localMatches);
 
   if (!knowledgeContext || !knowledgeContext.trim()) {
@@ -1615,6 +1612,10 @@ export async function insertKnowledge({
   content,
   metadata = {}
 }) {
+  if (!openai) {
+    return { status: 500, body: { error: "OpenAI not configured" } };
+  }
+
   if (!supabase) {
     return { status: 500, body: { error: "Supabase not configured" } };
   }
@@ -1651,6 +1652,10 @@ export async function insertKnowledge({
 }
 
 export async function bulkInsertKnowledge({ openai, supabase, entries }) {
+  if (!openai) {
+    return { status: 500, body: { error: "OpenAI not configured" } };
+  }
+
   if (!supabase) {
     return { status: 500, body: { error: "Supabase not configured" } };
   }
@@ -1700,6 +1705,10 @@ export async function bulkInsertKnowledge({ openai, supabase, entries }) {
 }
 
 export async function backfillEmbeddings({ openai, supabase }) {
+  if (!openai) {
+    return { status: 500, body: { error: "OpenAI not configured" } };
+  }
+
   if (!supabase) {
     return { status: 500, body: { error: "Supabase not configured" } };
   }
