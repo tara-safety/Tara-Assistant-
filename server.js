@@ -107,14 +107,6 @@ if (process.env.OPENAI_API_KEY) {
   console.warn("OpenAI not configured");
 }
 
-async function getEmbedding(text) {
-  const response = await openai.embeddings.create({
-    model: "text-embedding-3-small",
-    input: text
-  });
-
-  return response.data[0].embedding;
-}
 const twilioReady =
   !!process.env.TWILIO_ACCOUNT_SID &&
   !!process.env.TWILIO_AUTH_TOKEN &&
@@ -145,6 +137,14 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
   console.warn("Supabase environment variables missing");
 }
 
+async function getEmbedding(text) {
+  const response = await openai.embeddings.create({
+    model: "text-embedding-3-small",
+    input: text
+  });
+
+  return response.data[0].embedding;
+}
 /* =========================================================
    5. AI ROUTES
 ========================================================= */
