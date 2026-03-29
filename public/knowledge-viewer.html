@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TARA Knowledge Viewer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f1720;
+      color: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #22c55e;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    input, button {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+    }
+
+    input {
+      min-width: 280px;
+      background: #1e293b;
+      color: white;
+    }
+
+    button {
+      background: #22c55e;
+      color: #08110c;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button.delete-btn {
+      background: #ef4444;
+      color: white;
+    }
+
+    .stats {
+      margin-bottom: 15px;
+      color: #cbd5e1;
+    }
+
+    .row {
+      background: #16212d;
+      border: 1px solid #243244;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .row-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .id {
+      font-weight: bold;
+      color: #38bdf8;
+    }
+
+    .meta, .content {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #0b1220;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+
+    .label {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .empty {
+      color: #94a3b8;
+      padding: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>TARA Knowledge Viewer</h1>
+
+  <div class="toolbar">
+    <input id="searchBox" type="text" placeholder="Search content..." />
+    <input id="limitBox" type="number" value="50" min="1" max="200" />
+    <button onclick="loadKnowledge()">Load</button>
+  </div>
+
+  <div class="stats" id="stats">Loading...</div>
+  <div id="results"></div>
+
+  <script>
+    async function loadKnowledge() {
+      const search = document.getElementById("searchBox").value.trim();
+      const limit = document.getElementById("limitBox").value || 50;
+      const stats = document.getElementById("stats");
+      const results = document.getElementById("results");
+
+      stats.textContent = "Loading...";
+      results.innerHTML = "";
+
+      try {
+        const url = `/admin/knowledge?search=${encodeURIComponent(search)}&limit=${encodeURIComponent(limit)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!res.ok) {
+          stats.textContent = "Error loading rows.";
+          results.innerHTML = `<div class="empty">${data.error || "Unknown error"}</div>`;
+          return;
+        }
+
+        stats.textContent = `Showing ${data.count} row(s)`;
+
+        if (!data.rows || data.rows.length === 0) {
+          results.innerHTML = `<div class="empty">No matching knowledge found.</div>`;
+          return;
+        }
+
+        results.innerHTML = data.rows.map(row => {
+          const meta = row.metadata
+            ? JSON.stringify(row.metadata, null, 2)
+            : "No metadata";
+
+          return `
+            <div class="row">
+              <div class="row-header">
+                <div>
+                  <div class="id">ID: ${row.id}</div>
+                  <div>Created: ${row.created_at || "N/A"}</div>
+                </div>
+                <button class="delete-btn" onclick="deleteRow('${row.id}')">Delete</button>
+              </div>
+
+              <div class="label">Content</div>
+              <div class="content">${escapeHtml(row.content || "")}</div>
+
+              <div class="label">Metadata</div>
+              <div class="meta">${escapeHtml(meta)}</div>
+            </div>
+          `;
+        }).join("");
+      } catch (err) {
+        stats.textContent = "Error loading rows.";
+        results.innerHTML = `<div class="empty">${err.message}</div>`;
+      }
+    }
+
+    async function deleteRow(id) {
+      const ok = confirm(`Delete knowledge row ${id}?`);
+      if (!ok) return;
+
+      try {
+        const res = await fetch(`/admin/knowledge/${encodeURIComponent(id)}`, {
+          method: "DELETE"
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.error || "Delete failed.");
+          return;
+        }
+
+        loadKnowledge();
+      } catch (err) {
+        alert("Delete failed: " + err.message);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    loadKnowledge();
+  </script>
+</body>
+</html>
