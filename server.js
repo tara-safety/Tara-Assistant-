@@ -162,9 +162,9 @@ app.post("/ask", async (req, res) => {
     const proMode = parseBoolean(req.body?.proMode, false);
     const sessionId = String(
       req.body?.sessionId ||
-      req.headers["x-session-id"] ||
-      req.ip ||
-      "default"
+        req.headers["x-session-id"] ||
+        req.ip ||
+        "default"
     ).trim();
 
     if (!question) {
@@ -317,7 +317,10 @@ app.post("/knowledge/bulk", async (req, res) => {
     return res.status(result.status).json(result.body);
   } catch (err) {
     console.error("Bulk knowledge route error:", err.message);
-    return res.status(500).json({ error: "Failed to process bulk knowledge" });
+    return res.status(500).json({
+      error: "Failed to process bulk knowledge",
+      details: err.message
+    });
   }
 });
 
@@ -530,11 +533,16 @@ app.get("/health", (req, res) => {
   });
 });
 
-// ==============================
-// TARA KNOWLEDGE VIEWER ROUTES
-// ==============================
+/* =========================================================
+   10. KNOWLEDGE VIEWER ROUTES
+========================================================= */
+
 app.get("/admin/knowledge", async (req, res) => {
   try {
+    if (!supabase) {
+      return res.status(500).json({ error: "Supabase not configured" });
+    }
+
     const limit = Math.min(parseInt(req.query.limit || "50", 10), 200);
     const search = String(req.query.search || "").trim();
 
@@ -555,33 +563,42 @@ app.get("/admin/knowledge", async (req, res) => {
       return res.status(500).json({ error: error.message });
     }
 
-    res.json({
+    return res.json({
       count: data?.length || 0,
       rows: data || []
     });
   } catch (err) {
     console.error("Knowledge viewer route error:", err);
-    res.status(500).json({ error: "Failed to load knowledge rows." });
+    return res.status(500).json({ error: "Failed to load knowledge rows." });
   }
 });
 
 app.delete("/admin/knowledge/:id", async (req, res) => {
-  const { id } = req.params;
+  try {
+    if (!supabase) {
+      return res.status(500).json({ error: "Supabase not configured" });
+    }
 
-  const { error } = await supabase
-    .from("knowledge_base")
-    .delete()
-    .eq("id", id);
+    const { id } = req.params;
 
-  if (error) {
-    return res.status(500).json({ error: error.message });
+    const { error } = await supabase
+      .from("knowledge_base")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("Knowledge delete route error:", err);
+    return res.status(500).json({ error: "Failed to delete knowledge row." });
   }
-
-  res.json({ success: true });
 });
 
 /* =========================================================
-   10. START SERVER
+   11. START SERVER
 ========================================================= */
 
 const PORT = process.env.PORT || 10000;
