@@ -41,7 +41,7 @@ function parseTxtFile(content, filePath) {
   };
 
   let inAnswer = false;
-  let answerLines = [];
+  const answerLines = [];
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
@@ -76,7 +76,7 @@ function parseTxtFile(content, filePath) {
       entry.tags = line
         .replace("SEARCH_TAGS:", "")
         .split(",")
-        .map(tag => tag.trim())
+        .map((tag) => tag.trim())
         .filter(Boolean);
       continue;
     }
@@ -145,7 +145,9 @@ function main() {
       const parsed = parseTxtFile(content, file);
 
       knowledge.push(parsed);
-      console.log(`Imported: ${parsed.meta_id || path.basename(file)} -> ${parsed.keyword}`);
+      console.log(
+        `Imported: ${parsed.meta_id || path.basename(file)} -> ${parsed.keyword}`
+      );
     } catch (err) {
       console.error(`Failed to import ${file}:`, err.message);
     }
