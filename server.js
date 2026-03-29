@@ -530,6 +530,53 @@ app.get("/health", (req, res) => {
   });
 });
 
+// ==============================
+// TARA KNOWLEDGE VIEWER ROUTES
+// ==============================
+
+app.get("/admin/knowledge", async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit || "50", 10), 200);
+    const search = String(req.query.search || "").trim();
+
+    let query = supabase
+      .from("knowledge_base")
+      .select("id, content, metadata, created_at")
+      .order("id", { ascending: false })
+      .limit(limit);
+
+    if (search) {
+      query = query.ilike("content", `%${search}%`);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    res.json({ count: data.length, rows: data });
+
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load knowledge" });
+  }
+});
+
+app.delete("/admin/knowledge/:id", async (req, res) => {
+  const { id } = req.params;
+
+  const { error } = await supabase
+    .from("knowledge_base")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
+  res.json({ success: true });
+});
+
 /* =========================================================
    10. START SERVER
 ========================================================= */
