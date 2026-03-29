@@ -370,7 +370,7 @@ function extractWebSources(data) {
     console.error("Web source extraction error:", err.message);
   }
 
-  return sources.slice(0, 5);
+  return sources.slice(0, 3);
 }
 
 /* =========================================================
