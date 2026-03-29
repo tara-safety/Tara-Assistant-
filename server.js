@@ -533,7 +533,6 @@ app.get("/health", (req, res) => {
 // ==============================
 // TARA KNOWLEDGE VIEWER ROUTES
 // ==============================
-
 app.get("/admin/knowledge", async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit || "50", 10), 200);
@@ -552,17 +551,21 @@ app.get("/admin/knowledge", async (req, res) => {
     const { data, error } = await query;
 
     if (error) {
+      console.error("Knowledge viewer read error:", error);
       return res.status(500).json({ error: error.message });
     }
 
-    res.json({ count: data.length, rows: data });
-
+    res.json({
+      count: data?.length || 0,
+      rows: data || []
+    });
   } catch (err) {
-    res.status(500).json({ error: "Failed to load knowledge" });
+    console.error("Knowledge viewer route error:", err);
+    res.status(500).json({ error: "Failed to load knowledge rows." });
   }
 });
 
-app.delete("/admin/knowledge/:id", async (req, res) => {
+"/admin/knowledge/:id", async (req, res) => {
   const { id } = req.params;
 
   const { error } = await supabase
