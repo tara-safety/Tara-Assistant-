@@ -1286,26 +1286,23 @@ function filterKnowledgeMatches(question, matches) {
 function formatKnowledgeContext(vectorMatches = [], localMatches = []) {
   const parts = [];
 
-  if (Array.isArray(vectorMatches) && vectorMatches.length > 0) {
-    parts.push(
-      vectorMatches
-        .map((item, index) => {
-          const metadata = item.metadata ? JSON.stringify(item.metadata) : "{}";
-          return `Vector Source ${index + 1}:
-Content: ${item.content}
-Metadata: ${metadata}`;
-        })
-        .join("\n\n")
-    );
+  if (vectorMatches.length > 0) {
+    const cleaned = vectorMatches.map((item, i) => {
+      return `Source ${i + 1}:
+${item.content}`;
+    }).join("\n\n");
+
+    parts.push(cleaned);
   }
 
-  if (Array.isArray(localMatches) && localMatches.length > 0) {
+  if (localMatches.length > 0) {
     parts.push(formatLocalKnowledgeContext(localMatches));
   }
 
-  if (parts.length === 0) {
-    return "No relevant knowledge found.";
-  }
+  return parts.length > 0
+    ? parts.join("\n\n")
+    : "No relevant knowledge found.";
+}
 
   return parts.join("\n\n");
 }
