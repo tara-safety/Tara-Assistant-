@@ -92,6 +92,15 @@ async function uploadBatch(entries, batchNumber, totalBatches) {
     );
   }
 
+  const { data: existing } = await supabase
+  .from("knowledge_base")
+  .select("id")
+  .ilike("content", `%${content.slice(0, 100)}%`)
+  .limit(1);
+
+if (existing.length === 0) {
+  // insert only if not found
+}
   console.log(`✅ Batch ${batchNumber} uploaded`, payload);
   return payload;
 }
