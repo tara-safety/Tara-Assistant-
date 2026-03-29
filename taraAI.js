@@ -1474,13 +1474,13 @@ ${knowledgeContext}
 Previous conversation:
 ${historyContext}
 
-Current question:
+Question:
 ${normalizedQuestion}
 
 Built-in towing guidance:
 ${builtInContext}
 
-Knowledge context:
+Relevant knowledge:
 ${knowledgeContext}
 `,
         max_output_tokens: 550
