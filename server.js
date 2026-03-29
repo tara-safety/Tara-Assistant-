@@ -573,7 +573,7 @@ app.get("/admin/knowledge", async (req, res) => {
   }
 });
 
-"/admin/knowledge/:id", async (req, res) => {
+app.delete("/admin/knowledge/:id", async (req, res) => {
   const { id } = req.params;
 
   const { error } = await supabase
