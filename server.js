@@ -1,3 +1,4 @@
+throw new Error("TEST DEPLOY CHECK");
 import express from "express";
 import OpenAI from "openai";
 import twilio from "twilio";
