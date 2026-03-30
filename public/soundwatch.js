@@ -1,3 +1,20 @@
+let audioContext = null;
+let analyser = null;
+let microphone = null;
+let soundLoop = null;
+let mediaStream = null;
+
+let ambientRms = 10;
+let ambientPeak = 12;
+
+let lastTriggerTime = 0;
+let sustainedLoudFrames = 0;
+let burstHits = 0;
+let lastBurstTime = 0;
+
+const TRIGGER_COOLDOWN_MS = 9000;
+const BURST_WINDOW_MS = 2200;
+
 export async function startSoundWatch(state, dom, onDanger) {
   if (state.soundWatchActive) return;
   state.soundWatchActive = true;
@@ -13,20 +30,19 @@ export async function startSoundWatch(state, dom, onDanger) {
 
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
     microphone = audioContext.createMediaStreamSource(mediaStream);
+
     analyser = audioContext.createAnalyser();
     analyser.fftSize = 1024;
-    analyser.smoothingTimeConstant = 0.25;
+    analyser.smoothingTimeConstant = 0.1;
 
     microphone.connect(analyser);
 
     const timeData = new Uint8Array(analyser.fftSize);
-    const freqData = new Uint8Array(analyser.frequencyBinCount);
 
     function checkAudio() {
       if (!state.soundWatchActive || !analyser) return;
 
       analyser.getByteTimeDomainData(timeData);
-      analyser.getByteFrequencyData(freqData);
 
       let peakDeviation = 0;
       let squareSum = 0;
@@ -40,51 +56,59 @@ export async function startSoundWatch(state, dom, onDanger) {
       const rms = Math.sqrt(squareSum / timeData.length);
       const now = Date.now();
 
-      // 🔊 Frequency bands
-      let lowMid = 0;
-      let mid = 0;
-      let high = 0;
+      // Adaptive ambient tracking
+      ambientRms = ambientRms * 0.985 + rms * 0.015;
+      ambientPeak = ambientPeak * 0.985 + peakDeviation * 0.015;
 
-      for (let i = 5; i < 20; i++) lowMid += freqData[i];
-      for (let i = 20; i < 60; i++) mid += freqData[i];
-      for (let i = 60; i < 120; i++) high += freqData[i];
+      // 1) Short sharp loud burst (horn tap, bang, close shout)
+      const sharpBurst =
+        peakDeviation > Math.max(42, ambientPeak * 2.0) &&
+        rms > Math.max(18, ambientRms * 1.8);
 
-      // 🔥 More forgiving detection
-      const loudEvent = rms > ambientRms * 1.8 + 6;
-      const sharpPeak = peakDeviation > 55;
+      // 2) Sustained loud event (long horn, alarm, prolonged hazard sound)
+      const sustainedLoud =
+        peakDeviation > Math.max(34, ambientPeak * 1.55) &&
+        rms > Math.max(16, ambientRms * 1.5);
 
-      // Horn OR sudden loud spike
-      const hornLike =
-        (mid > lowMid * 1.1) && (mid > high * 0.8);
-
-      const danger =
-        (loudEvent && sharpPeak) ||
-        (hornLike && rms > ambientRms * 1.5 + 5);
-
-      if (danger) {
-        if (now - lastSpikeTime > 400) {
-          if (now - lastSpikeTime > SPIKE_WINDOW_MS) {
-            spikeHits = 0;
-          }
-
-          spikeHits += 1;
-          lastSpikeTime = now;
-        }
+      // Count sustained frames
+      if (sustainedLoud) {
+        sustainedLoudFrames += 1;
       } else {
-        ambientRms = ambientRms * 0.96 + rms * 0.04;
-
-        if (now - lastSpikeTime > SPIKE_WINDOW_MS) {
-          spikeHits = 0;
-        }
+        sustainedLoudFrames = Math.max(0, sustainedLoudFrames - 1);
       }
 
-      // 🔥 Trigger faster (less strict)
+      // Count burst hits
+      if (sharpBurst) {
+        if (now - lastBurstTime > 250) {
+          if (now - lastBurstTime > BURST_WINDOW_MS) {
+            burstHits = 0;
+          }
+          burstHits += 1;
+          lastBurstTime = now;
+        }
+      } else if (now - lastBurstTime > BURST_WINDOW_MS) {
+        burstHits = 0;
+      }
+
+      // Trigger conditions:
+      // A) one very strong burst
+      const immediateDanger =
+        peakDeviation > Math.max(52, ambientPeak * 2.4) &&
+        rms > Math.max(22, ambientRms * 2.0);
+
+      // B) repeated bursts within short window
+      const repeatedBurstDanger = burstHits >= 2;
+
+      // C) sustained loud tone over several frames
+      const sustainedDanger = sustainedLoudFrames >= 10;
+
       if (
-        spikeHits >= 1 &&
+        (immediateDanger || repeatedBurstDanger || sustainedDanger) &&
         now - lastTriggerTime > TRIGGER_COOLDOWN_MS
       ) {
-        spikeHits = 0;
         lastTriggerTime = now;
+        burstHits = 0;
+        sustainedLoudFrames = 0;
         onDanger("hazard_sound");
       }
 
@@ -110,9 +134,11 @@ export function stopSoundWatch(state, dom) {
   state.soundWatchActive = false;
 
   ambientRms = 10;
-  lastSpikeTime = 0;
-  spikeHits = 0;
+  ambientPeak = 12;
   lastTriggerTime = 0;
+  sustainedLoudFrames = 0;
+  burstHits = 0;
+  lastBurstTime = 0;
 
   if (soundLoop) {
     cancelAnimationFrame(soundLoop);
