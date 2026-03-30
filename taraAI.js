@@ -1652,15 +1652,24 @@ export async function insertKnowledge({
 }
 
 export async function bulkInsertKnowledge({ openai, supabase, entries }) {
+  console.log("BULK A: function entered", {
+    hasOpenAI: !!openai,
+    hasSupabase: !!supabase,
+    entryCount: Array.isArray(entries) ? entries.length : 0
+  });
+
   if (!openai) {
+    console.log("BULK B: openai missing");
     return { status: 500, body: { error: "OpenAI not configured" } };
   }
 
   if (!supabase) {
+    console.log("BULK C: supabase missing");
     return { status: 500, body: { error: "Supabase not configured" } };
   }
 
   if (!Array.isArray(entries) || entries.length === 0) {
+    console.log("BULK D: entries invalid");
     return { status: 400, body: { error: "Entries array is required" } };
   }
 
@@ -1672,6 +1681,12 @@ export async function bulkInsertKnowledge({ openai, supabase, entries }) {
 
     if (!content) continue;
 
+    console.log("BULK E: creating embedding", {
+      contentLength: content.length,
+      title: metadata?.title || null,
+      source_id: metadata?.source_id || null
+    });
+
     const embedding = await getEmbedding(openai, content);
 
     rowsToInsert.push({
@@ -1681,18 +1696,35 @@ export async function bulkInsertKnowledge({ openai, supabase, entries }) {
     });
   }
 
+  console.log("BULK F: rows prepared", {
+    rowCount: rowsToInsert.length
+  });
+
   if (rowsToInsert.length === 0) {
     return { status: 400, body: { error: "No valid entries to insert" } };
   }
+
+  console.log("BULK G: before supabase insert");
 
   const { data, error } = await supabase
     .from("knowledge_base")
     .insert(rowsToInsert)
     .select();
 
+  console.log("BULK H: after supabase insert", {
+    hasError: !!error,
+    insertedCount: data?.length || 0
+  });
+
   if (error) {
-    console.error("Bulk insert error:", error);
-    return { status: 500, body: { error: "Bulk insert failed" } };
+    console.error("BULK I: Supabase insert error object:", error);
+    return {
+      status: 500,
+      body: {
+        error: "Bulk insert failed",
+        details: error.message || error
+      }
+    };
   }
 
   return {
