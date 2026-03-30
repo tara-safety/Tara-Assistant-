@@ -49,14 +49,6 @@ function getOrCreateSessionId() {
 document.addEventListener("DOMContentLoaded", function () {
   console.log("TARA System Booting");
 
-  // ================================
-  // 🔐 USER AGREEMENT (NEW)
-  // ================================
-  if (localStorage.getItem("tara_agreed") !== "true") {
-    window.location.href = "/agreement.html";
-    return;
-  }
-
   let dom;
   const sessionId = getOrCreateSessionId();
 
@@ -188,13 +180,17 @@ document.addEventListener("DOMContentLoaded", function () {
     setupDriverMinder(state, dom, function () {
       startEmergencyCountdown(state, dom);
     });
-  } catch (err) {}
+  } catch (err) {
+    console.error("setupDriverMinder failed:", err);
+  }
 
   try {
     setupEmergencyButton(state, dom, function () {
       startEmergencyCountdown(state, dom);
     });
-  } catch (err) {}
+  } catch (err) {
+    console.error("setupEmergencyButton failed:", err);
+  }
 
   function toggleMiniSOS() {
     if (!emergencyMiniBtn) return;
@@ -285,5 +281,4 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   console.log("TARA READY");
-
 });
