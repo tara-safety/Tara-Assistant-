@@ -2,40 +2,168 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Near Miss Report</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TARA Near Miss</title>
 
 <style>
-body { font-family: Arial; padding:20px; max-width:600px; margin:auto; }
-input, textarea, button {
-  width:100%; margin:10px 0; padding:10px;
-}
-button {
-  background:#1e9f4f;
+body {
+  margin:0;
+  font-family: Arial;
+  background: linear-gradient(180deg,#071a22,#0e2c38);
   color:#fff;
+}
+
+/* HEADER */
+.header {
+  padding:20px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.back {
+  background:#0e2c38;
+  border:1px solid #1e9f4f;
+  color:#00ff99;
+  padding:8px 12px;
+  border-radius:8px;
+}
+
+.title {
+  font-size:20px;
+  font-weight:bold;
+}
+
+/* HERO */
+.hero {
+  padding:20px;
+}
+
+.hero h1 {
+  margin:0;
+  font-size:28px;
+}
+
+.hero p {
+  color:#b7d4dc;
+  font-size:14px;
+}
+
+/* CARD */
+.card {
+  background:#0f2e3b;
+  margin:20px;
+  padding:20px;
+  border-radius:14px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.4);
+}
+
+/* INPUTS */
+input, textarea, select {
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  margin-bottom:16px;
+  border-radius:10px;
   border:none;
+  background:#071a22;
+  color:#fff;
+}
+
+textarea {
+  min-height:120px;
+}
+
+/* LABEL */
+label {
+  font-size:13px;
+  color:#9fd6e3;
+}
+
+/* BUTTON */
+.submit {
+  width:100%;
+  padding:16px;
+  background:#00ff99;
+  color:#000;
+  font-weight:bold;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+}
+
+/* STATUS */
+.status {
+  margin-top:15px;
+  font-size:13px;
+  color:#9fd6e3;
+}
+
+.warning {
+  background:#1b3c47;
+  padding:12px;
+  border-radius:10px;
+  margin-bottom:15px;
+  font-size:13px;
+  color:#9fd6e3;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Near Miss Reporting</h1>
+<div class="header">
+  <button class="back" onclick="history.back()">← Back</button>
+  <div class="title">TARA Report</div>
+</div>
+
+<div class="hero">
+  <h1>Near Miss Report</h1>
+  <p>Report unsafe roadside incidents to improve driver safety and awareness.</p>
+</div>
+
+<div class="card">
+
+<div class="warning">
+⚠️ This report may be used for safety improvement and internal review.
+</div>
 
 <form id="reportForm">
-  <input type="text" placeholder="Name" id="name" required>
-  <input type="text" placeholder="Company" id="company">
-  <input type="text" placeholder="Location" id="location">
-  <textarea placeholder="Describe the near miss..." id="details" required></textarea>
-  <button type="submit">Submit Report</button>
+
+<label>Name *</label>
+<input id="name" required>
+
+<label>Company</label>
+<input id="company">
+
+<label>Location *</label>
+<input id="location" placeholder="Highway / street / landmark" required>
+
+<label>Incident Type *</label>
+<select id="type" required>
+  <option value="">Select</option>
+  <option>Traffic too close</option>
+  <option>Failed move over</option>
+  <option>Unsafe loading</option>
+  <option>Poor visibility</option>
+  <option>Other</option>
+</select>
+
+<label>What happened *</label>
+<textarea id="details" placeholder="Explain what happened..." required></textarea>
+
+<button class="submit">Submit Report</button>
+
+<div class="status" id="status"></div>
+
 </form>
 
-<script>
-const AGREEMENT_KEY = "tara_agreement";
+</div>
 
-function getAgreement() {
-  const data = localStorage.getItem(AGREEMENT_KEY);
-  if (!data) return null;
-  try { return JSON.parse(data); } catch { return null; }
+<script>
+function getAgreement(){
+  const a = localStorage.getItem("tara_agreement");
+  return a ? JSON.parse(a) : null;
 }
 
 document.getElementById("reportForm").addEventListener("submit", function(e){
@@ -43,33 +171,30 @@ document.getElementById("reportForm").addEventListener("submit", function(e){
 
   const agreement = getAgreement();
 
-  if (!agreement || !agreement.agreed) {
-    alert("You must accept the TARA User Agreement before submitting a report.");
+  if(!agreement){
+    alert("You must accept agreement first");
     window.location.href = "/agreement.html";
     return;
   }
 
   const report = {
-    name: document.getElementById("name").value,
-    company: document.getElementById("company").value,
-    location: document.getElementById("location").value,
-    details: document.getElementById("details").value,
-    date: new Date().toISOString(),
-
-    // 🔐 AGREEMENT PROOF ATTACHED
-    agreementVersion: agreement.version,
-    agreementTimestamp: agreement.timestamp,
-    device: agreement.userAgent
+    name: name.value,
+    company: company.value,
+    location: location.value,
+    type: type.value,
+    details: details.value,
+    time: new Date().toISOString(),
+    agreement: agreement
   };
 
-  console.log("FULL REPORT:", report);
+  console.log(report);
 
-  localStorage.setItem("tara_last_report", JSON.stringify(report));
+  localStorage.setItem("tara_report", JSON.stringify(report));
 
-  alert("Report saved locally (ready for server)");
-
-  this.reset();
+  document.getElementById("status").innerText =
+    "Report captured ✔ (ready for server)";
 });
 </script>
+
 </body>
 </html>
