@@ -20,12 +20,12 @@ import { playAlarm, stopAlarm } from "./emergency.js";
 import { startSoundWatch, stopSoundWatch } from "./soundwatch.js";
 
 const ROADSIDE_WARNING_TIME = 12000;
-const WARNING_CLEAR_DELAY = 3000;
-const WARNING_CLEAR_THRESHOLD = 14;
-const WARNING_CLEAR_HITS_REQUIRED = 4;
-const MEANINGFUL_IMPACT_RESET = 10;
-const MEANINGFUL_MOTION_RESET = 4.8;
-const WARNING_RETRIGGER_COOLDOWN = 5000;
+const WARNING_CLEAR_DELAY = 4000;
+const WARNING_CLEAR_THRESHOLD = 18;
+const WARNING_CLEAR_HITS_REQUIRED = 6;
+const MEANINGFUL_IMPACT_RESET = 12;
+const MEANINGFUL_MOTION_RESET = 6.2;
+const WARNING_RETRIGGER_COOLDOWN = 7000;
 
 const REMINDER_MS = 30 * 60 * 1000;
 const HAZARD_WARNING_COOLDOWN = 9000;
@@ -154,6 +154,7 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
     const magnitude = Math.sqrt(x * x + y * y + z * z);
     const impact = Math.abs(magnitude - (state.lastMagnitude || magnitude));
     state.lastMagnitude = magnitude;
+
     const motionLevel = x * 0.35 + y * 0.35 + z * 0.2;
 
     if (impact > IMPACT_LIMIT) {
@@ -170,11 +171,10 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
       const enoughTimePassed =
         now - state.warningStartedAt > WARNING_CLEAR_DELAY;
 
-      if (
-        enoughTimePassed &&
-        (impact > WARNING_CLEAR_THRESHOLD ||
-          motionLevel > MEANINGFUL_MOTION_RESET)
-      ) {
+      const strongImpact = impact > WARNING_CLEAR_THRESHOLD;
+      const strongMotion = motionLevel > MEANINGFUL_MOTION_RESET;
+
+      if (enoughTimePassed && strongImpact && strongMotion) {
         state.warningClearHits += 1;
       }
 
@@ -186,7 +186,7 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
     }
 
     const meaningfulMotion =
-      impact > MEANINGFUL_IMPACT_RESET ||
+      impact > MEANINGFUL_IMPACT_RESET &&
       motionLevel > MEANINGFUL_MOTION_RESET;
 
     if (meaningfulMotion) {
