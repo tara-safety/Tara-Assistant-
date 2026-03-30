@@ -290,31 +290,34 @@ app.post("/knowledge", async (req, res) => {
 
 app.post("/knowledge/bulk", async (req, res) => {
   try {
+    console.log("STEP 1: hit /knowledge/bulk");
+
     if (!ALLOW_KNOWLEDGE_WRITE) {
+      console.log("STEP 2: knowledge write disabled");
       return res.status(403).json({
         error: "Bulk knowledge upload is temporarily disabled while TARA brain is being rebuilt."
       });
     }
 
-    console.log("STEP 1: hit /knowledge/bulk");
-
-console.log("STEP 5: before bulkInsertKnowledge", {
-  hasOpenAI: !!openai,
-  hasSupabase: !!supabase,
-  entryCount: Array.isArray(req.body?.entries) ? req.body.entries.length : 0
-});
-    
     if (!openai) {
+      console.log("STEP 3: openai missing");
       return res.status(500).json({
         error: "OpenAI not configured"
       });
     }
 
     if (!supabase) {
+      console.log("STEP 4: supabase missing");
       return res.status(500).json({
         error: "Supabase not configured"
       });
     }
+
+    console.log("STEP 5: before bulkInsertKnowledge", {
+      hasOpenAI: !!openai,
+      hasSupabase: !!supabase,
+      entryCount: Array.isArray(req.body?.entries) ? req.body.entries.length : 0
+    });
 
     const result = await bulkInsertKnowledge({
       openai,
@@ -322,12 +325,17 @@ console.log("STEP 5: before bulkInsertKnowledge", {
       entries: req.body?.entries
     });
 
+    console.log("STEP 6: bulkInsertKnowledge returned", result);
+
     return res.status(result.status).json(result.body);
   } catch (err) {
-    console.error("Bulk knowledge route error:", err.message);
+    console.error("STEP 7: Bulk knowledge route error full object:", err);
+    console.error("STEP 8: Bulk knowledge route error message:", err?.message);
+    console.error("STEP 9: Bulk knowledge route error stack:", err?.stack);
+
     return res.status(500).json({
       error: "Failed to process bulk knowledge",
-      details: err.message
+      details: err?.message || "Unknown bulk route error"
     });
   }
 });
