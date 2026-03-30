@@ -1,18 +1,3 @@
-let audioContext = null;
-let analyser = null;
-let microphone = null;
-let soundLoop = null;
-let mediaStream = null;
-
-let ambientRms = 10;
-let lastSpikeTime = 0;
-let spikeHits = 0;
-let lastTriggerTime = 0;
-let toneHits = 0;
-
-const SPIKE_WINDOW_MS = 2500;
-const TRIGGER_COOLDOWN_MS = 9000;
-
 export async function startSoundWatch(state, dom, onDanger) {
   if (state.soundWatchActive) return;
   state.soundWatchActive = true;
@@ -30,7 +15,7 @@ export async function startSoundWatch(state, dom, onDanger) {
     microphone = audioContext.createMediaStreamSource(mediaStream);
     analyser = audioContext.createAnalyser();
     analyser.fftSize = 1024;
-    analyser.smoothingTimeConstant = 0.15;
+    analyser.smoothingTimeConstant = 0.25;
 
     microphone.connect(analyser);
 
@@ -55,50 +40,50 @@ export async function startSoundWatch(state, dom, onDanger) {
       const rms = Math.sqrt(squareSum / timeData.length);
       const now = Date.now();
 
-      // Frequency band checks
-      // Rough speech-heavy area vs stronger horn-like band energy
-      let lowMid = 0;   // lower energy
-      let hornBand = 0; // likely horn-ish / sharp alert-ish region
-      let upperMid = 0;
+      // 🔊 Frequency bands
+      let lowMid = 0;
+      let mid = 0;
+      let high = 0;
 
-      for (let i = 8; i < 20; i++) lowMid += freqData[i];
-      for (let i = 20; i < 55; i++) hornBand += freqData[i];
-      for (let i = 55; i < 100; i++) upperMid += freqData[i];
+      for (let i = 5; i < 20; i++) lowMid += freqData[i];
+      for (let i = 20; i < 60; i++) mid += freqData[i];
+      for (let i = 60; i < 120; i++) high += freqData[i];
 
-      const hornDominant = hornBand > lowMid * 1.15 && hornBand > upperMid * 0.9;
-      const loudSpike = peakDeviation > 62 && rms > ambientRms * 2.1 + 8;
-      const strongSpike = peakDeviation > 54 && rms > ambientRms * 2.5 + 10;
+      // 🔥 More forgiving detection
+      const loudEvent = rms > ambientRms * 1.8 + 6;
+      const sharpPeak = peakDeviation > 55;
 
-      const hornLikeEvent = hornDominant && (loudSpike || strongSpike);
+      // Horn OR sudden loud spike
+      const hornLike =
+        (mid > lowMid * 1.1) && (mid > high * 0.8);
 
-      // Talking tends to fluctuate a lot; require horn-like pattern twice
-      if (hornLikeEvent) {
-        if (now - lastSpikeTime > 500) {
+      const danger =
+        (loudEvent && sharpPeak) ||
+        (hornLike && rms > ambientRms * 1.5 + 5);
+
+      if (danger) {
+        if (now - lastSpikeTime > 400) {
           if (now - lastSpikeTime > SPIKE_WINDOW_MS) {
             spikeHits = 0;
-            toneHits = 0;
           }
 
           spikeHits += 1;
-          toneHits += 1;
           lastSpikeTime = now;
         }
       } else {
-        ambientRms = ambientRms * 0.97 + rms * 0.03;
+        ambientRms = ambientRms * 0.96 + rms * 0.04;
 
         if (now - lastSpikeTime > SPIKE_WINDOW_MS) {
           spikeHits = 0;
-          toneHits = 0;
         }
       }
 
+      // 🔥 Trigger faster (less strict)
       if (
-        spikeHits >= 2 &&
-        toneHits >= 2 &&
+        spikeHits >= 1 &&
         now - lastTriggerTime > TRIGGER_COOLDOWN_MS
       ) {
         spikeHits = 0;
-        toneHits = 0;
         lastTriggerTime = now;
         onDanger("hazard_sound");
       }
