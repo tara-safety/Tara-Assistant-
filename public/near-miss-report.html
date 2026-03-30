@@ -30,24 +30,46 @@ button {
 </form>
 
 <script>
+const AGREEMENT_KEY = "tara_agreement";
+
+function getAgreement() {
+  const data = localStorage.getItem(AGREEMENT_KEY);
+  if (!data) return null;
+  try { return JSON.parse(data); } catch { return null; }
+}
+
 document.getElementById("reportForm").addEventListener("submit", function(e){
   e.preventDefault();
+
+  const agreement = getAgreement();
+
+  if (!agreement || !agreement.agreed) {
+    alert("You must accept the TARA User Agreement before submitting a report.");
+    window.location.href = "/agreement.html";
+    return;
+  }
 
   const report = {
     name: document.getElementById("name").value,
     company: document.getElementById("company").value,
     location: document.getElementById("location").value,
     details: document.getElementById("details").value,
-    date: new Date().toISOString()
+    date: new Date().toISOString(),
+
+    // 🔐 AGREEMENT PROOF ATTACHED
+    agreementVersion: agreement.version,
+    agreementTimestamp: agreement.timestamp,
+    device: agreement.userAgent
   };
 
-  console.log("Report:", report);
+  console.log("FULL REPORT:", report);
 
-  alert("Report submitted (local test)");
+  localStorage.setItem("tara_last_report", JSON.stringify(report));
+
+  alert("Report saved locally (ready for server)");
 
   this.reset();
 });
 </script>
-
 </body>
 </html>
