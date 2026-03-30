@@ -296,6 +296,14 @@ app.post("/knowledge/bulk", async (req, res) => {
       });
     }
 
+    console.log("STEP 1: hit /knowledge/bulk");
+
+console.log("STEP 5: before bulkInsertKnowledge", {
+  hasOpenAI: !!openai,
+  hasSupabase: !!supabase,
+  entryCount: Array.isArray(req.body?.entries) ? req.body.entries.length : 0
+});
+    
     if (!openai) {
       return res.status(500).json({
         error: "OpenAI not configured"
