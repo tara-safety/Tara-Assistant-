@@ -8,6 +8,7 @@ let ambientRms = 10;
 let lastSpikeTime = 0;
 let spikeHits = 0;
 let lastTriggerTime = 0;
+let toneHits = 0;
 
 const SPIKE_WINDOW_MS = 2500;
 const TRIGGER_COOLDOWN_MS = 9000;
@@ -29,16 +30,18 @@ export async function startSoundWatch(state, dom, onDanger) {
     microphone = audioContext.createMediaStreamSource(mediaStream);
     analyser = audioContext.createAnalyser();
     analyser.fftSize = 1024;
-    analyser.smoothingTimeConstant = 0.2;
+    analyser.smoothingTimeConstant = 0.15;
 
     microphone.connect(analyser);
 
     const timeData = new Uint8Array(analyser.fftSize);
+    const freqData = new Uint8Array(analyser.frequencyBinCount);
 
     function checkAudio() {
       if (!state.soundWatchActive || !analyser) return;
 
       analyser.getByteTimeDomainData(timeData);
+      analyser.getByteFrequencyData(freqData);
 
       let peakDeviation = 0;
       let squareSum = 0;
@@ -52,38 +55,50 @@ export async function startSoundWatch(state, dom, onDanger) {
       const rms = Math.sqrt(squareSum / timeData.length);
       const now = Date.now();
 
-      const suddenSpike =
-        peakDeviation > 58 &&
-        rms > ambientRms * 1.9 + 6;
+      // Frequency band checks
+      // Rough speech-heavy area vs stronger horn-like band energy
+      let lowMid = 0;   // lower energy
+      let hornBand = 0; // likely horn-ish / sharp alert-ish region
+      let upperMid = 0;
 
-      const mediumSpike =
-        peakDeviation > 48 &&
-        rms > ambientRms * 2.2 + 8;
+      for (let i = 8; i < 20; i++) lowMid += freqData[i];
+      for (let i = 20; i < 55; i++) hornBand += freqData[i];
+      for (let i = 55; i < 100; i++) upperMid += freqData[i];
 
-      const isHazardSpike = suddenSpike || mediumSpike;
+      const hornDominant = hornBand > lowMid * 1.15 && hornBand > upperMid * 0.9;
+      const loudSpike = peakDeviation > 62 && rms > ambientRms * 2.1 + 8;
+      const strongSpike = peakDeviation > 54 && rms > ambientRms * 2.5 + 10;
 
-      if (isHazardSpike) {
-        if (now - lastSpikeTime > 600) {
+      const hornLikeEvent = hornDominant && (loudSpike || strongSpike);
+
+      // Talking tends to fluctuate a lot; require horn-like pattern twice
+      if (hornLikeEvent) {
+        if (now - lastSpikeTime > 500) {
           if (now - lastSpikeTime > SPIKE_WINDOW_MS) {
             spikeHits = 0;
+            toneHits = 0;
           }
 
           spikeHits += 1;
+          toneHits += 1;
           lastSpikeTime = now;
         }
       } else {
-        ambientRms = ambientRms * 0.95 + rms * 0.05;
+        ambientRms = ambientRms * 0.97 + rms * 0.03;
 
         if (now - lastSpikeTime > SPIKE_WINDOW_MS) {
           spikeHits = 0;
+          toneHits = 0;
         }
       }
 
       if (
         spikeHits >= 2 &&
+        toneHits >= 2 &&
         now - lastTriggerTime > TRIGGER_COOLDOWN_MS
       ) {
         spikeHits = 0;
+        toneHits = 0;
         lastTriggerTime = now;
         onDanger("hazard_sound");
       }
