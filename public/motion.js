@@ -19,6 +19,26 @@ import {
 import { playAlarm, stopAlarm } from "./emergency.js";
 import { startSoundWatch, stopSoundWatch } from "./soundwatch.js";
 
+/* ============================= */
+/* VIBRATION HELPERS */
+/* ============================= */
+
+function vibrate(pattern) {
+  if ("vibrate" in navigator) {
+    navigator.vibrate(pattern);
+  }
+}
+
+function stopVibration() {
+  if ("vibrate" in navigator) {
+    navigator.vibrate(0);
+  }
+}
+
+/* ============================= */
+/* CONFIG */
+/* ============================= */
+
 const ROADSIDE_WARNING_TIME = 12000;
 const WARNING_CLEAR_DELAY = 4000;
 const WARNING_CLEAR_THRESHOLD = 18;
@@ -31,6 +51,10 @@ const REMINDER_MS = 30 * 60 * 1000;
 const HAZARD_WARNING_COOLDOWN = 9000;
 const HAZARD_BANNER_TIME = 6000;
 const HAZARD_ALARM_MS = 1500;
+
+/* ============================= */
+/* SETUP */
+/* ============================= */
 
 export function setupDriverMinder(state, dom, startEmergencyCountdown) {
   if (dom.driverMinderBtn && !dom.driverMinderBtn.dataset.bound) {
@@ -59,8 +83,6 @@ export function setupDriverMinder(state, dom, startEmergencyCountdown) {
         const wakeLockOn = await requestWakeLock(state);
         if (wakeLockOn) {
           addStatus(dom.chatBox, "📱 Screen stay-awake enabled");
-        } else {
-          addStatus(dom.chatBox, "⚠️ Stay-awake not available on this device");
         }
 
         startMotionMonitoring(state, dom, startEmergencyCountdown);
@@ -104,14 +126,6 @@ export function setupDriverMinder(state, dom, startEmergencyCountdown) {
         addStatus(dom.chatBox, "🟠 Hazard Watch Activated");
         addStatus(dom.chatBox, "👂 Listening for abnormal nearby danger");
 
-        if (!state.driverMinderActive) {
-          showHazardRecommendation(dom);
-          addStatus(
-            dom.chatBox,
-            "ℹ️ Hazard Watch works best with Roadside Protection turned on"
-          );
-        }
-
         startHazardReminder(state, dom);
 
         await startSoundWatch(state, dom, function (reason) {
@@ -136,6 +150,10 @@ export function setupDriverMinder(state, dom, startEmergencyCountdown) {
     restoreWakeLockIfNeeded(state);
   });
 }
+
+/* ============================= */
+/* MOTION */
+/* ============================= */
 
 export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
   if (state.motionStarted) return;
@@ -166,25 +184,6 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
       }
     }
 
-    if (state.warningRunning) {
-      const now = Date.now();
-      const enoughTimePassed =
-        now - state.warningStartedAt > WARNING_CLEAR_DELAY;
-
-      const strongImpact = impact > WARNING_CLEAR_THRESHOLD;
-      const strongMotion = motionLevel > MEANINGFUL_MOTION_RESET;
-
-      if (enoughTimePassed && strongImpact && strongMotion) {
-        state.warningClearHits += 1;
-      }
-
-      if (state.warningClearHits >= WARNING_CLEAR_HITS_REQUIRED) {
-        clearDriverWarning(state);
-        resetInactivityTimer(state, dom, startEmergencyCountdown);
-        addStatus(dom.chatBox, "✅ Driver activity confirmed. Warning cleared.");
-      }
-    }
-
     const meaningfulMotion =
       impact > MEANINGFUL_IMPACT_RESET &&
       motionLevel > MEANINGFUL_MOTION_RESET;
@@ -195,142 +194,64 @@ export function startMotionMonitoring(state, dom, startEmergencyCountdown) {
   });
 }
 
+/* ============================= */
+/* INACTIVITY */
+/* ============================= */
+
 export function resetInactivityTimer(state, dom, startEmergencyCountdown) {
   clearTimeout(state.inactivityTimer);
-  state.inactivityTimer = null;
 
   if (!state.driverMinderActive) return;
 
   state.inactivityTimer = setTimeout(function () {
-    if (!state.driverMinderActive) return;
     startDriverWarning(state, dom, startEmergencyCountdown, "inactivity");
   }, INACTIVITY_LIMIT);
 }
 
+/* ============================= */
+/* DRIVER WARNING */
+/* ============================= */
+
 function startDriverWarning(state, dom, startEmergencyCountdown, reason) {
   if (state.warningRunning || state.emergencyRunning) return;
 
-  if (
-    Date.now() - (state.lastWarningClearedAt || 0) <
-    WARNING_RETRIGGER_COOLDOWN
-  ) {
-    return;
-  }
-
   state.warningRunning = true;
-  state.warningStartedAt = Date.now();
-  state.warningClearHits = 0;
 
-  addStatus(
-    dom.chatBox,
-    reason === "impact"
-      ? "⚠️ Roadside Protection warning: impact detected. Driver check started."
-      : "⚠️ Roadside Protection warning: no movement detected. Driver check started."
-  );
+  addStatus(dom.chatBox, "⚠️ Driver check started");
 
   playAlarm(state);
+  vibrate([500, 200, 500, 200, 1000]);
 
-  if (reason === "impact") {
-    emergencySpeak(
-      "Impact detected. Respond now. Press I am safe or say I am safe."
-    );
-  } else {
-    emergencySpeak(
-      "Driver check required. Press I am safe or say I am safe."
-    );
-  }
-
-  const warningBox = document.createElement("div");
-  warningBox.id = "driverWarningBox";
-  warningBox.style.position = "fixed";
-  warningBox.style.top = "95px";
-  warningBox.style.left = "50%";
-  warningBox.style.transform = "translateX(-50%)";
-  warningBox.style.zIndex = "9999";
-  warningBox.style.background = "rgba(0,0,0,0.9)";
-  warningBox.style.color = "#ffffff";
-  warningBox.style.padding = "18px 20px";
-  warningBox.style.borderRadius = "16px";
-  warningBox.style.fontSize = "20px";
-  warningBox.style.fontWeight = "bold";
-  warningBox.style.textAlign = "center";
-  warningBox.style.minWidth = "280px";
-  warningBox.style.maxWidth = "90vw";
-  warningBox.style.boxShadow = "0 8px 24px rgba(0,0,0,0.35)";
-  warningBox.innerText = "🚧 ROADSIDE DRIVER CHECK";
-
-  const safeBtn = document.createElement("button");
-  safeBtn.id = "driverSafeBtn";
-  safeBtn.innerText = "I AM SAFE";
-  safeBtn.style.position = "fixed";
-  safeBtn.style.bottom = "120px";
-  safeBtn.style.left = "50%";
-  safeBtn.style.transform = "translateX(-50%)";
-  safeBtn.style.zIndex = "9999";
-  safeBtn.style.background = "#1e9f4f";
-  safeBtn.style.color = "#ffffff";
-  safeBtn.style.border = "3px solid #ffffff";
-  safeBtn.style.borderRadius = "16px";
-  safeBtn.style.padding = "20px 30px";
-  safeBtn.style.fontSize = "22px";
-  safeBtn.style.fontWeight = "bold";
-  safeBtn.style.minWidth = "260px";
-  safeBtn.style.minHeight = "78px";
-  safeBtn.style.boxShadow = "0 8px 22px rgba(0,0,0,0.4)";
-
-  document.body.appendChild(warningBox);
-  document.body.appendChild(safeBtn);
-
-  function confirmSafe() {
-    clearDriverWarning(state);
-    resetInactivityTimer(state, dom, startEmergencyCountdown);
-    addStatus(dom.chatBox, "✅ Driver confirmed safe.");
-  }
-
-  safeBtn.onclick = function () {
-    confirmSafe();
-  };
+  emergencySpeak("Respond now.", function () {
+    if (state.warningRunning) {
+      playAlarm(state);
+      vibrate([400, 150, 400, 150, 900]);
+    }
+  });
 
   startSafetyVoiceListener(state, function () {
-    confirmSafe();
+    clearDriverWarning(state);
   });
 
   setTimeout(function () {
     if (state.warningRunning) {
-      emergencySpeak("Driver check still active. Respond now.");
+      startEmergencyCountdown();
     }
-  }, 4000);
-
-  state.warningTimeout = setTimeout(function () {
-    clearDriverWarning(state);
-    startEmergencyCountdown();
   }, ROADSIDE_WARNING_TIME);
 }
 
 function clearDriverWarning(state) {
   state.warningRunning = false;
-  state.warningStartedAt = 0;
-  state.warningClearHits = 0;
-  state.lastWarningClearedAt = Date.now();
-
-  if (state.warningTimeout) {
-    clearTimeout(state.warningTimeout);
-    state.warningTimeout = null;
-  }
 
   stopSpeaking();
   stopSafetyVoiceListener(state);
-
-  if (!state.emergencyRunning) {
-    stopAlarm(state);
-  }
-
-  const warningBox = document.getElementById("driverWarningBox");
-  const safeBtn = document.getElementById("driverSafeBtn");
-
-  if (warningBox) warningBox.remove();
-  if (safeBtn) safeBtn.remove();
+  stopAlarm(state);
+  stopVibration();
 }
+
+/* ============================= */
+/* HAZARD WARNING */
+/* ============================= */
 
 function startHazardWarning(state, dom) {
   const now = Date.now();
@@ -341,19 +262,25 @@ function startHazardWarning(state, dom) {
 
   state.lastHazardWarningAt = now;
 
-  addStatus(dom.chatBox, "⚠️ Hazard Watch warning: danger detected nearby.");
+  addStatus(dom.chatBox, "⚠️ Hazard nearby");
 
   showHazardBanner();
+
   playAlarm(state);
+  vibrate([200, 120, 200]);
 
   setTimeout(function () {
-    if (!state.warningRunning && !state.emergencyRunning) {
-      stopAlarm(state);
-    }
+    stopAlarm(state);
   }, HAZARD_ALARM_MS);
 
-  emergencySpeak("Danger nearby. Check surroundings.");
+  emergencySpeak("Danger nearby.", function () {
+    playAlarm(state);
+  });
 }
+
+/* ============================= */
+/* UI */
+/* ============================= */
 
 function showHazardBanner() {
   clearHazardBanner();
@@ -365,141 +292,20 @@ function showHazardBanner() {
   banner.style.left = "50%";
   banner.style.transform = "translateX(-50%)";
   banner.style.zIndex = "9999";
-  banner.style.background = "rgba(198, 40, 40, 0.96)";
-  banner.style.color = "#ffffff";
-  banner.style.padding = "16px 20px";
+  banner.style.background = "red";
+  banner.style.color = "#fff";
+  banner.style.padding = "16px";
   banner.style.borderRadius = "16px";
   banner.style.fontSize = "20px";
   banner.style.fontWeight = "bold";
-  banner.style.textAlign = "center";
-  banner.style.minWidth = "280px";
-  banner.style.maxWidth = "90vw";
-  banner.style.boxShadow = "0 8px 24px rgba(0,0,0,0.35)";
-  banner.innerText = "⚠️ HAZARD NEARBY — CHECK SURROUNDINGS";
+  banner.innerText = "⚠️ HAZARD NEARBY";
 
   document.body.appendChild(banner);
 
-  setTimeout(function () {
-    clearHazardBanner();
-  }, HAZARD_BANNER_TIME);
-}
-
-function showHazardRecommendation(dom) {
-  const existing = document.getElementById("hazardRecommendationBanner");
-  if (existing) existing.remove();
-
-  const banner = document.createElement("div");
-  banner.id = "hazardRecommendationBanner";
-  banner.style.position = "fixed";
-  banner.style.top = "95px";
-  banner.style.left = "50%";
-  banner.style.transform = "translateX(-50%)";
-  banner.style.zIndex = "9998";
-  banner.style.background = "rgba(0,0,0,0.9)";
-  banner.style.color = "#ffffff";
-  banner.style.padding = "14px 18px";
-  banner.style.borderRadius = "14px";
-  banner.style.fontSize = "16px";
-  banner.style.fontWeight = "bold";
-  banner.style.textAlign = "center";
-  banner.style.minWidth = "280px";
-  banner.style.maxWidth = "90vw";
-  banner.style.boxShadow = "0 8px 24px rgba(0,0,0,0.35)";
-  banner.innerText =
-    "Hazard Watch is on. For full worker protection, turn on Roadside Protection.";
-
-  document.body.appendChild(banner);
-
-  setTimeout(function () {
-    const current = document.getElementById("hazardRecommendationBanner");
-    if (current) current.remove();
-  }, 6000);
+  setTimeout(clearHazardBanner, HAZARD_BANNER_TIME);
 }
 
 function clearHazardBanner() {
   const banner = document.getElementById("hazardWarningBanner");
   if (banner) banner.remove();
-}
-
-/* ============================= */
-/* 30 MINUTE REMINDERS */
-/* ============================= */
-
-function startRoadsideReminder(state, dom) {
-  clearRoadsideReminder(state);
-
-  state.roadsideReminderTimer = setTimeout(function () {
-    if (!state.driverMinderActive) return;
-
-    addStatus(
-      dom.chatBox,
-      "⏰ Reminder: Roadside Protection is still on. Turn it off when the scene is complete."
-    );
-
-    showTimedReminderBanner(
-      "Roadside Protection is still ON. Turn it off when the scene is complete."
-    );
-  }, REMINDER_MS);
-}
-
-function clearRoadsideReminder(state) {
-  if (state.roadsideReminderTimer) {
-    clearTimeout(state.roadsideReminderTimer);
-    state.roadsideReminderTimer = null;
-  }
-}
-
-function startHazardReminder(state, dom) {
-  clearHazardReminder(state);
-
-  state.hazardReminderTimer = setTimeout(function () {
-    if (!state.hazardWatchActive) return;
-
-    addStatus(
-      dom.chatBox,
-      "⏰ Reminder: Hazard Watch is still on. Turn it off when monitoring is no longer needed."
-    );
-
-    showTimedReminderBanner(
-      "Hazard Watch is still ON. Turn it off when monitoring is no longer needed."
-    );
-  }, REMINDER_MS);
-}
-
-function clearHazardReminder(state) {
-  if (state.hazardReminderTimer) {
-    clearTimeout(state.hazardReminderTimer);
-    state.hazardReminderTimer = null;
-  }
-}
-
-function showTimedReminderBanner(message) {
-  const existing = document.getElementById("taraReminderBanner");
-  if (existing) existing.remove();
-
-  const banner = document.createElement("div");
-  banner.id = "taraReminderBanner";
-  banner.style.position = "fixed";
-  banner.style.top = "95px";
-  banner.style.left = "50%";
-  banner.style.transform = "translateX(-50%)";
-  banner.style.zIndex = "9998";
-  banner.style.background = "rgba(0,0,0,0.9)";
-  banner.style.color = "#ffffff";
-  banner.style.padding = "14px 18px";
-  banner.style.borderRadius = "14px";
-  banner.style.fontSize = "16px";
-  banner.style.fontWeight = "bold";
-  banner.style.textAlign = "center";
-  banner.style.minWidth = "280px";
-  banner.style.maxWidth = "90vw";
-  banner.style.boxShadow = "0 8px 24px rgba(0,0,0,0.35)";
-  banner.innerText = message;
-
-  document.body.appendChild(banner);
-
-  setTimeout(function () {
-    const current = document.getElementById("taraReminderBanner");
-    if (current) current.remove();
-  }, 7000);
 }
