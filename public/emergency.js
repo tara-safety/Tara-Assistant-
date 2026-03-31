@@ -16,6 +16,47 @@ const RETRY_INTERVAL_MS = 10000;
 let retryIntervalStarted = false;
 
 /* ============================= */
+/* VIBRATION */
+/* ============================= */
+
+function canVibrate() {
+  return typeof navigator !== "undefined" && "vibrate" in navigator;
+}
+
+function vibrateOnce(pattern) {
+  if (canVibrate()) {
+    navigator.vibrate(pattern);
+  }
+}
+
+function startRepeatVibration(state, pattern = [500, 200, 500, 200, 1000], everyMs = 2200) {
+  stopRepeatVibration(state);
+
+  if (!canVibrate()) return;
+
+  navigator.vibrate(pattern);
+
+  state.vibrationInterval = setInterval(function () {
+    if (!state.warningRunning && !state.emergencyRunning && !state.highRiskModeActive) {
+      stopRepeatVibration(state);
+      return;
+    }
+    navigator.vibrate(pattern);
+  }, everyMs);
+}
+
+function stopRepeatVibration(state) {
+  if (state.vibrationInterval) {
+    clearInterval(state.vibrationInterval);
+    state.vibrationInterval = null;
+  }
+
+  if (canVibrate()) {
+    navigator.vibrate(0);
+  }
+}
+
+/* ============================= */
 /* HIGH-RISK SIREN */
 /* ============================= */
 
@@ -98,19 +139,25 @@ function stopHighRiskSiren(state) {
 export function playAlarm(state) {
   if (state.highRiskMode) {
     startHighRiskSiren(state);
+    startRepeatVibration(state, [500, 180, 500, 180, 1000], 2200);
     return;
   }
 
-  if (!state.alarmAudio) return;
+  if (state.alarmAudio) {
+    state.alarmAudio.loop = true;
+    state.alarmAudio.volume = 1;
+    state.alarmAudio.currentTime = 0;
+    state.alarmAudio.play().catch(() => {
+      console.log("Alarm blocked by iPhone");
+    });
+  }
 
-  state.alarmAudio.currentTime = 0;
-  state.alarmAudio.play().catch(() => {
-    console.log("Alarm blocked by iPhone");
-  });
+  startRepeatVibration(state, [500, 180, 500, 180, 1000], 2200);
 }
 
 export function stopAlarm(state) {
   stopHighRiskSiren(state);
+  stopRepeatVibration(state);
 
   if (!state.alarmAudio) return;
 
@@ -173,6 +220,7 @@ function startHold(state, startEmergencyCountdown) {
   if (state.holdTimer || state.emergencyRunning) return;
 
   playAlarm(state);
+  vibrateOnce([250, 120, 250]);
 
   state.holdTimer = setTimeout(function () {
     state.holdTimer = null;
@@ -259,9 +307,13 @@ export function startEmergencyCountdown(state, dom) {
   addStatus(dom.chatBox, "🚨 Emergency countdown started");
 
   if (state.highRiskMode) {
-    forceSpeak("High-risk emergency countdown started. Say cancel emergency now.");
+    forceSpeak("High-risk countdown started.", function () {
+      playAlarm(state);
+    });
   } else {
-    forceSpeak("Emergency countdown started. Say cancel emergency to stop.");
+    forceSpeak("Emergency countdown started.", function () {
+      playAlarm(state);
+    });
   }
 
   let count = EMERGENCY_COUNTDOWN;
@@ -298,11 +350,15 @@ export function startEmergencyCountdown(state, dom) {
     }
 
     if (count === 20) {
-      forceSpeak("Emergency in twenty seconds. Say cancel emergency to stop.");
+      forceSpeak("Emergency in twenty seconds.", function () {
+        if (state.emergencyRunning) playAlarm(state);
+      });
     }
 
     if (count === 10) {
-      forceSpeak("Emergency in ten seconds. Say cancel emergency to stop.");
+      forceSpeak("Emergency in ten seconds.", function () {
+        if (state.emergencyRunning) playAlarm(state);
+      });
     }
 
     if (count <= 0) {
@@ -327,6 +383,7 @@ export function triggerEmergency(state, dom) {
 
   state.emergencyActive = true;
   addStatus(dom.chatBox, "📍 Collecting emergency location...");
+  vibrateOnce([300, 120, 300, 120, 600]);
 
   if (!navigator.geolocation) {
     addStatus(dom.chatBox, "⚠️ Geolocation not supported");
@@ -481,4 +538,12 @@ export function setupEmergencyFailSafe(dom) {
 
   setInterval(processEmergencyQueue, RETRY_INTERVAL_MS);
   processEmergencyQueue();
+}
+
+/* ============================= */
+/* HAZARD ALERT SUPPORT */
+/* ============================= */
+
+export function pulseHazardAlert(state) {
+  vibrateOnce([180, 100, 180]);
 }
