@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const KNOWLEDGE_FILE = path.join(process.cwd(), "knowledge.json");
+const KNOWLEDGE_FILE = process.argv[2] || path.join(process.cwd(), "knowledge.json");
 const API_BASE_URL =
   process.env.TARA_API_URL || "https://tara-assistant-dwhg.onrender.com";
 const BULK_ENDPOINT = `${API_BASE_URL}/knowledge/bulk`;
