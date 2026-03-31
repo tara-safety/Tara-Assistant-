@@ -59,6 +59,10 @@ function buildUtterance(text, options = {}) {
     utterance.voice = cachedVoice;
   }
 
+  if (typeof options.onEnd === "function") {
+    utterance.onend = options.onEnd;
+  }
+
   return utterance;
 }
 
@@ -99,7 +103,7 @@ export function initVoices() {
   }
 }
 
-export function speak(text, state) {
+export function speak(text, state, onEnd) {
   if (!text) return;
   if (state && state.voiceEnabled === false) return;
 
@@ -107,29 +111,32 @@ export function speak(text, state) {
     lang: "en-US",
     rate: 0.94,
     pitch: 1.03,
-    volume: 1
+    volume: 1,
+    onEnd
   });
 }
 
-export function forceSpeak(text) {
+export function forceSpeak(text, onEnd) {
   if (!text) return;
 
   speakNow(text, {
     lang: "en-US",
     rate: 0.9,
     pitch: 1.0,
-    volume: 1
+    volume: 1,
+    onEnd
   });
 }
 
-export function emergencySpeak(text) {
+export function emergencySpeak(text, onEnd) {
   if (!text) return;
 
   speakNow(text, {
     lang: "en-US",
     rate: 0.88,
     pitch: 0.98,
-    volume: 1
+    volume: 1,
+    onEnd
   });
 }
 
