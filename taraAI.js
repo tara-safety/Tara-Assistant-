@@ -26,8 +26,7 @@ function saveSessionMessage(sessionId = "default", role, content) {
     content: String(content).trim()
   });
 
-  const trimmed = history.slice(-12);
-  sessionStore.set(sessionId, trimmed);
+  sessionStore.set(sessionId, history.slice(-12));
 }
 
 function clearSessionHistory(sessionId = "default") {
@@ -62,6 +61,26 @@ function loadLocalKnowledge() {
   }
 }
 
+function formatLocalKnowledgeContext(entries) {
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return "No relevant local knowledge found.";
+  }
+
+  return entries
+    .map((entry, index) => {
+      const tags = Array.isArray(entry?.tags) ? entry.tags.join(", ") : "";
+      return `Local Source ${index + 1}:
+Title: ${entry?.title || "Untitled"}
+Source ID: ${entry?.source_id || "Unknown"}
+Category: ${entry?.category || "Unknown"}
+Tags: ${tags}
+Question: ${entry?.question || ""}
+Answer: ${entry?.answer || ""}
+Raw Text: ${entry?.raw_text || ""}`;
+    })
+    .join("\n\n");
+}
+
 function scoreLocalKnowledgeEntry(question, entry) {
   const q = cleanText(question);
 
@@ -77,7 +96,6 @@ function scoreLocalKnowledgeEntry(question, entry) {
   if (!haystack) return 0;
 
   let score = 0;
-
   const importantTerms = getImportantQuestionTerms(question);
 
   for (const term of importantTerms) {
@@ -126,25 +144,6 @@ function searchLocalKnowledge(question, maxResults = 4) {
     .sort((a, b) => b.local_score - a.local_score)
     .slice(0, maxResults);
 }
-
-function formatLocalKnowledgeContext(entries) {
-  if (!Array.isArray(entries) || entries.length === 0) {
-    return "No relevant local knowledge found.";
-  }
-
-  return entries
-    .map((entry, index) => {
-      const tags = Array.isArray(entry.tags) ? entry.tags.join(", ") : "";
-      return `Local Source ${index + 1}:
-Title: ${entry.title || "Untitled"}
-Source ID: ${entry.source_id || "Unknown"}
-Category: ${entry.category || "Unknown"}
-Tags: ${tags}
-Answer: ${entry.answer || ""}
-Raw Text: ${entry.raw_text || ""}`;
-    })
-    .join("\n\n");
-
 
 /* =========================================================
    1. TEXT + QUESTION HELPERS
@@ -240,7 +239,19 @@ function isTowingQuestion(question) {
     "lane keeping",
     "class 3",
     "class 2",
-    "class 1"
+    "class 1",
+    "hookup",
+    "hook up",
+    "load",
+    "loading",
+    "pull",
+    "drag",
+    "tow mode",
+    "transport",
+    "casualty vehicle",
+    "shoulder recovery",
+    "operator",
+    "securement"
   ];
 
   return keywords.some((word) => q.includes(word));
@@ -313,7 +324,11 @@ function getImportantQuestionTerms(question) {
           "should",
           "there",
           "their",
-          "them"
+          "them",
+          "they",
+          "just",
+          "then",
+          "than"
         ].includes(word)
     );
 }
@@ -517,11 +532,7 @@ function getSmartBuiltInProAnswer(question) {
     });
   }
 
-  if (
-    q.includes("winch") ||
-    q.includes("winching") ||
-    q.includes("pull out")
-  ) {
+  if (q.includes("winch") || q.includes("winching") || q.includes("pull out")) {
     return formatProAnswerFromSections({
       Setup: [
         "Align for the straightest pull possible",
@@ -657,12 +668,8 @@ function getSmartBuiltInProAnswer(question) {
         "Check for fluid leaks, broken suspension, loose panels, and shifting weight",
         "Treat the vehicle as unstable until proven otherwise"
       ],
-      "Best Practice": [
-        "Use the safest loading method, often a flatbed"
-      ],
-      "Watch For": [
-        "Do not assume wheels will roll or steer correctly"
-      ],
+      "Best Practice": ["Use the safest loading method, often a flatbed"],
+      "Watch For": ["Do not assume wheels will roll or steer correctly"],
       "Stop If": [
         "Stop and reassess if anything looks compromised or unpredictable"
       ]
@@ -700,10 +707,7 @@ function getSmartBuiltInProAnswer(question) {
       "Check First": [
         "Check height clearance, ramp angle, and turning space"
       ],
-      Setup: [
-        "Use low-clearance equipment",
-        "Plan your exit path before loading"
-      ],
+      Setup: ["Use low-clearance equipment", "Plan your exit path before loading"],
       "Watch For": [
         "Watch ceiling height, body clearance, and ramp transitions"
       ],
@@ -720,9 +724,7 @@ function getSmartBuiltInProAnswer(question) {
     q.includes("confined")
   ) {
     return formatProAnswerFromSections({
-      Plan: [
-        "Slow the operation down and plan every movement first"
-      ],
+      Plan: ["Slow the operation down and plan every movement first"],
       "Watch For": [
         "Watch mirrors, doors, nearby vehicles, and body clearance"
       ],
@@ -798,9 +800,7 @@ function getSmartBuiltInProAnswer(question) {
         "Vehicle rolls freely",
         "Drivetrain and condition allow it"
       ],
-      "Final Check": [
-        "Default to the safest method if unsure"
-      ]
+      "Final Check": ["Default to the safest method if unsure"]
     });
   }
 
@@ -811,19 +811,13 @@ function getSmartBuiltInProAnswer(question) {
     q.includes("hill recovery")
   ) {
     return formatProAnswerFromSections({
-      "Check First": [
-        "Check slope and how weight will shift during movement"
-      ],
+      "Check First": ["Check slope and how weight will shift during movement"],
       Setup: [
         "Use the straightest path possible",
         "Control rollback and sudden movement"
       ],
-      "Watch For": [
-        "Watch side load and traction loss"
-      ],
-      "Stop If": [
-        "Stop and reassess if traction or control is uncertain"
-      ]
+      "Watch For": ["Watch side load and traction loss"],
+      "Stop If": ["Stop and reassess if traction or control is uncertain"]
     });
   }
 
@@ -839,12 +833,8 @@ function getSmartBuiltInProAnswer(question) {
       "Best Practice": [
         "Use dollies or lift methods if wheels cannot rotate"
       ],
-      "Do Not Do": [
-        "Do not drag the vehicle with locked wheels"
-      ],
-      "Stop If": [
-        "Stop and reassess if the condition cannot be safely managed"
-      ]
+      "Do Not Do": ["Do not drag the vehicle with locked wheels"],
+      "Stop If": ["Stop and reassess if the condition cannot be safely managed"]
     });
   }
 
@@ -854,9 +844,7 @@ function getSmartBuiltInProAnswer(question) {
     q.includes("shoulder recovery")
   ) {
     return formatProAnswerFromSections({
-      "First Priority": [
-        "Traffic control and visibility"
-      ],
+      "First Priority": ["Traffic control and visibility"],
       Setup: [
         "Position the truck to protect the scene",
         "Create the safest work area possible"
@@ -933,11 +921,7 @@ function getSmartBuiltInAnswer(question, proMode = false) {
     return "Start by slowing the whole scene down and checking traffic exposure, shoulder stability, ditch depth, vehicle angle, ground condition, and whether the customer can stay safely inside or must move to a protected area. Stabilize the vehicle first if there is any chance of shifting, sliding, or rolling during hookup. Use the straightest and least-shocking pull possible, and avoid side-loading, sudden jerks, or attachment to weak or unknown components. Before pulling, confirm where the vehicle will travel, what will happen when it reaches the shoulder, and whether a winch-out, wheel-lift assist, dollies, or flatbed load is the safer finish. If the recovery angle, anchor point, or vehicle condition is uncertain, stop and reassess before continuing. Follow company policy and local regulations.";
   }
 
-  if (
-    q.includes("winch") ||
-    q.includes("winching") ||
-    q.includes("pull out")
-  ) {
+  if (q.includes("winch") || q.includes("winching") || q.includes("pull out")) {
     return "Set up for the straightest pull you can, and reduce side-load on the cable, vehicle, and casualty unit as much as possible. Inspect the scene, ground condition, vehicle condition, and likely travel path before loading the line. Keep people clear of the danger zone, remove slack carefully, and use controlled tension instead of shock loading. If the vehicle may bind, shift, or climb unpredictably, stop and reset the plan before continuing. Follow company policy and local regulations.";
   }
 
@@ -1057,7 +1041,9 @@ function shouldUseWebFallback(answer) {
     "check the owner",
     "check the manual",
     "not enough information",
-    "unclear from the information"
+    "unclear from the information",
+    "tara can t answer this",
+    "tara cant answer this"
   ];
 
   return weakPhrases.some((phrase) => a.includes(phrase));
@@ -1072,9 +1058,7 @@ function buildHistoryContext(history = []) {
     return "No recent conversation history.";
   }
 
-  return history
-    .map((item) => `${item.role.toUpperCase()}: ${item.content}`)
-    .join("\n");
+  return history.map((item) => `${item.role.toUpperCase()}: ${item.content}`).join("\n");
 }
 
 function buildChatPrompt(
@@ -1236,7 +1220,7 @@ async function getEmbedding(openai, text) {
   return response.data[0].embedding;
 }
 
-async function searchKnowledgeBase(openai, supabase, question, matchCount = 5) {
+async function searchKnowledgeBase(openai, supabase, question, matchCount = 8) {
   if (!supabase) {
     console.log("Supabase not configured for search");
     return [];
@@ -1248,7 +1232,7 @@ async function searchKnowledgeBase(openai, supabase, question, matchCount = 5) {
     const { data, error } = await supabase.rpc("match_knowledge_base", {
       query_embedding: queryEmbedding,
       match_count: matchCount,
-      match_threshold: 0.45
+      match_threshold: 0.22
     });
 
     if (error) {
@@ -1268,18 +1252,25 @@ function filterKnowledgeMatches(question, matches) {
 
   const terms = getImportantQuestionTerms(question);
 
-  if (terms.length === 0) {
-    return matches.slice(0, 5);
-  }
-
   return matches
-    .filter((item) => {
-      const content = String(item?.content || "").toLowerCase();
-      const metadata = JSON.stringify(item?.metadata || {}).toLowerCase();
-      const haystack = `${content} ${metadata}`;
+    .map((item) => {
+      const content = cleanText(item?.content || "");
+      const metadataObj = item?.metadata || {};
+      const metadataText = cleanText(JSON.stringify(metadataObj));
+      const haystack = `${content} ${metadataText}`;
+
       const hitCount = terms.filter((term) => haystack.includes(term)).length;
-      return hitCount >= 1;
+      const similarity =
+        Number(item?.similarity ?? item?.score ?? item?.match_score ?? 0) || 0;
+
+      return {
+        ...item,
+        hitCount,
+        similarity,
+        rankScore: similarity * 10 + hitCount
+      };
     })
+    .sort((a, b) => b.rankScore - a.rankScore)
     .slice(0, 5);
 }
 
@@ -1287,10 +1278,21 @@ function formatKnowledgeContext(vectorMatches = [], localMatches = []) {
   const parts = [];
 
   if (vectorMatches.length > 0) {
-    const cleaned = vectorMatches.map((item, i) => {
-      return `Source ${i + 1}:
-${item.content}`;
-    }).join("\n\n");
+    const cleaned = vectorMatches
+      .map((item, i) => {
+        const metadata = item?.metadata || {};
+        const tags = Array.isArray(metadata?.tags) ? metadata.tags.join(", ") : "";
+
+        return `Vector Source ${i + 1}:
+Title: ${metadata?.title || "Untitled"}
+Source ID: ${metadata?.source_id || "Unknown"}
+Category: ${metadata?.category || "Unknown"}
+Tags: ${tags}
+Question: ${metadata?.question || ""}
+Answer: ${metadata?.answer || ""}
+Raw Text: ${metadata?.raw_text || item?.content || ""}`;
+      })
+      .join("\n\n");
 
     parts.push(cleaned);
   }
@@ -1309,23 +1311,23 @@ function formatVectorKnowledgeFallback(match) {
 
   const metadata = match?.metadata || {};
   const title = String(metadata?.title || "").trim();
+  const answer = String(metadata?.answer || "").trim();
+  const rawText = String(metadata?.raw_text || "").trim();
   const question = String(metadata?.question || "").trim();
   const sourceId = String(metadata?.source_id || "").trim();
   const content = String(match?.content || "").trim();
 
-  if (!content) return "";
+  const bestBody = answer || rawText || content;
+  if (!bestBody) return "";
 
   const sections = [];
 
   if (title) sections.push(title);
-  sections.push(content);
+  sections.push(bestBody);
   if (question) sections.push(`Question: ${question}`);
   if (sourceId) sections.push(`Source: ${sourceId}`);
 
   return sections.join("\n\n").trim();
-}
-
-  return parts.join("\n\n");
 }
 
 async function saveLearnedKnowledge(
@@ -1407,7 +1409,6 @@ export async function handleAsk({
   let localMatches = [];
   let knowledgeContext = "No relevant knowledge found.";
 
-  // 1. Supabase first
   if (useStoredKnowledge) {
     const rawMatches = await searchKnowledgeBase(
       openai,
@@ -1416,15 +1417,43 @@ export async function handleAsk({
       8
     );
 
+    console.log(
+      "RAW SUPABASE MATCHES:",
+      (rawMatches || []).map((item) => ({
+        similarity: item?.similarity ?? item?.score ?? item?.match_score ?? null,
+        title: item?.metadata?.title || null,
+        source_id: item?.metadata?.source_id || null,
+        preview: String(
+          item?.metadata?.answer || item?.metadata?.raw_text || item?.content || ""
+        ).slice(0, 120)
+      }))
+    );
+
     vectorMatches = filterKnowledgeMatches(normalizedQuestion, rawMatches);
+
+    console.log(
+      "FILTERED MATCHES:",
+      (vectorMatches || []).map((item) => ({
+        similarity: item?.similarity ?? item?.score ?? item?.match_score ?? null,
+        hitCount: item?.hitCount ?? null,
+        title: item?.metadata?.title || null
+      }))
+    );
   }
 
-  // 2. Local fallback only if Supabase found nothing useful
   if (vectorMatches.length === 0) {
     localMatches = searchLocalKnowledge(normalizedQuestion, 4);
+
+    console.log(
+      "LOCAL MATCHES:",
+      (localMatches || []).map((item) => ({
+        local_score: item?.local_score ?? null,
+        title: item?.title || null,
+        source_id: item?.source_id || null
+      }))
+    );
   }
 
-  // 3. Build final knowledge context
   knowledgeContext = formatKnowledgeContext(vectorMatches, localMatches);
 
   if (!knowledgeContext || !knowledgeContext.trim()) {
@@ -1477,6 +1506,8 @@ ${knowledgeContext}
     });
 
     answer = extractResponseText(firstPass).replace(/\n\s+/g, "\n").trim();
+
+    console.log("FIRST PASS ANSWER:", answer.slice(0, 300));
 
     if (shouldUseWebFallback(answer)) {
       const webResult = await openai.responses.create({
