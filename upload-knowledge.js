@@ -1,13 +1,14 @@
 import fs from "fs";
 import path from "path";
-import dotenv from "dotenv";
 
-dotenv.config();
+const KNOWLEDGE_FILE = path.join(process.cwd(), "knowledge.json");
 
-const KNOWLEDGE_FILE = process.argv[2] || path.join(process.cwd(), "knowledge.json");
+// Change this to your live server if needed
 const API_BASE_URL =
   process.env.TARA_API_URL || "https://tara-assistant-dwhg.onrender.com";
 const BULK_ENDPOINT = `${API_BASE_URL}/knowledge/bulk`;
+
+// Keep batches moderate so Render/OpenAI/Supabase don't get slammed
 const BATCH_SIZE = 25;
 
 function readKnowledgeFile() {
@@ -77,7 +78,7 @@ async function uploadBatch(entries, batchNumber, totalBatches) {
 
   const text = await response.text();
 
-  let payload;
+  let payload = null;
   try {
     payload = JSON.parse(text);
   } catch {
@@ -90,7 +91,7 @@ async function uploadBatch(entries, batchNumber, totalBatches) {
     );
   }
 
-  console.log(`✅ Batch ${batchNumber} uploaded`, payload);
+  console.log(`Batch ${batchNumber} uploaded`, payload);
   return payload;
 }
 
@@ -125,10 +126,10 @@ async function main() {
       await uploadBatch(batches[i], i + 1, batches.length);
     }
 
-    console.log("\n🎉 Upload complete");
+    console.log("\nUpload complete");
     console.log(`Uploaded ${entries.length} entries to ${API_BASE_URL}`);
   } catch (err) {
-    console.error("❌ Upload failed:", err.message);
+    console.error("Upload failed:", err.message);
     process.exit(1);
   }
 }

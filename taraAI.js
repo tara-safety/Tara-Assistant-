@@ -144,7 +144,7 @@ Answer: ${entry.answer || ""}
 Raw Text: ${entry.raw_text || ""}`;
     })
     .join("\n\n");
-}
+
 
 /* =========================================================
    1. TEXT + QUESTION HELPERS
@@ -1287,12 +1287,10 @@ function formatKnowledgeContext(vectorMatches = [], localMatches = []) {
   const parts = [];
 
   if (vectorMatches.length > 0) {
-    const cleaned = vectorMatches
-      .map((item, i) => {
-        return `Source ${i + 1}:
+    const cleaned = vectorMatches.map((item, i) => {
+      return `Source ${i + 1}:
 ${item.content}`;
-      })
-      .join("\n\n");
+    }).join("\n\n");
 
     parts.push(cleaned);
   }
@@ -1304,6 +1302,30 @@ ${item.content}`;
   return parts.length > 0
     ? parts.join("\n\n")
     : "No relevant knowledge found.";
+}
+
+function formatVectorKnowledgeFallback(match) {
+  if (!match) return "";
+
+  const metadata = match?.metadata || {};
+  const title = String(metadata?.title || "").trim();
+  const question = String(metadata?.question || "").trim();
+  const sourceId = String(metadata?.source_id || "").trim();
+  const content = String(match?.content || "").trim();
+
+  if (!content) return "";
+
+  const sections = [];
+
+  if (title) sections.push(title);
+  sections.push(content);
+  if (question) sections.push(`Question: ${question}`);
+  if (sourceId) sections.push(`Source: ${sourceId}`);
+
+  return sections.join("\n\n").trim();
+}
+
+  return parts.join("\n\n");
 }
 
 async function saveLearnedKnowledge(
@@ -1385,6 +1407,7 @@ export async function handleAsk({
   let localMatches = [];
   let knowledgeContext = "No relevant knowledge found.";
 
+  // 1. Supabase first
   if (useStoredKnowledge) {
     const rawMatches = await searchKnowledgeBase(
       openai,
@@ -1396,10 +1419,12 @@ export async function handleAsk({
     vectorMatches = filterKnowledgeMatches(normalizedQuestion, rawMatches);
   }
 
+  // 2. Local fallback only if Supabase found nothing useful
   if (vectorMatches.length === 0) {
     localMatches = searchLocalKnowledge(normalizedQuestion, 4);
   }
 
+  // 3. Build final knowledge context
   knowledgeContext = formatKnowledgeContext(vectorMatches, localMatches);
 
   if (!knowledgeContext || !knowledgeContext.trim()) {
@@ -1508,7 +1533,9 @@ ${knowledgeContext}
   }
 
   if (!answer || shouldUseWebFallback(answer)) {
-    if (localMatches.length > 0) {
+    if (vectorMatches.length > 0) {
+      answer = formatVectorKnowledgeFallback(vectorMatches[0]);
+    } else if (localMatches.length > 0) {
       const bestLocal = localMatches[0];
       answer =
         `${bestLocal.title ? `${bestLocal.title}\n\n` : ""}` +
@@ -1612,10 +1639,6 @@ export async function insertKnowledge({
   content,
   metadata = {}
 }) {
-  if (!openai) {
-    return { status: 500, body: { error: "OpenAI not configured" } };
-  }
-
   if (!supabase) {
     return { status: 500, body: { error: "Supabase not configured" } };
   }
@@ -1652,24 +1675,11 @@ export async function insertKnowledge({
 }
 
 export async function bulkInsertKnowledge({ openai, supabase, entries }) {
-  console.log("BULK A: function entered", {
-    hasOpenAI: !!openai,
-    hasSupabase: !!supabase,
-    entryCount: Array.isArray(entries) ? entries.length : 0
-  });
-
-  if (!openai) {
-    console.log("BULK B: openai missing");
-    return { status: 500, body: { error: "OpenAI not configured" } };
-  }
-
   if (!supabase) {
-    console.log("BULK C: supabase missing");
     return { status: 500, body: { error: "Supabase not configured" } };
   }
 
   if (!Array.isArray(entries) || entries.length === 0) {
-    console.log("BULK D: entries invalid");
     return { status: 400, body: { error: "Entries array is required" } };
   }
 
@@ -1681,12 +1691,6 @@ export async function bulkInsertKnowledge({ openai, supabase, entries }) {
 
     if (!content) continue;
 
-    console.log("BULK E: creating embedding", {
-      contentLength: content.length,
-      title: metadata?.title || null,
-      source_id: metadata?.source_id || null
-    });
-
     const embedding = await getEmbedding(openai, content);
 
     rowsToInsert.push({
@@ -1696,35 +1700,18 @@ export async function bulkInsertKnowledge({ openai, supabase, entries }) {
     });
   }
 
-  console.log("BULK F: rows prepared", {
-    rowCount: rowsToInsert.length
-  });
-
   if (rowsToInsert.length === 0) {
     return { status: 400, body: { error: "No valid entries to insert" } };
   }
-
-  console.log("BULK G: before supabase insert");
 
   const { data, error } = await supabase
     .from("knowledge_base")
     .insert(rowsToInsert)
     .select();
 
-  console.log("BULK H: after supabase insert", {
-    hasError: !!error,
-    insertedCount: data?.length || 0
-  });
-
   if (error) {
-    console.error("BULK I: Supabase insert error object:", error);
-    return {
-      status: 500,
-      body: {
-        error: "Bulk insert failed",
-        details: error.message || error
-      }
-    };
+    console.error("Bulk insert error:", error);
+    return { status: 500, body: { error: "Bulk insert failed" } };
   }
 
   return {
@@ -1737,10 +1724,6 @@ export async function bulkInsertKnowledge({ openai, supabase, entries }) {
 }
 
 export async function backfillEmbeddings({ openai, supabase }) {
-  if (!openai) {
-    return { status: 500, body: { error: "OpenAI not configured" } };
-  }
-
   if (!supabase) {
     return { status: 500, body: { error: "Supabase not configured" } };
   }
