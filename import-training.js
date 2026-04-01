@@ -23,6 +23,27 @@ function walkDir(dirPath) {
   return results;
 }
 
+function cleanText(value = "") {
+  return String(value).trim();
+}
+
+function cleanArray(arr) {
+  return Array.isArray(arr)
+    ? arr.map((item) => String(item).trim()).filter(Boolean)
+    : [];
+}
+
+function deriveParentMetaId(metaId = "") {
+  const id = cleanText(metaId);
+  const match = id.match(/^(.+?)([A-Z])$/);
+  if (!match) return null;
+
+  const base = match[1];
+  if (!/^SBA-KB-\d+$/i.test(base)) return null;
+
+  return base;
+}
+
 function parseTxtFile(content, filePath) {
   const lines = content.split(/\r?\n/);
 
@@ -30,6 +51,7 @@ function parseTxtFile(content, filePath) {
     source_file: path.relative(process.cwd(), filePath).replace(/\\/g, "/"),
     keyword: "",
     meta_id: "",
+    parent_meta_id: null,
     source_id: "",
     title: "",
     category: "",
@@ -37,7 +59,8 @@ function parseTxtFile(content, filePath) {
     tags: [],
     question: "",
     answer: "",
-    raw_text: content.trim()
+    raw_text: content.trim(),
+    chunk_type: ""
   };
 
   let inAnswer = false;
@@ -86,6 +109,11 @@ function parseTxtFile(content, filePath) {
       continue;
     }
 
+    if (line.startsWith("CHUNK_TYPE:")) {
+      entry.chunk_type = line.replace("CHUNK_TYPE:", "").trim();
+      continue;
+    }
+
     if (line.startsWith("ANSWER:")) {
       inAnswer = true;
       answerLines.push(line.replace("ANSWER:", "").trim());
@@ -102,12 +130,13 @@ function parseTxtFile(content, filePath) {
   }
 
   entry.answer = answerLines.join(" ").trim();
+  entry.parent_meta_id = deriveParentMetaId(entry.meta_id);
 
   entry.keyword =
-    entry.question ||
-    entry.title ||
-    entry.tags[0] ||
-    entry.meta_id ||
+    cleanText(entry.question) ||
+    cleanText(entry.title) ||
+    cleanArray(entry.tags)[0] ||
+    cleanText(entry.meta_id) ||
     path.basename(filePath, ".txt");
 
   if (!entry.answer) {
@@ -121,7 +150,47 @@ function parseTxtFile(content, filePath) {
     entry.answer = content.trim().slice(0, 1200);
   }
 
+  entry.source_file = cleanText(entry.source_file);
+  entry.keyword = cleanText(entry.keyword);
+  entry.meta_id = cleanText(entry.meta_id);
+  entry.source_id = cleanText(entry.source_id);
+  entry.title = cleanText(entry.title);
+  entry.category = cleanText(entry.category);
+  entry.subcategory = cleanText(entry.subcategory);
+  entry.tags = cleanArray(entry.tags);
+  entry.question = cleanText(entry.question);
+  entry.answer = cleanText(entry.answer);
+  entry.raw_text = cleanText(entry.raw_text);
+  entry.chunk_type = cleanText(entry.chunk_type);
+
   return entry;
+}
+
+function inheritParentMetadata(entries) {
+  const byMetaId = new Map();
+
+  for (const entry of entries) {
+    if (entry.meta_id) {
+      byMetaId.set(entry.meta_id, entry);
+    }
+  }
+
+  return entries.map((entry) => {
+    if (!entry.parent_meta_id) return entry;
+
+    const parent = byMetaId.get(entry.parent_meta_id);
+    if (!parent) return entry;
+
+    return {
+      ...entry,
+      title: entry.title || parent.title || "",
+      category: entry.category || parent.category || "",
+      subcategory: entry.subcategory || parent.subcategory || "",
+      tags: entry.tags.length > 0 ? entry.tags : cleanArray(parent.tags),
+      source_id: entry.source_id || parent.source_id || "",
+      keyword: entry.keyword || entry.question || parent.keyword || ""
+    };
+  });
 }
 
 function main() {
@@ -137,14 +206,14 @@ function main() {
     process.exit(1);
   }
 
-  const knowledge = [];
+  const parsedEntries = [];
 
   for (const file of txtFiles) {
     try {
       const content = fs.readFileSync(file, "utf8");
       const parsed = parseTxtFile(content, file);
+      parsedEntries.push(parsed);
 
-      knowledge.push(parsed);
       console.log(
         `Imported: ${parsed.meta_id || path.basename(file)} -> ${parsed.keyword}`
       );
@@ -152,6 +221,8 @@ function main() {
       console.error(`Failed to import ${file}:`, err.message);
     }
   }
+
+  const knowledge = inheritParentMetadata(parsedEntries);
 
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(knowledge, null, 2), "utf8");
 
