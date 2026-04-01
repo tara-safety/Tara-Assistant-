@@ -3,12 +3,10 @@ import path from "path";
 
 const KNOWLEDGE_FILE = path.join(process.cwd(), "knowledge.json");
 
-// Change this to your live server if needed
 const API_BASE_URL =
   process.env.TARA_API_URL || "https://tara-assistant-dwhg.onrender.com";
 const BULK_ENDPOINT = `${API_BASE_URL}/knowledge/bulk`;
 
-// Keep batches moderate so Render/OpenAI/Supabase don't get slammed
 const BATCH_SIZE = 25;
 
 function readKnowledgeFile() {
@@ -26,28 +24,55 @@ function readKnowledgeFile() {
   return parsed;
 }
 
+function cleanText(value) {
+  return String(value || "").trim();
+}
+
+function cleanArray(arr) {
+  return Array.isArray(arr)
+    ? arr.map((item) => String(item).trim()).filter(Boolean)
+    : [];
+}
+
 function buildContent(entry) {
   const parts = [];
 
-  if (entry.title) parts.push(`Title: ${entry.title}`);
-  if (entry.question) parts.push(`Question: ${entry.question}`);
-  if (entry.answer) parts.push(`Answer: ${entry.answer}`);
-  if (entry.raw_text) parts.push(`Raw Text: ${entry.raw_text}`);
+  const title = cleanText(entry.title);
+  const category = cleanText(entry.category);
+  const subcategory = cleanText(entry.subcategory);
+  const keyword = cleanText(entry.keyword);
+  const question = cleanText(entry.question);
+  const answer = cleanText(entry.answer);
+  const rawText = cleanText(entry.raw_text);
+  const tags = cleanArray(entry.tags);
+
+  if (title) parts.push(`Title: ${title}`);
+  if (category) parts.push(`Category: ${category}`);
+  if (subcategory) parts.push(`Subcategory: ${subcategory}`);
+  if (keyword) parts.push(`Keyword: ${keyword}`);
+  if (tags.length > 0) parts.push(`Tags: ${tags.join(", ")}`);
+  if (question) parts.push(`Question: ${question}`);
+  if (answer) parts.push(`Answer: ${answer}`);
+  if (rawText) parts.push(`Raw Text: ${rawText}`);
 
   return parts.join("\n\n").trim();
 }
 
 function buildMetadata(entry) {
   return {
-    source_file: entry.source_file || null,
-    keyword: entry.keyword || null,
-    meta_id: entry.meta_id || null,
-    source_id: entry.source_id || null,
-    title: entry.title || null,
-    category: entry.category || null,
-    subcategory: entry.subcategory || null,
-    tags: Array.isArray(entry.tags) ? entry.tags : [],
-    question: entry.question || null,
+    source_file: cleanText(entry.source_file) || null,
+    keyword: cleanText(entry.keyword) || null,
+    meta_id: cleanText(entry.meta_id) || null,
+    parent_meta_id: cleanText(entry.parent_meta_id) || null,
+    source_id: cleanText(entry.source_id) || null,
+    title: cleanText(entry.title) || null,
+    category: cleanText(entry.category) || null,
+    subcategory: cleanText(entry.subcategory) || null,
+    tags: cleanArray(entry.tags),
+    question: cleanText(entry.question) || null,
+    answer: cleanText(entry.answer) || null,
+    raw_text: cleanText(entry.raw_text) || null,
+    chunk_type: cleanText(entry.chunk_type) || null,
     imported_at: new Date().toISOString(),
     source_type: "knowledge_json_upload"
   };
@@ -104,7 +129,6 @@ async function main() {
     const entries = knowledge
       .map((entry) => {
         const content = buildContent(entry);
-
         if (!content) return null;
 
         return {
