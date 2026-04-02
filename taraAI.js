@@ -161,6 +161,19 @@ function hasAny(text, terms = []) {
   return terms.some((term) => text.includes(term));
 }
 
+function cleanDriverFacingAnswer(text = "") {
+  return String(text)
+    .replace(/\bSource:\s.*$/gim, "")
+    .replace(/\bMETA_ID:\s.*$/gim, "")
+    .replace(/\bSOURCE_ID:\s.*$/gim, "")
+    .replace(/\bCHUNK_TYPE:\s.*$/gim, "")
+    .replace(/\bRaw Text:\s*/gi, "")
+    .replace(/\bLocal Source\s+\d+:\s*/gim, "")
+    .replace(/\bVector Source\s+\d+:\s*/gim, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function isTowingQuestion(question) {
   const q = cleanText(question);
 
@@ -1081,6 +1094,10 @@ Style:
 - keep answers easy to scan in the field
 - prefer short paragraphs or step-style flow
 - avoid long blocks of text when possible
+- keep answers short and practical for roadside use
+- give the direct answer first
+- keep most regular-mode answers to 2 short paragraphs maximum
+- only add extra context if it clearly improves safety
 
 Rules:
 - stay focused on towing, roadside, recovery, EV service, dispatch, loading, securement, and vehicle disablement
@@ -1093,6 +1110,7 @@ Rules:
 - if the exact make/model procedure may vary, say what is typical first, then say what should be verified
 - do not mention internal source files
 - do not mention AAA or CAA
+- never show internal labels like source id, meta id, chunk type, file names, or database references
 - if the user asks outside your scope, say exactly: Sorry, I can only answer towing and roadside safety questions.
 
 Recent conversation:
@@ -1138,6 +1156,7 @@ Rules:
 - use recent conversation context if relevant
 - do not mention internal source files
 - do not mention AAA or CAA
+- never show internal labels like source id, meta id, chunk type, file names, or database references
 - if the user asks outside your scope, say exactly: Sorry, I can only answer towing and roadside safety questions.
 
 Recent conversation:
@@ -1313,21 +1332,16 @@ function formatVectorKnowledgeFallback(match) {
   const title = String(metadata?.title || "").trim();
   const answer = String(metadata?.answer || "").trim();
   const rawText = String(metadata?.raw_text || "").trim();
-  const question = String(metadata?.question || "").trim();
-  const sourceId = String(metadata?.source_id || "").trim();
   const content = String(match?.content || "").trim();
 
   const bestBody = answer || rawText || content;
   if (!bestBody) return "";
 
-  const sections = [];
+  if (title) {
+    return `${title}\n\n${bestBody}`.trim();
+  }
 
-  if (title) sections.push(title);
-  sections.push(bestBody);
-  if (question) sections.push(`Question: ${question}`);
-  if (sourceId) sections.push(`Source: ${sourceId}`);
-
-  return sections.join("\n\n").trim();
+  return bestBody;
 }
 
 async function saveLearnedKnowledge(
@@ -1570,14 +1584,15 @@ ${knowledgeContext}
       const bestLocal = localMatches[0];
       answer =
         `${bestLocal.title ? `${bestLocal.title}\n\n` : ""}` +
-        `${bestLocal.answer || bestLocal.raw_text || ""}` +
-        `${bestLocal.source_id ? `\n\nSource: ${bestLocal.source_id}` : ""}`;
+        `${bestLocal.answer || bestLocal.raw_text || ""}`;
     } else if (builtInAnswer) {
       answer = builtInAnswer;
     } else {
       answer = buildFallbackAnswer(normalizedQuestion, proMode);
     }
   }
+
+  answer = cleanDriverFacingAnswer(answer);
 
   if (useChatMemory) {
     saveSessionMessage(sessionId, "user", normalizedQuestion);
