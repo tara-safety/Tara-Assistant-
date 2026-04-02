@@ -71,12 +71,9 @@ function formatLocalKnowledgeContext(entries) {
       const tags = Array.isArray(entry?.tags) ? entry.tags.join(", ") : "";
       return `Local Source ${index + 1}:
 Title: ${entry?.title || "Untitled"}
-Source ID: ${entry?.source_id || "Unknown"}
 Category: ${entry?.category || "Unknown"}
 Tags: ${tags}
-Question: ${entry?.question || ""}
-Answer: ${entry?.answer || ""}
-Raw Text: ${entry?.raw_text || ""}`;
+Guidance: ${entry?.answer || ""}`;
     })
     .join("\n\n");
 }
@@ -167,9 +164,17 @@ function cleanDriverFacingAnswer(text = "") {
     .replace(/\bMETA_ID:\s.*$/gim, "")
     .replace(/\bSOURCE_ID:\s.*$/gim, "")
     .replace(/\bCHUNK_TYPE:\s.*$/gim, "")
-    .replace(/\bRaw Text:\s*/gi, "")
+    .replace(/\bRaw Text:\s*/gim, "")
     .replace(/\bLocal Source\s+\d+:\s*/gim, "")
     .replace(/\bVector Source\s+\d+:\s*/gim, "")
+    .replace(/\bQuestion:\s*/gim, "")
+    .replace(/\bQUESTION:\s*/gim, "")
+    .replace(/\bAnswer:\s*/gim, "")
+    .replace(/\bANSWER:\s*/gim, "")
+    .replace(/\bKeywords:\s*/gim, "")
+    .replace(/\bKEYWORDS:\s*/gim, "")
+    .replace(/\bTags:\s*/gim, "")
+    .replace(/\bSEARCH_TAGS:\s*/gim, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
@@ -1071,7 +1076,9 @@ function buildHistoryContext(history = []) {
     return "No recent conversation history.";
   }
 
-  return history.map((item) => `${item.role.toUpperCase()}: ${item.content}`).join("\n");
+  return history
+    .map((item) => `${item.role.toUpperCase()}: ${item.content}`)
+    .join("\n");
 }
 
 function buildChatPrompt(
@@ -1111,6 +1118,8 @@ Rules:
 - do not mention internal source files
 - do not mention AAA or CAA
 - never show internal labels like source id, meta id, chunk type, file names, or database references
+- never repeat labels such as Question, Answer, Keywords, Tags, Guidance, or Raw Text
+- respond as a direct assistant answer, not as a document extract
 - if the user asks outside your scope, say exactly: Sorry, I can only answer towing and roadside safety questions.
 
 Recent conversation:
@@ -1157,6 +1166,8 @@ Rules:
 - do not mention internal source files
 - do not mention AAA or CAA
 - never show internal labels like source id, meta id, chunk type, file names, or database references
+- never repeat labels such as Question, Answer, Keywords, Tags, Guidance, or Raw Text
+- respond as a direct assistant answer, not as a document extract
 - if the user asks outside your scope, say exactly: Sorry, I can only answer towing and roadside safety questions.
 
 Recent conversation:
@@ -1301,15 +1312,13 @@ function formatKnowledgeContext(vectorMatches = [], localMatches = []) {
       .map((item, i) => {
         const metadata = item?.metadata || {};
         const tags = Array.isArray(metadata?.tags) ? metadata.tags.join(", ") : "";
+        const guidance = String(metadata?.answer || item?.content || "").trim();
 
         return `Vector Source ${i + 1}:
 Title: ${metadata?.title || "Untitled"}
-Source ID: ${metadata?.source_id || "Unknown"}
 Category: ${metadata?.category || "Unknown"}
 Tags: ${tags}
-Question: ${metadata?.question || ""}
-Answer: ${metadata?.answer || ""}
-Raw Text: ${metadata?.raw_text || item?.content || ""}`;
+Guidance: ${guidance}`;
       })
       .join("\n\n");
 
@@ -1329,19 +1338,10 @@ function formatVectorKnowledgeFallback(match) {
   if (!match) return "";
 
   const metadata = match?.metadata || {};
-  const title = String(metadata?.title || "").trim();
   const answer = String(metadata?.answer || "").trim();
-  const rawText = String(metadata?.raw_text || "").trim();
   const content = String(match?.content || "").trim();
 
-  const bestBody = answer || rawText || content;
-  if (!bestBody) return "";
-
-  if (title) {
-    return `${title}\n\n${bestBody}`.trim();
-  }
-
-  return bestBody;
+  return answer || content || "";
 }
 
 async function saveLearnedKnowledge(
@@ -1438,7 +1438,7 @@ export async function handleAsk({
         title: item?.metadata?.title || null,
         source_id: item?.metadata?.source_id || null,
         preview: String(
-          item?.metadata?.answer || item?.metadata?.raw_text || item?.content || ""
+          item?.metadata?.answer || item?.content || ""
         ).slice(0, 120)
       }))
     );
@@ -1582,9 +1582,7 @@ ${knowledgeContext}
       answer = formatVectorKnowledgeFallback(vectorMatches[0]);
     } else if (localMatches.length > 0) {
       const bestLocal = localMatches[0];
-      answer =
-        `${bestLocal.title ? `${bestLocal.title}\n\n` : ""}` +
-        `${bestLocal.answer || bestLocal.raw_text || ""}`;
+      answer = `${bestLocal.answer || ""}`.trim();
     } else if (builtInAnswer) {
       answer = builtInAnswer;
     } else {
