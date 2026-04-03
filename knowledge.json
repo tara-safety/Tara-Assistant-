@@ -369,5 +369,152 @@
     "question": "What should tow operators expect from drivers with lane-keeping assist?",
     "answer": "Operators should expect unpredictable movement and never assume the vehicle will move over safely. Always maintain an escape plan.",
     "raw_text": "META_ID: SBA-KB-0002D\r\nSOURCE_ID: SB-2025-VIS-02\r\nCHUNK_TYPE: Quick Answer\r\nQUESTION: What should tow operators expect from drivers with lane-keeping assist?\r\nANSWER: Operators should expect unpredictable movement and never assume the vehicle will move over safely. Always maintain an escape plan.\r\nKEYWORDS: towing safety, lane assist expectation, roadside safety"
+  },
+  {
+    "source_file": "tara-knowledge/concepts/CONCEPT-UNDERLIFT-001.txt",
+    "keyword": "underlift underreach stinger wheel lift tow truck equipment",
+    "meta_id": "CONCEPT-UNDERLIFT-001",
+    "source_id": "CURATED-CONCEPT",
+    "title": "Underlift",
+    "category": "Truck Equipment",
+    "subcategory": "Underlift and Wheel Lift",
+    "tags": [
+      "underlift",
+      "underreach",
+      "stinger",
+      "wrecker",
+      "wheel lift",
+      "tow truck equipment"
+    ],
+    "question": "What is an underlift?",
+    "answer": "An underlift is a rear lift system on a wrecker used to raise and tow a casualty vehicle by the wheels or approved attachment points.",
+    "raw_text": "Definition: An underlift is a rear lift system on a wrecker used to raise and tow a casualty vehicle by the wheels or approved attachment points. Aliases: underreach, under reach, stinger. Related concepts: wheel lift, l arms, forks."
+  },
+  {
+    "source_file": "tara-knowledge/concepts/CONCEPT-BLOCKER-001.txt",
+    "keyword": "blocker vehicle shadow vehicle buffer zone taper traffic incident management",
+    "meta_id": "CONCEPT-BLOCKER-001",
+    "source_id": "CURATED-CONCEPT",
+    "title": "Blocker Vehicle",
+    "category": "Traffic Incident Management",
+    "subcategory": "Blocker Positioning",
+    "tags": [
+      "blocker vehicle",
+      "shadow vehicle",
+      "buffer zone",
+      "taper",
+      "traffic control",
+      "TIM",
+      "scene safety"
+    ],
+    "question": "What is a blocker vehicle?",
+    "answer": "A blocker vehicle is a service or support vehicle positioned to create a physical buffer between live traffic and the work area.",
+    "raw_text": "Definition: A blocker vehicle is a service or support vehicle positioned to create a physical buffer between live traffic and the work area. Aliases: blocking vehicle, shadow vehicle. Related concepts: buffer zone, scene setup, traffic control."
+  },
+  {
+    "source_file": "tara-knowledge/concepts/CONCEPT-NONROLLER-001.txt",
+    "keyword": "non-roller wont roll won't roll locked in park free roll manual park release shift lock release",
+    "meta_id": "CONCEPT-NONROLLER-001",
+    "source_id": "INTERNAL-CONCEPT",
+    "title": "Non-Roller",
+    "category": "Vehicle Handling",
+    "subcategory": "Neutral and Free Roll",
+    "tags": [
+      "non-roller",
+      "non roller",
+      "won't roll",
+      "wont roll",
+      "locked in park",
+      "manual park release",
+      "shift-lock release",
+      "free roll",
+      "EPB",
+      "electronic parking brake"
+    ],
+    "question": "What is a non-roller?",
+    "answer": "A non-roller is a vehicle that cannot be confirmed movable in neutral or free-roll, or still has a parking brake, park lock, or another condition preventing safe rolling.",
+    "raw_text": "Definition: A vehicle that cannot be confirmed movable in neutral or free-roll, or that still has parking brake, park lock, or another condition preventing safe rolling. Aliases: non roller, won't roll, wont roll, locked in park. Related concepts: manual park release, shift lock release, wheel skates, tire skates."
+  },
+  {
+    "source_file": "tara-knowledge/rules/RULE-NONROLLER-001.txt",
+    "keyword": "when to classify vehicle as non-roller manual park release shift-lock release wheel skates dollies",
+    "meta_id": "RULE-NONROLLER-001",
+    "source_id": "INTERNAL-RULE",
+    "title": "When to Classify a Vehicle as Non-Roller",
+    "category": "Vehicle Handling",
+    "subcategory": "Neutral and Free Roll",
+    "tags": [
+      "non-roller",
+      "manual park release",
+      "shift-lock release",
+      "wheel skates",
+      "dollies",
+      "parking brake",
+      "park lock",
+      "12V",
+      "transport mode"
+    ],
+    "question": "When should a vehicle be treated as a non-roller?",
+    "answer": "Treat the unit as a non-roller if you cannot confirm neutral or free-roll, the parking brake remains applied, required 12V power is unavailable, the key is not recognized when needed, or the manual release method is unavailable or not confirmed. Use skates, dollies, or another approved alternate handling method instead of forcing the driveline.",
+    "raw_text": "If signals: cannot confirm neutral or free-roll; parking brake remains applied; no usable 12V power when required by the OEM method; no recognized key when required by the OEM method; manual release method is unavailable or not confirmed. Then action: Treat the unit as a non-roller and switch to skates, dollies, or another approved alternate handling method instead of forcing the driveline. Exception: A verified OEM manual release exists for that exact year, make, and model and also allows brake release."
+  },
+  {
+    "source_file": "tara-knowledge/rules/RULE-LOCAL-ESCALATE-001.txt",
+    "keyword": "when should local mode escalate to pro mode source backed answer database backed answer current oem procedure",
+    "meta_id": "RULE-LOCAL-ESCALATE-001",
+    "source_id": "INTERNAL-RULE",
+    "title": "When Local Mode Should Escalate to Pro Mode",
+    "category": "Routing",
+    "subcategory": "Retrieval Routing",
+    "tags": [
+      "routing",
+      "pro mode",
+      "local mode",
+      "source backed answer",
+      "database backed answer",
+      "OEM procedure",
+      "current law",
+      "recall"
+    ],
+    "question": "When should local mode escalate to pro mode?",
+    "answer": "Escalate to pro mode when the question asks for current law or regulation, exact OEM procedure by year and model, current pricing, bulletin, or recall information, when local confidence is low, or when the user asks for a source-backed or database-backed answer.",
+    "raw_text": "If signals: question asks for current law or regulation; question asks for exact OEM procedure by year, make, and model; question asks for current pricing, bulletin, or recall; local mode confidence is below threshold; user asks for source-backed or database-backed answer. Then action: Escalate to pro mode and search chunked source records or live external sources with metadata filtering."
+  },
+  {
+    "source_file": "tara-knowledge/public/PUB-TERM-TIM-001.txt",
+    "keyword": "what is TIM traffic incident management quick clearance responder safety",
+    "meta_id": "PUB-TERM-TIM-001",
+    "source_id": "CURATED-PUBLIC",
+    "title": "Traffic Incident Management",
+    "category": "Traffic Incident Management",
+    "subcategory": "Terms",
+    "tags": [
+      "TIM",
+      "traffic incident management",
+      "quick clearance",
+      "responder safety"
+    ],
+    "question": "What is traffic incident management?",
+    "answer": "Traffic incident management is the coordinated detection, response, and clearance of traffic incidents with an emphasis on responder safety and quick clearance.",
+    "raw_text": "Fact: Traffic incident management is the coordinated detection, response, and clearance of traffic incidents with an emphasis on responder safety and quick clearance."
+  },
+  {
+    "source_file": "tara-knowledge/public/PUB-TERM-NONCONSENT-001.txt",
+    "keyword": "what is non-consent tow ppi private property impound impound tow",
+    "meta_id": "PUB-TERM-NONCONSENT-001",
+    "source_id": "CURATED-PUBLIC",
+    "title": "Non-Consent Tow",
+    "category": "Dispatch and Impound",
+    "subcategory": "Private Property Impound",
+    "tags": [
+      "non-consent tow",
+      "PPI",
+      "private property impound",
+      "impound",
+      "dispatch"
+    ],
+    "question": "What is a non-consent tow?",
+    "answer": "A non-consent tow is a tow performed without the vehicle owner's direct request, typically under law enforcement, property, or legal authority.",
+    "raw_text": "Fact: A non-consent tow is a tow performed without the vehicle owner's direct request, typically under law enforcement, property, or legal authority."
   }
-]
+  
