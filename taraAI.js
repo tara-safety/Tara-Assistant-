@@ -37,6 +37,121 @@ function clearSessionHistory(sessionId = "default") {
    0.1 LOCAL KNOWLEDGE LOADER
 ========================================================= */
 
+function normalizeAdvancedKnowledge(records = []) {
+  if (!Array.isArray(records)) return [];
+
+  return records
+    .map((record) => {
+      if (!record || typeof record !== "object") return null;
+
+      const tags = [
+        ...(Array.isArray(record.tags) ? record.tags : []),
+        ...(Array.isArray(record.topics) ? record.topics : []),
+        ...(Array.isArray(record.industry_terms) ? record.industry_terms : []),
+        ...(Array.isArray(record.search_phrases) ? record.search_phrases : []),
+        ...(Array.isArray(record.aliases) ? record.aliases : []),
+        ...(Array.isArray(record.job_types) ? record.job_types : []),
+        ...(Array.isArray(record.vehicle_scope) ? record.vehicle_scope : []),
+        ...(Array.isArray(record.scene_type) ? record.scene_type : []),
+        ...(Array.isArray(record.region) ? record.region : [])
+      ].filter(Boolean);
+
+      let question = "";
+      let answer = "";
+      let rawText = "";
+      let title = String(record.title || record.id || "").trim();
+
+      switch (record.record_type) {
+        case "qa":
+          question = String(record.question || "").trim();
+          answer = String(record.answer || "").trim();
+          rawText = `Question: ${question}\nAnswer: ${answer}`;
+          break;
+
+        case "concept":
+          question = title ? `What is ${title}?` : "";
+          answer = String(record.definition || "").trim();
+          rawText = [
+            `Definition: ${record.definition || ""}`,
+            Array.isArray(record.aliases) && record.aliases.length
+              ? `Aliases: ${record.aliases.join(", ")}`
+              : "",
+            Array.isArray(record.related_concepts) && record.related_concepts.length
+              ? `Related concepts: ${record.related_concepts.join(", ")}`
+              : ""
+          ]
+            .filter(Boolean)
+            .join("\n");
+          break;
+
+        case "decision_rule":
+          question = title || "What should TARA do in this situation?";
+          answer = String(record.then_action || "").trim();
+          rawText = [
+            Array.isArray(record.if_signals) && record.if_signals.length
+              ? `If signals: ${record.if_signals.join("; ")}`
+              : "",
+            `Then action: ${record.then_action || ""}`,
+            Array.isArray(record.exceptions) && record.exceptions.length
+              ? `Exceptions: ${record.exceptions.join("; ")}`
+              : ""
+          ]
+            .filter(Boolean)
+            .join("\n");
+          break;
+
+        case "source":
+          answer = String(record.summary || "").trim();
+          rawText = String(record.raw_text || "").trim();
+          break;
+
+        case "chunk":
+          answer = String(record.chunk_summary || record.chunk_text || "").trim();
+          rawText = String(record.chunk_text || "").trim();
+          break;
+
+        case "public_fact":
+          question = title || "";
+          answer = String(record.fact_text || "").trim();
+          rawText = [
+            `Fact: ${record.fact_text || ""}`,
+            record.source_name ? `Source name: ${record.source_name}` : "",
+            record.source_url ? `Source URL: ${record.source_url}` : ""
+          ]
+            .filter(Boolean)
+            .join("\n");
+          break;
+
+        default:
+          return null;
+      }
+
+      return {
+        source_file: record.id || "",
+        keyword: [
+          title,
+          question,
+          ...(Array.isArray(record.aliases) ? record.aliases : []),
+          ...(Array.isArray(record.search_phrases) ? record.search_phrases : [])
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .trim(),
+        meta_id: record.meta_id || record.id || "",
+        source_id: record.source_id || record.id || "",
+        title,
+        category: record.category || "",
+        subcategory: record.subcategory || "",
+        tags: [...new Set(tags)],
+        question,
+        answer,
+        raw_text: rawText
+      };
+    })
+    .filter(Boolean)
+    .filter((entry) => entry.answer || entry.raw_text || entry.question);
+}
+
 function loadLocalKnowledge() {
   try {
     const filePath = path.join(process.cwd(), "knowledge.json");
@@ -47,14 +162,18 @@ function loadLocalKnowledge() {
     }
 
     const raw = fs.readFileSync(filePath, "utf8");
-    const parsed = JSON.parse(raw);
+    let parsed = JSON.parse(raw);
 
-    if (!Array.isArray(parsed)) {
-      console.warn("knowledge.json is not an array");
-      return [];
+    if (Array.isArray(parsed)) {
+      return parsed;
     }
 
-    return parsed;
+    if (parsed && Array.isArray(parsed.records)) {
+      return normalizeAdvancedKnowledge(parsed.records);
+    }
+
+    console.warn("knowledge.json format not recognized");
+    return [];
   } catch (err) {
     console.error("Failed to load local knowledge:", err.message);
     return [];
@@ -73,73 +192,10 @@ function formatLocalKnowledgeContext(entries) {
 Title: ${entry?.title || "Untitled"}
 Category: ${entry?.category || "Unknown"}
 Tags: ${tags}
+Question: ${entry?.question || ""}
 Guidance: ${entry?.answer || ""}`;
     })
     .join("\n\n");
-}
-
-function scoreLocalKnowledgeEntry(question, entry) {
-  const q = cleanText(question);
-
-  const title = cleanText(entry?.title || "");
-  const keyword = cleanText(entry?.keyword || "");
-  const answer = cleanText(entry?.answer || "");
-  const rawText = cleanText(entry?.raw_text || "");
-  const tags = Array.isArray(entry?.tags)
-    ? entry.tags.map((tag) => cleanText(tag)).join(" ")
-    : "";
-
-  const haystack = `${title} ${keyword} ${tags} ${answer} ${rawText}`.trim();
-  if (!haystack) return 0;
-
-  let score = 0;
-  const importantTerms = getImportantQuestionTerms(question);
-
-  for (const term of importantTerms) {
-    if (title.includes(term)) score += 5;
-    if (keyword.includes(term)) score += 6;
-    if (tags.includes(term)) score += 4;
-    if (answer.includes(term)) score += 3;
-    if (rawText.includes(term)) score += 2;
-  }
-
-  if (keyword && q.includes(keyword)) score += 10;
-  if (title && q.includes(title)) score += 8;
-
-  if (q.includes("parking brake") && haystack.includes("parking brake")) {
-    score += 8;
-  }
-
-  if (q.includes("spare tire") && haystack.includes("spare tire")) {
-    score += 8;
-  }
-
-  if (q.includes("lane keeping") && haystack.includes("lane keeping")) {
-    score += 8;
-  }
-
-  if (q.includes("class 3") && haystack.includes("class 3")) {
-    score += 8;
-  }
-
-  return score;
-}
-
-function searchLocalKnowledge(question, maxResults = 4) {
-  const localKnowledge = loadLocalKnowledge();
-
-  if (!Array.isArray(localKnowledge) || localKnowledge.length === 0) {
-    return [];
-  }
-
-  return localKnowledge
-    .map((entry) => ({
-      ...entry,
-      local_score: scoreLocalKnowledgeEntry(question, entry)
-    }))
-    .filter((entry) => entry.local_score > 0)
-    .sort((a, b) => b.local_score - a.local_score)
-    .slice(0, maxResults);
 }
 
 /* =========================================================
@@ -147,9 +203,11 @@ function searchLocalKnowledge(question, maxResults = 4) {
 ========================================================= */
 
 function cleanText(text = "") {
-  return String(text)
+  return String(text || "")
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/[’']/g, "'")
+    .replace(/ğ/g, "g")
+    .replace(/[^\w\s'-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -181,98 +239,127 @@ function cleanDriverFacingAnswer(text = "") {
 
 function isTowingQuestion(question) {
   const q = cleanText(question);
+  if (!q) return false;
 
-  const keywords = [
-    "tow",
-    "towing",
-    "recovery",
-    "winch",
-    "flatbed",
-    "deck truck",
-    "wheel lift",
-    "wheel-lift",
-    "strap",
-    "chain",
-    "unlock",
-    "lockout",
-    "hook",
-    "roadside",
-    "ditch",
-    "rollover",
-    "highway",
-    "traffic",
-    "pylons",
-    "cones",
-    "battery",
-    "jump start",
-    "jump-start",
-    "flat tire",
-    "spare tire",
-    "ev",
-    "electric",
-    "electric vehicle",
-    "tow truck",
-    "carrier",
-    "vehicle",
-    "stuck",
-    "snow",
-    "ditch pull",
-    "tow points",
-    "transport mode",
-    "tesla",
-    "hybrid",
-    "12v",
-    "boost",
-    "charging",
-    "dispatcher",
-    "dispatch",
-    "disabled vehicle",
-    "jack",
-    "lug nut",
-    "dolly",
-    "rollback",
-    "j-hook",
-    "tie down",
-    "move over",
-    "neutral",
-    "parking brake",
-    "wheel straps",
-    "t-hook",
-    "soft strap",
-    "snatch block",
-    "control arm",
-    "loading angle",
-    "securement",
-    "non-roller",
-    "doesn't roll",
-    "wont roll",
-    "won't roll",
-    "seized",
-    "scrape",
-    "low clearance",
-    "visibility",
-    "hi vis",
-    "csa approved work boots",
-    "high vis",
-    "lane keeping",
-    "class 3",
-    "class 2",
-    "class 1",
-    "hookup",
-    "hook up",
-    "load",
-    "loading",
-    "pull",
-    "drag",
-    "tow mode",
-    "transport",
-    "casualty vehicle",
-    "shoulder recovery",
-    "operator",
-    "securement"
+  const negativePatterns = [
+    /\btoward\b/,
+    /\btowing the line\b/
   ];
 
-  return keywords.some((word) => q.includes(word));
+  if (negativePatterns.some((rx) => rx.test(q))) {
+    return false;
+  }
+
+  const strongPatterns = [
+    /\btow truck\b/,
+    /\btowing\b/,
+    /\bwrecker\b/,
+    /\brecovery\b/,
+    /\broadside\b/,
+    /\bwheel[\s-]?lift\b/,
+    /\bflatbed\b/,
+    /\brollback\b/,
+    /\bdeck truck\b/,
+    /\bunder[\s-]?lift\b/,
+    /\bunder[\s-]?reach\b/,
+    /\bstinger\b/,
+    /\brotator\b/,
+    /\bwinch\b/,
+    /\bwinch line\b/,
+    /\bnon[\s-]?roller\b/,
+    /\bmanual[\s-]?park release\b/,
+    /\bemergency[\s-]?park release\b/,
+    /\bshift[\s-]?lock(?: release)?\b/,
+    /\belectronic parking brake\b/,
+    /\bditch pull\b/,
+    /\brollover\b/,
+    /\bshoulder recovery\b/,
+    /\btraffic incident management\b/,
+    /\blockout\b/,
+    /\bimpound\b/,
+    /\bnon[\s-]?consent tow\b/,
+    /\bjump[\s-]?start\b/,
+    /\btow mode\b/,
+    /\btransport mode\b/,
+    /\btow points?\b/
+  ];
+
+  const mediumPatterns = [
+    /\bcarrier\b/,
+    /\boperator\b/,
+    /\bdispatch(?:er)?\b/,
+    /\bdisabled vehicle\b/,
+    /\bcasualty vehicle\b/,
+    /\bwheel straps?\b/,
+    /\bj[\s-]?hook\b/,
+    /\bt[\s-]?hook\b/,
+    /\br[\s-]?hook\b/,
+    /\bl[\s-]?arms?\b/,
+    /\bbridle\b/,
+    /\bsnatch block\b/,
+    /\bsoft strap\b/,
+    /\bsoft shackle\b/,
+    /\bdolly\b/,
+    /\bwheel skates?\b/,
+    /\btire skates?\b/,
+    /\bfree[\s-]?roll\b/,
+    /\bneutral hold\b/,
+    /\bstay[\s-]?in[\s-]?neutral\b/,
+    /\bpark lock\b/,
+    /\bpark pawl\b/,
+    /\bdriveline\b/,
+    /\bdriveshaft\b/,
+    /\bblocker vehicle\b/,
+    /\bshadow vehicle\b/,
+    /\bquick clearance\b/,
+    /\bprivate property impound\b/,
+    /\btraffic control\b/,
+    /\bmove over\b/,
+    /\bhigh vis\b/,
+    /\bhi vis\b/,
+    /\btesla\b/,
+    /\bev\b/,
+    /\belectric vehicle\b/,
+    /\bhybrid\b/
+  ];
+
+  const weakPatterns = [
+    /\bvehicle\b/,
+    /\btransport\b/,
+    /\bload(?:ing)?\b/,
+    /\bpull\b/,
+    /\bdrag\b/,
+    /\bstrap\b/,
+    /\bchain\b/,
+    /\bbattery\b/,
+    /\b12v\b/,
+    /\belectric\b/,
+    /\bjack\b/,
+    /\blug nut\b/,
+    /\btraffic\b/,
+    /\bhighway\b/,
+    /\bcones?\b/,
+    /\bpylons?\b/,
+    /\bvisibility\b/,
+    /\bflat tire\b/,
+    /\bspare tire\b/
+  ];
+
+  if (strongPatterns.some((rx) => rx.test(q))) {
+    return true;
+  }
+
+  let score = 0;
+
+  for (const rx of mediumPatterns) {
+    if (rx.test(q)) score += 2;
+  }
+
+  for (const rx of weakPatterns) {
+    if (rx.test(q)) score += 1;
+  }
+
+  return score >= 3;
 }
 
 function isLockoutQuestion(question) {
@@ -349,6 +436,220 @@ function getImportantQuestionTerms(question) {
           "than"
         ].includes(word)
     );
+}
+
+function classifyTowingQuestion(question) {
+  const q = cleanText(question);
+
+  const categoryMap = {
+    vehicleCondition: [
+      "non-roller",
+      "won't roll",
+      "wont roll",
+      "shift lock release",
+      "manual park release",
+      "emergency park release",
+      "electronic parking brake",
+      "park lock",
+      "park pawl",
+      "neutral",
+      "free roll",
+      "tow mode",
+      "transport mode",
+      "driveline",
+      "driveshaft",
+      "battery",
+      "12v",
+      "ev",
+      "hybrid",
+      "tesla",
+      "dead battery",
+      "low voltage",
+      "stuck in park",
+      "locked in park"
+    ],
+    securementAndRigging: [
+      "j-hook",
+      "t-hook",
+      "r-hook",
+      "soft strap",
+      "soft shackle",
+      "bridle",
+      "snatch block",
+      "wheel straps",
+      "securement",
+      "chain",
+      "strap",
+      "winch",
+      "winch line",
+      "anchor point",
+      "recovery strap",
+      "rigging"
+    ],
+    loadingAndAttachment: [
+      "flatbed",
+      "rollback",
+      "wheel lift",
+      "underlift",
+      "underreach",
+      "tow points",
+      "hookup",
+      "hook up",
+      "load",
+      "loading",
+      "pull",
+      "drag",
+      "fork",
+      "frame fork",
+      "axle fork",
+      "crossbar",
+      "l-arm",
+      "l-arms"
+    ],
+    roadsideScene: [
+      "highway",
+      "traffic",
+      "move over",
+      "ditch",
+      "rollover",
+      "pylons",
+      "cones",
+      "blocker vehicle",
+      "shadow vehicle",
+      "quick clearance",
+      "buffer zone",
+      "traffic control",
+      "lane closure",
+      "lane block",
+      "upstream",
+      "downstream"
+    ],
+    equipmentAndTerms: [
+      "underlift",
+      "underreach",
+      "stinger",
+      "wheel lift",
+      "rotator",
+      "wrecker",
+      "blocker vehicle",
+      "tim",
+      "non-consent tow",
+      "ppi"
+    ]
+  };
+
+  const matchedCategories = [];
+  const matchedTerms = [];
+
+  for (const [category, terms] of Object.entries(categoryMap)) {
+    const found = terms.filter((term) => q.includes(cleanText(term)));
+    if (found.length > 0) {
+      matchedCategories.push(category);
+      matchedTerms.push(...found);
+    }
+  }
+
+  return {
+    isTowing: isTowingQuestion(question),
+    matchedCategories,
+    matchedTerms: [...new Set(matchedTerms)]
+  };
+}
+
+function scoreLocalKnowledgeEntry(question, entry) {
+  const q = cleanText(question);
+
+  const title = cleanText(entry?.title || "");
+  const keyword = cleanText(entry?.keyword || "");
+  const answer = cleanText(entry?.answer || "");
+  const questionText = cleanText(entry?.question || "");
+  const rawText = cleanText(entry?.raw_text || "");
+  const tags = Array.isArray(entry?.tags)
+    ? entry.tags.map((tag) => cleanText(tag)).join(" ")
+    : "";
+
+  const haystack = `${title} ${keyword} ${tags} ${questionText} ${answer} ${rawText}`.trim();
+  if (!haystack) return 0;
+
+  let score = 0;
+  const importantTerms = getImportantQuestionTerms(question);
+  const classification = classifyTowingQuestion(question);
+
+  for (const term of importantTerms) {
+    if (title.includes(term)) score += 5;
+    if (keyword.includes(term)) score += 6;
+    if (tags.includes(term)) score += 4;
+    if (questionText.includes(term)) score += 5;
+    if (answer.includes(term)) score += 3;
+    if (rawText.includes(term)) score += 2;
+  }
+
+  for (const matchedTerm of classification.matchedTerms) {
+    const term = cleanText(matchedTerm);
+    if (title.includes(term)) score += 5;
+    if (keyword.includes(term)) score += 6;
+    if (tags.includes(term)) score += 5;
+    if (questionText.includes(term)) score += 5;
+    if (answer.includes(term)) score += 4;
+    if (rawText.includes(term)) score += 2;
+  }
+
+  if (keyword && q.includes(keyword)) score += 10;
+  if (title && q.includes(title)) score += 8;
+  if (questionText && q.includes(questionText)) score += 8;
+
+  if (q.includes("parking brake") && haystack.includes("parking brake")) {
+    score += 8;
+  }
+
+  if (q.includes("spare tire") && haystack.includes("spare tire")) {
+    score += 8;
+  }
+
+  if (q.includes("lane keeping") && haystack.includes("lane keeping")) {
+    score += 8;
+  }
+
+  if (q.includes("class 3") && haystack.includes("class 3")) {
+    score += 8;
+  }
+
+  if (q.includes("non-roller") && haystack.includes("non-roller")) {
+    score += 10;
+  }
+
+  if (
+    (q.includes("underlift") || q.includes("underreach") || q.includes("stinger")) &&
+    (haystack.includes("underlift") || haystack.includes("underreach") || haystack.includes("stinger"))
+  ) {
+    score += 10;
+  }
+
+  if (
+    (q.includes("blocker vehicle") || q.includes("shadow vehicle")) &&
+    (haystack.includes("blocker vehicle") || haystack.includes("shadow vehicle"))
+  ) {
+    score += 10;
+  }
+
+  return score;
+}
+
+function searchLocalKnowledge(question, maxResults = 4) {
+  const localKnowledge = loadLocalKnowledge();
+
+  if (!Array.isArray(localKnowledge) || localKnowledge.length === 0) {
+    return [];
+  }
+
+  return localKnowledge
+    .map((entry) => ({
+      ...entry,
+      local_score: scoreLocalKnowledgeEntry(question, entry)
+    }))
+    .filter((entry) => entry.local_score > 0)
+    .sort((a, b) => b.local_score - a.local_score)
+    .slice(0, maxResults);
 }
 
 /* =========================================================
@@ -880,15 +1181,22 @@ function getSmartBuiltInProAnswer(question) {
   if (
     q.includes("equipment") ||
     q.includes("what is the equipment called") ||
-    q.includes("equipment names")
+    q.includes("equipment names") ||
+    q.includes("underlift") ||
+    q.includes("underreach") ||
+    q.includes("stinger") ||
+    q.includes("blocker vehicle") ||
+    q.includes("shadow vehicle")
   ) {
     return formatProAnswerFromSections({
-      "Common Loading Equipment": [
+      "Common Equipment": [
         "Winch line: pulls the casualty onto the deck",
         "J-hook or T-hook: attachment hardware for approved connection points",
         "Soft strap: non-metal attachment option when approved",
         "Wheel straps: transport securement around the tires",
-        "Dollies or skates: move vehicles that do not roll freely"
+        "Dollies or skates: move vehicles that do not roll freely",
+        "Underlift or underreach: rear lift system used to raise and tow a casualty vehicle",
+        "Blocker vehicle: a protective vehicle positioned to create a buffer from traffic"
       ],
       "Support Equipment": [
         "Snatch block: changes winch angle or doubles line advantage",
@@ -1009,9 +1317,14 @@ function getSmartBuiltInAnswer(question, proMode = false) {
   if (
     q.includes("equipment") ||
     q.includes("what is the equipment called") ||
-    q.includes("equipment names")
+    q.includes("equipment names") ||
+    q.includes("underlift") ||
+    q.includes("underreach") ||
+    q.includes("stinger") ||
+    q.includes("blocker vehicle") ||
+    q.includes("shadow vehicle")
   ) {
-    return "Common towing and loading equipment includes the winch line, J-hooks or T-hooks for approved connection points, soft straps when appropriate, wheel straps for final securement, dollies or skates for non-rollers, chains for heavy securement or recovery use when appropriate, and snatch blocks for changing line angle or improving pull setup. The right equipment depends on the casualty condition, approved hookup points, and the recovery plan.";
+    return "Common towing and loading equipment includes the winch line, J-hooks or T-hooks for approved connection points, soft straps when appropriate, wheel straps for final securement, dollies or skates for non-rollers, chains for heavy securement or recovery use when appropriate, snatch blocks for changing line angle or improving pull setup, underlifts or underreach systems for lifting a casualty vehicle, and blocker vehicles or shadow vehicles for creating a protective traffic buffer. The right equipment depends on the casualty condition, approved hookup points, and the recovery plan.";
   }
 
   return "";
@@ -1281,6 +1594,7 @@ function filterKnowledgeMatches(question, matches) {
   if (!Array.isArray(matches) || matches.length === 0) return [];
 
   const terms = getImportantQuestionTerms(question);
+  const classification = classifyTowingQuestion(question);
 
   return matches
     .map((item) => {
@@ -1290,14 +1604,19 @@ function filterKnowledgeMatches(question, matches) {
       const haystack = `${content} ${metadataText}`;
 
       const hitCount = terms.filter((term) => haystack.includes(term)).length;
+      const classificationHits = classification.matchedTerms.filter((term) =>
+        haystack.includes(cleanText(term))
+      ).length;
+
       const similarity =
         Number(item?.similarity ?? item?.score ?? item?.match_score ?? 0) || 0;
 
       return {
         ...item,
         hitCount,
+        classificationHits,
         similarity,
-        rankScore: similarity * 10 + hitCount
+        rankScore: similarity * 10 + hitCount + classificationHits * 1.5
       };
     })
     .sort((a, b) => b.rankScore - a.rankScore)
@@ -1450,6 +1769,7 @@ export async function handleAsk({
       (vectorMatches || []).map((item) => ({
         similarity: item?.similarity ?? item?.score ?? item?.match_score ?? null,
         hitCount: item?.hitCount ?? null,
+        classificationHits: item?.classificationHits ?? null,
         title: item?.metadata?.title || null
       }))
     );
