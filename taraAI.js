@@ -251,6 +251,7 @@ function isTowingQuestion(question) {
   }
 
   const strongPatterns = [
+    /\btow\b/,
     /\btow truck\b/,
     /\btowing\b/,
     /\bwrecker\b/,
