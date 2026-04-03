@@ -1992,11 +1992,39 @@ export async function handleAsk({
     };
   }
 
+  // 🔥 HARD LOCAL SHORT-CIRCUIT FIRST
+  const deterministicLocal = getDeterministicLocalAnswer(normalizedQuestion);
+  if (deterministicLocal?.answer) {
+    const answer = cleanDriverFacingAnswer(deterministicLocal.answer);
+
+    if (useChatMemory) {
+      saveSessionMessage(sessionId, "user", normalizedQuestion);
+      saveSessionMessage(sessionId, "assistant", answer);
+    }
+
+    console.log("DETERMINISTIC LOCAL MATCH:", {
+      matchType: deterministicLocal.matchType,
+      meta_id: deterministicLocal?.matchedEntry?.meta_id || null,
+      title: deterministicLocal?.matchedEntry?.title || null
+    });
+
+    return {
+      answer,
+      sourcesUsed: 1,
+      modeUsed,
+      webSources: [],
+      intent
+    };
+  }
+
   let vectorMatches = [];
   let localMatches = [];
   let knowledgeContext = "No relevant knowledge found.";
 
-  if (useStoredKnowledge) {
+  // For definition/rule questions, prefer local first before vector search
+  if (intent === "definition" || intent === "rule") {
+    localMatches = searchLocalKnowledge(normalizedQuestion, 4);
+  } else if (useStoredKnowledge) {
     const rawMatches = await searchKnowledgeBase(
       openai,
       supabase,
@@ -2027,20 +2055,12 @@ export async function handleAsk({
         title: item?.metadata?.title || null
       }))
     );
-  }
 
-  if (vectorMatches.length === 0) {
+    if (vectorMatches.length === 0) {
+      localMatches = searchLocalKnowledge(normalizedQuestion, 4);
+    }
+  } else {
     localMatches = searchLocalKnowledge(normalizedQuestion, 4);
-
-    console.log(
-      "LOCAL MATCHES:",
-      (localMatches || []).map((item) => ({
-        local_score: item?.local_score ?? null,
-        title: item?.title || null,
-        source_id: item?.source_id || null,
-        meta_id: item?.meta_id || null
-      }))
-    );
   }
 
   knowledgeContext = formatKnowledgeContext(vectorMatches, localMatches);
@@ -2163,21 +2183,16 @@ ${knowledgeContext}
   }
 
   if (!answer || shouldUseWebFallback(answer)) {
-    if (vectorMatches.length > 0) {
-      answer = formatVectorKnowledgeFallback(vectorMatches[0], intent);
-    } else if (localMatches.length > 0) {
+    if (localMatches.length > 0) {
       const bestLocal = localMatches[0];
 
       if (intent === "rule" && String(bestLocal?.meta_id || "").includes("RULE")) {
         answer = formatRuleAnswer(bestLocal);
-      } else if (
-        intent === "definition" &&
-        String(bestLocal?.meta_id || "").includes("CONCEPT")
-      ) {
-        answer = formatConceptAnswer(bestLocal);
       } else {
         answer = bestLocal.answer || bestLocal.raw_text || "";
       }
+    } else if (vectorMatches.length > 0) {
+      answer = formatVectorKnowledgeFallback(vectorMatches[0], intent);
     } else if (builtInAnswer) {
       answer = builtInAnswer;
     } else {
