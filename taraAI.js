@@ -693,8 +693,8 @@ function formatRuleAnswer(entry) {
   const raw = String(entry?.raw_text || "").trim();
 
   const ifSignalsMatch = raw.match(/If signals:\s*([\s\S]*?)(?:Then action:|$)/i);
-  const thenActionMatch = raw.match(/Then action:\s*([\s\S]*?)(?:Exceptions:|$)/i);
-  const exceptionsMatch = raw.match(/Exceptions:\s*([\s\S]*)$/i);
+  const thenActionMatch = raw.match(/Then action:\s*([\s\S]*?)(?:Exception:|Exceptions:|$)/i);
+  const exceptionsMatch = raw.match(/Exceptions?:\s*([\s\S]*)$/i);
 
   const bullets = ifSignalsMatch
     ? ifSignalsMatch[1]
@@ -704,6 +704,7 @@ function formatRuleAnswer(entry) {
     : [];
 
   const thenAction = thenActionMatch ? thenActionMatch[1].trim() : answer;
+
   const exceptions = exceptionsMatch
     ? exceptionsMatch[1]
         .split(";")
@@ -716,9 +717,11 @@ function formatRuleAnswer(entry) {
   if (bullets.length > 0) {
     parts.push("Treat it as a non-roller when:");
     parts.push(bullets.map((b) => `- ${b}`).join("\n"));
+  } else if (answer) {
+    parts.push(answer);
   }
 
-  if (thenAction) {
+  if (thenAction && thenAction !== answer) {
     parts.push(thenAction);
   }
 
