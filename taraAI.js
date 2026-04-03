@@ -382,7 +382,9 @@ function isTowingQuestion(question) {
     /\bjump[\s-]?start\b/,
     /\btow mode\b/,
     /\btransport mode\b/,
-    /\btow points?\b/
+    /\btow points?\b/,
+    /\btire service\b/,
+    /\bwork zone\b/
   ];
 
   const mediumPatterns = [
@@ -421,7 +423,12 @@ function isTowingQuestion(question) {
     /\btesla\b/,
     /\bev\b/,
     /\belectric vehicle\b/,
-    /\bhybrid\b/
+    /\bhybrid\b/,
+    /\bspare tire\b/,
+    /\broadside tire\b/,
+    /\bflat tire\b/,
+    /\btire change\b/,
+    /\bservice truck\b/
   ];
 
   const weakPatterns = [
@@ -441,9 +448,7 @@ function isTowingQuestion(question) {
     /\bhighway\b/,
     /\bcones?\b/,
     /\bpylons?\b/,
-    /\bvisibility\b/,
-    /\bflat tire\b/,
-    /\bspare tire\b/
+    /\bvisibility\b/
   ];
 
   if (strongPatterns.some((rx) => rx.test(q))) {
