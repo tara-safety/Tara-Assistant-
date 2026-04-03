@@ -294,6 +294,7 @@ function hasAny(text, terms = []) {
 
 function cleanDriverFacingAnswer(text = "") {
   return String(text)
+    .replace(/\bDirect:\s*/gim, "")
     .replace(/\bTitle:\s.*$/gim, "")
     .replace(/\bSource:\s.*$/gim, "")
     .replace(/\bMETA_ID:\s.*$/gim, "")
