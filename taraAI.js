@@ -197,6 +197,82 @@ Guidance: ${entry?.answer || ""}`;
     })
     .join("\n\n");
 }
+function getDeterministicLocalAnswer(question) {
+  const localKnowledge = loadLocalKnowledge();
+  if (!Array.isArray(localKnowledge) || localKnowledge.length === 0) {
+    return null;
+  }
+
+  const qClean = cleanText(question);
+  const intent = detectQuestionIntent(question);
+
+  // 1. Exact question match wins immediately
+  const exactQuestionMatch = localKnowledge.find((entry) => {
+    const entryQuestion = cleanText(entry?.question || "");
+    return entryQuestion && entryQuestion === qClean;
+  });
+
+  if (exactQuestionMatch) {
+    if (intent === "rule" || String(exactQuestionMatch.meta_id || "").includes("RULE")) {
+      return {
+        answer: formatRuleAnswer(exactQuestionMatch),
+        matchedEntry: exactQuestionMatch,
+        matchType: "exact_question_rule"
+      };
+    }
+
+    return {
+      answer: exactQuestionMatch.answer || exactQuestionMatch.raw_text || "",
+      matchedEntry: exactQuestionMatch,
+      matchType: "exact_question"
+    };
+  }
+
+  // 2. Exact definition intent: prefer concept entries
+  if (intent === "definition") {
+    const exactConcept = localKnowledge.find((entry) => {
+      const entryQuestion = cleanText(entry?.question || "");
+      const entryTitle = cleanText(entry?.title || "");
+      const metaId = String(entry?.meta_id || "");
+
+      return (
+        metaId.includes("CONCEPT") &&
+        (
+          (entryQuestion && entryQuestion === qClean) ||
+          (entryTitle && qClean.includes(entryTitle))
+        )
+      );
+    });
+
+    if (exactConcept) {
+      return {
+        answer: exactConcept.answer || exactConcept.raw_text || "",
+        matchedEntry: exactConcept,
+        matchType: "exact_concept"
+      };
+    }
+  }
+
+  // 3. Exact rule intent: prefer rule entries
+  if (intent === "rule") {
+    const exactRule = localKnowledge.find((entry) => {
+      const entryQuestion = cleanText(entry?.question || "");
+      const metaId = String(entry?.meta_id || "");
+
+      return metaId.includes("RULE") && entryQuestion && entryQuestion === qClean;
+    });
+
+    if (exactRule) {
+      return {
+        answer: formatRuleAnswer(exactRule),
+        matchedEntry: exactRule,
+        matchType: "exact_rule"
+      };
+    }
+  }
+
+  return null;
+}
 
 /* =========================================================
    1. TEXT + INTENT HELPERS
