@@ -162,7 +162,7 @@ function loadLocalKnowledge() {
     }
 
     const raw = fs.readFileSync(filePath, "utf8");
-    let parsed = JSON.parse(raw);
+    const parsed = JSON.parse(raw);
 
     if (Array.isArray(parsed)) {
       return parsed;
@@ -199,7 +199,7 @@ Guidance: ${entry?.answer || ""}`;
 }
 
 /* =========================================================
-   1. TEXT + QUESTION HELPERS
+   1. TEXT + INTENT HELPERS
 ========================================================= */
 
 function cleanText(text = "") {
@@ -218,6 +218,7 @@ function hasAny(text, terms = []) {
 
 function cleanDriverFacingAnswer(text = "") {
   return String(text)
+    .replace(/\bTitle:\s.*$/gim, "")
     .replace(/\bSource:\s.*$/gim, "")
     .replace(/\bMETA_ID:\s.*$/gim, "")
     .replace(/\bSOURCE_ID:\s.*$/gim, "")
@@ -439,6 +440,59 @@ function getImportantQuestionTerms(question) {
     );
 }
 
+function detectQuestionIntent(question) {
+  const q = cleanText(question);
+
+  if (
+    q.startsWith("what is ") ||
+    q.startsWith("what's ") ||
+    q.startsWith("define ") ||
+    q.includes("meaning of") ||
+    q.includes("what does") ||
+    q.includes("what is a ") ||
+    q.includes("what is an ")
+  ) {
+    return "definition";
+  }
+
+  if (
+    q.startsWith("when should") ||
+    q.startsWith("when do i") ||
+    q.startsWith("when do we") ||
+    q.includes("should a vehicle be treated as") ||
+    q.includes("when should a vehicle be") ||
+    q.includes("when do you treat") ||
+    q.includes("when must") ||
+    q.includes("when is it a")
+  ) {
+    return "rule";
+  }
+
+  if (
+    q.startsWith("how do i") ||
+    q.startsWith("how should i") ||
+    q.startsWith("how to ") ||
+    q.includes("what should i do") ||
+    q.includes("procedure") ||
+    q.includes("steps")
+  ) {
+    return "procedure";
+  }
+
+  if (
+    q.includes("risk") ||
+    q.includes("danger") ||
+    q.includes("hazard") ||
+    q.includes("safe") ||
+    q.includes("safest") ||
+    q.includes("warning")
+  ) {
+    return "safety_warning";
+  }
+
+  return "general";
+}
+
 function classifyTowingQuestion(question) {
   const q = cleanText(question);
 
@@ -552,9 +606,57 @@ function classifyTowingQuestion(question) {
 
   return {
     isTowing: isTowingQuestion(question),
+    intent: detectQuestionIntent(question),
     matchedCategories,
     matchedTerms: [...new Set(matchedTerms)]
   };
+}
+
+function formatRuleAnswer(entry) {
+  const answer = String(entry?.answer || "").trim();
+  const raw = String(entry?.raw_text || "").trim();
+
+  const ifSignalsMatch = raw.match(/If signals:\s*([\s\S]*?)(?:Then action:|$)/i);
+  const thenActionMatch = raw.match(/Then action:\s*([\s\S]*?)(?:Exceptions:|$)/i);
+  const exceptionsMatch = raw.match(/Exceptions:\s*([\s\S]*)$/i);
+
+  const bullets = ifSignalsMatch
+    ? ifSignalsMatch[1]
+        .split(";")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
+
+  const thenAction = thenActionMatch ? thenActionMatch[1].trim() : answer;
+  const exceptions = exceptionsMatch
+    ? exceptionsMatch[1]
+        .split(";")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
+
+  const parts = [];
+
+  if (bullets.length > 0) {
+    parts.push("Treat it as a non-roller when:");
+    parts.push(bullets.map((b) => `- ${b}`).join("\n"));
+  }
+
+  if (thenAction) {
+    parts.push(thenAction);
+  }
+
+  if (exceptions.length > 0) {
+    parts.push("Exception:");
+    parts.push(exceptions.map((e) => `- ${e}`).join("\n"));
+  }
+
+  return parts.join("\n\n").trim() || answer;
+}
+
+function formatConceptAnswer(entry) {
+  const answer = String(entry?.answer || "").trim();
+  return answer;
 }
 
 function scoreLocalKnowledgeEntry(question, entry) {
@@ -565,6 +667,9 @@ function scoreLocalKnowledgeEntry(question, entry) {
   const answer = cleanText(entry?.answer || "");
   const questionText = cleanText(entry?.question || "");
   const rawText = cleanText(entry?.raw_text || "");
+  const category = cleanText(entry?.category || "");
+  const subcategory = cleanText(entry?.subcategory || "");
+  const metaId = String(entry?.meta_id || "").trim();
   const tags = Array.isArray(entry?.tags)
     ? entry.tags.map((tag) => cleanText(tag)).join(" ")
     : "";
@@ -576,11 +681,24 @@ function scoreLocalKnowledgeEntry(question, entry) {
   const importantTerms = getImportantQuestionTerms(question);
   const classification = classifyTowingQuestion(question);
 
+  // HARD WIN: exact question match
+  if (entry?.question) {
+    const qClean = cleanText(question);
+    const entryQ = cleanText(entry.question);
+
+    if (qClean === entryQ) return 1000;
+  }
+
+  // Strong boost for question containment
+  if (entry?.question && q.includes(cleanText(entry.question))) {
+    score += 50;
+  }
+
   for (const term of importantTerms) {
     if (title.includes(term)) score += 5;
     if (keyword.includes(term)) score += 6;
     if (tags.includes(term)) score += 4;
-    if (questionText.includes(term)) score += 5;
+    if (questionText.includes(term)) score += 8;
     if (answer.includes(term)) score += 3;
     if (rawText.includes(term)) score += 2;
   }
@@ -590,7 +708,7 @@ function scoreLocalKnowledgeEntry(question, entry) {
     if (title.includes(term)) score += 5;
     if (keyword.includes(term)) score += 6;
     if (tags.includes(term)) score += 5;
-    if (questionText.includes(term)) score += 5;
+    if (questionText.includes(term)) score += 7;
     if (answer.includes(term)) score += 4;
     if (rawText.includes(term)) score += 2;
   }
@@ -598,6 +716,24 @@ function scoreLocalKnowledgeEntry(question, entry) {
   if (keyword && q.includes(keyword)) score += 10;
   if (title && q.includes(title)) score += 8;
   if (questionText && q.includes(questionText)) score += 8;
+
+  // Intent boosts
+  if (classification.intent === "rule") {
+    if (metaId.includes("RULE")) score += 40;
+    if (category.includes("vehicle handling")) score += 15;
+    if (subcategory.includes("neutral")) score += 15;
+  }
+
+  if (classification.intent === "definition") {
+    if (metaId.includes("CONCEPT")) score += 35;
+    if (questionText.startsWith("what is")) score += 20;
+  }
+
+  if (classification.intent === "safety_warning") {
+    if (category.includes("roadside safety")) score += 15;
+    if (category.includes("ppe")) score += 10;
+    if (category.includes("roadside operations")) score += 10;
+  }
 
   if (q.includes("parking brake") && haystack.includes("parking brake")) {
     score += 8;
@@ -615,22 +751,25 @@ function scoreLocalKnowledgeEntry(question, entry) {
     score += 8;
   }
 
-  if (q.includes("non-roller") && haystack.includes("non-roller")) {
-    score += 10;
+  if (
+    (q.includes("non-roller") || q.includes("non roller")) &&
+    (haystack.includes("non-roller") || haystack.includes("non roller"))
+  ) {
+    score += 20;
   }
 
   if (
     (q.includes("underlift") || q.includes("underreach") || q.includes("stinger")) &&
     (haystack.includes("underlift") || haystack.includes("underreach") || haystack.includes("stinger"))
   ) {
-    score += 10;
+    score += 15;
   }
 
   if (
     (q.includes("blocker vehicle") || q.includes("shadow vehicle")) &&
     (haystack.includes("blocker vehicle") || haystack.includes("shadow vehicle"))
   ) {
-    score += 10;
+    score += 15;
   }
 
   return score;
@@ -1399,7 +1538,8 @@ function buildChatPrompt(
   question,
   knowledgeContext,
   historyContext = "",
-  builtInContext = ""
+  builtInContext = "",
+  intent = "general"
 ) {
   return `You are TARA (Tow Awareness and Response Assistant).
 
@@ -1435,6 +1575,10 @@ Rules:
 - never repeat labels such as Question, Answer, Keywords, Tags, Guidance, or Raw Text
 - respond as a direct assistant answer, not as a document extract
 - if the user asks outside your scope, say exactly: Sorry, I can only answer towing and roadside safety questions.
+- if the best knowledge is a rule, present it as a decision rule with short bullets
+- if the user is asking for a definition, answer in one direct definition first
+- if the user is asking for a rule, answer with when/if conditions first
+- detected intent: ${intent}
 
 Recent conversation:
 ${historyContext}
@@ -1453,7 +1597,8 @@ function buildProChatPrompt(
   question,
   knowledgeContext,
   historyContext = "",
-  builtInContext = ""
+  builtInContext = "",
+  intent = "general"
 ) {
   return `You are TARA (Tow Awareness and Response Assistant) in Pro Mode.
 
@@ -1483,6 +1628,9 @@ Rules:
 - never repeat labels such as Question, Answer, Keywords, Tags, Guidance, or Raw Text
 - respond as a direct assistant answer, not as a document extract
 - if the user asks outside your scope, say exactly: Sorry, I can only answer towing and roadside safety questions.
+- if the best knowledge is a rule, present it as a decision rule with bullets
+- if the user is asking for a definition, start with the direct definition
+- detected intent: ${intent}
 
 Recent conversation:
 ${historyContext}
@@ -1528,7 +1676,8 @@ function buildWebSearchPrompt(
   knowledgeContext,
   proMode = false,
   historyContext = "",
-  builtInContext = ""
+  builtInContext = "",
+  intent = "general"
 ) {
   if (mode === "camera") {
     return buildCameraPrompt(question, knowledgeContext);
@@ -1539,7 +1688,8 @@ function buildWebSearchPrompt(
       question,
       knowledgeContext,
       historyContext,
-      builtInContext
+      builtInContext,
+      intent
     );
   }
 
@@ -1547,7 +1697,8 @@ function buildWebSearchPrompt(
     question,
     knowledgeContext,
     historyContext,
-    builtInContext
+    builtInContext,
+    intent
   );
 }
 
@@ -1612,12 +1763,25 @@ function filterKnowledgeMatches(question, matches) {
       const similarity =
         Number(item?.similarity ?? item?.score ?? item?.match_score ?? 0) || 0;
 
+      let rankScore = similarity * 10 + hitCount + classificationHits * 1.5;
+
+      if (classification.intent === "rule" && metadataObj?.meta_id?.includes("RULE")) {
+        rankScore += 25;
+      }
+
+      if (
+        classification.intent === "definition" &&
+        metadataObj?.meta_id?.includes("CONCEPT")
+      ) {
+        rankScore += 20;
+      }
+
       return {
         ...item,
         hitCount,
         classificationHits,
         similarity,
-        rankScore: similarity * 10 + hitCount + classificationHits * 1.5
+        rankScore
       };
     })
     .sort((a, b) => b.rankScore - a.rankScore)
@@ -1654,12 +1818,19 @@ Guidance: ${guidance}`;
     : "No relevant knowledge found.";
 }
 
-function formatVectorKnowledgeFallback(match) {
+function formatVectorKnowledgeFallback(match, intent = "general") {
   if (!match) return "";
 
   const metadata = match?.metadata || {};
   const answer = String(metadata?.answer || "").trim();
   const content = String(match?.content || "").trim();
+
+  if (intent === "rule" && metadata?.meta_id?.includes("RULE")) {
+    return formatRuleAnswer({
+      answer,
+      raw_text: String(metadata?.raw_text || content || "").trim()
+    });
+  }
 
   return answer || content || "";
 }
@@ -1729,8 +1900,10 @@ export async function handleAsk({
 
   const history = useChatMemory ? getSessionHistory(sessionId, 8) : [];
   const hasHistory = history.length > 0;
+  const classification = classifyTowingQuestion(normalizedQuestion);
+  const intent = classification.intent || "general";
 
-  if (!isTowingQuestion(normalizedQuestion) && !hasHistory) {
+  if (!classification.isTowing && !hasHistory) {
     return {
       answer: "Sorry, I can only answer towing and roadside safety questions.",
       sourcesUsed: 0,
@@ -1784,7 +1957,8 @@ export async function handleAsk({
       (localMatches || []).map((item) => ({
         local_score: item?.local_score ?? null,
         title: item?.title || null,
-        source_id: item?.source_id || null
+        source_id: item?.source_id || null,
+        meta_id: item?.meta_id || null
       }))
     );
   }
@@ -1816,13 +1990,15 @@ export async function handleAsk({
                 normalizedQuestion,
                 knowledgeContext,
                 historyContext,
-                builtInContext
+                builtInContext,
+                intent
               )
             : buildChatPrompt(
                 normalizedQuestion,
                 knowledgeContext,
                 historyContext,
-                builtInContext
+                builtInContext,
+                intent
               ),
       input: `
 Previous conversation:
@@ -1830,6 +2006,9 @@ ${historyContext}
 
 Current question:
 ${normalizedQuestion}
+
+Detected intent:
+${intent}
 
 Built-in towing guidance:
 ${builtInContext}
@@ -1855,7 +2034,8 @@ ${knowledgeContext}
           knowledgeContext,
           proMode,
           historyContext,
-          builtInContext
+          builtInContext,
+          intent
         ),
         input: `
 Previous conversation:
@@ -1863,6 +2043,9 @@ ${historyContext}
 
 Question:
 ${normalizedQuestion}
+
+Detected intent:
+${intent}
 
 Built-in towing guidance:
 ${builtInContext}
@@ -1888,7 +2071,8 @@ ${knowledgeContext}
             {
               mode_used: modeUsed,
               pro_mode: proMode,
-              web_sources: webSources
+              web_sources: webSources,
+              intent
             }
           );
         }
@@ -1900,10 +2084,20 @@ ${knowledgeContext}
 
   if (!answer || shouldUseWebFallback(answer)) {
     if (vectorMatches.length > 0) {
-      answer = formatVectorKnowledgeFallback(vectorMatches[0]);
+      answer = formatVectorKnowledgeFallback(vectorMatches[0], intent);
     } else if (localMatches.length > 0) {
       const bestLocal = localMatches[0];
-      answer = `${bestLocal.answer || ""}`.trim();
+
+      if (intent === "rule" && String(bestLocal?.meta_id || "").includes("RULE")) {
+        answer = formatRuleAnswer(bestLocal);
+      } else if (
+        intent === "definition" &&
+        String(bestLocal?.meta_id || "").includes("CONCEPT")
+      ) {
+        answer = formatConceptAnswer(bestLocal);
+      } else {
+        answer = bestLocal.answer || bestLocal.raw_text || "";
+      }
     } else if (builtInAnswer) {
       answer = builtInAnswer;
     } else {
@@ -1922,7 +2116,8 @@ ${knowledgeContext}
     answer,
     sourcesUsed: vectorMatches.length + localMatches.length,
     modeUsed,
-    webSources
+    webSources,
+    intent
   };
 }
 
