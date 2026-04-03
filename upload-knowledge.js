@@ -88,6 +88,35 @@ function chunkArray(items, size) {
   return chunks;
 }
 
+function prepareEntries(knowledge) {
+  const seenMetaIds = new Set();
+
+  return knowledge
+    .map((entry, index) => {
+      const content = buildContent(entry);
+      const metadata = buildMetadata(entry);
+      const metaId = metadata.meta_id || `ROW-${index + 1}`;
+
+      if (!content) {
+        console.log(`Skipping empty entry at row ${index + 1}`);
+        return null;
+      }
+
+      if (seenMetaIds.has(metaId)) {
+        console.log(`Skipping duplicate meta_id: ${metaId}`);
+        return null;
+      }
+
+      seenMetaIds.add(metaId);
+
+      return {
+        content,
+        metadata
+      };
+    })
+    .filter(Boolean);
+}
+
 async function uploadBatch(entries, batchNumber, totalBatches) {
   console.log(
     `Uploading batch ${batchNumber}/${totalBatches} (${entries.length} entries)`
@@ -126,17 +155,7 @@ async function main() {
     const knowledge = readKnowledgeFile();
     console.log(`Found ${knowledge.length} knowledge entries`);
 
-    const entries = knowledge
-      .map((entry) => {
-        const content = buildContent(entry);
-        if (!content) return null;
-
-        return {
-          content,
-          metadata: buildMetadata(entry)
-        };
-      })
-      .filter(Boolean);
+    const entries = prepareEntries(knowledge);
 
     if (entries.length === 0) {
       throw new Error("No valid entries found to upload");
