@@ -2220,23 +2220,28 @@ ${knowledgeContext}
     console.error("handleAsk AI error:", err.message);
   }
 
-  if (!answer || shouldUseWebFallback(answer)) {
-    if (localMatches.length > 0) {
-      const bestLocal = localMatches[0];
+ if (!answer || shouldUseWebFallback(answer)) {
+  if (localMatches.length > 0) {
+    const bestLocal = localMatches[0];
 
-      if (intent === "rule" && String(bestLocal?.meta_id || "").includes("RULE")) {
-        answer = formatRuleAnswer(bestLocal);
-      } else {
-        answer = bestLocal.answer || bestLocal.raw_text || "";
-      }
-    } else if (vectorMatches.length > 0) {
-      answer = formatVectorKnowledgeFallback(vectorMatches[0], intent);
-    } else if (builtInAnswer) {
-      answer = builtInAnswer;
+    if (intent === "rule" && String(bestLocal?.meta_id || "").includes("RULE")) {
+      answer = formatRuleAnswer(bestLocal);
+    } else if (
+      intent === "definition" &&
+      String(bestLocal?.meta_id || "").includes("CONCEPT")
+    ) {
+      answer = formatConceptAnswer(bestLocal);
     } else {
-      answer = buildFallbackAnswer(normalizedQuestion, proMode);
+      answer = formatShortLocalAnswer(bestLocal);
     }
+  } else if (vectorMatches.length > 0) {
+    answer = formatVectorKnowledgeFallback(vectorMatches[0], intent);
+  } else if (builtInAnswer) {
+    answer = builtInAnswer;
+  } else {
+    answer = buildFallbackAnswer(normalizedQuestion, proMode);
   }
+} 
 
   answer = cleanDriverFacingAnswer(answer);
 
