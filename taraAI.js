@@ -766,20 +766,32 @@ function formatConceptAnswer(entry) {
   return answer;
 }
 
-function formatShortLocalAnswer(entry) {
-  const answer = String(entry?.answer || "").trim();
-  if (answer) return answer;
+// 🔥 Hard short-circuit for spare tire / work zone question
+if (isSpareTireWorkZoneQuestion(normalizedQuestion)) {
+  const localMatches = searchLocalKnowledge(normalizedQuestion, 4);
 
-  const raw = String(entry?.raw_text || "").trim();
-  if (!raw) return "";
+  if (localMatches.length > 0) {
+    const bestLocal = localMatches[0];
+    const answer = cleanDriverFacingAnswer(formatShortLocalAnswer(bestLocal));
 
-  const summaryMatch = raw.match(/SUMMARY:\s*([\s\S]*?)(?:\n[A-Z_]+:|$)/i);
-  if (summaryMatch) {
-    return summaryMatch[1].trim();
+    if (useChatMemory) {
+      saveSessionMessage(sessionId, "user", normalizedQuestion);
+      saveSessionMessage(sessionId, "assistant", answer);
+    }
+
+    console.log("HARD SHORT-CIRCUIT MATCH:", {
+      meta_id: bestLocal?.meta_id || null,
+      title: bestLocal?.title || null
+    });
+
+    return {
+      answer,
+      sourcesUsed: 1,
+      modeUsed,
+      webSources: [],
+      intent
+    };
   }
-
-  const firstParagraph = raw.split(/\n\s*\n/)[0]?.trim() || "";
-  return firstParagraph;
 }
 
 function scoreLocalKnowledgeEntry(question, entry) {
