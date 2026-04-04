@@ -1832,7 +1832,7 @@ function buildFallbackAnswer(question, proMode = false) {
     });
   }
 
-  return "I don’t have a strong answer on that yet. The safest move is to slow down, verify the vehicle details, and confirm the right procedure before continuing. Follow company policy and local regulations.";
+  return "I am sorry, don’t have a strong answer on that yet. Remember safety first: check the surroundings, verify the vehicle details, and confirm the correct procedure before continuing. Follow company policy and local regulations.";
 }
 
 function shouldUseWebFallback(answer) {
