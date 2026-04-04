@@ -297,6 +297,19 @@
     "raw_text": "META_ID: SBA-KB-0005D\r\nSOURCE_ID: SB-2025-TOW-05\r\nCHUNK_TYPE: Quick Answer\r\nQUESTION: When is a high-risk moment during a tire service call?\r\nANSWER: After the job appears complete, especially if safety steps like checking tire pressure were skipped.\r\nKEYWORDS: post service risk, tire change hazard"
   },
   {
+  "source_file": "tara-knowledge/roadside-operations/SBA-KB-0005E.txt",
+  "keyword": "spare tire flat after install what do i do roadside tire inflation lost work zone",
+  "meta_id": "SBA-KB-0005E",
+  "source_id": "SB-2025-TOW-05",
+  "title": "",
+  "category": "",
+  "subcategory": "",
+  "tags": [],
+  "question": "Spare tire flat after install what do I do?",
+  "answer": "Do not rush and break your protected work zone if you can avoid it. If the spare is flat after install, the safer option is usually to work from behind the service truck, maintain traffic awareness, and avoid repositioning the truck into a less protected spot unless there is no safer choice.",
+  "raw_text": "META_ID: SBA-KB-0005E\r\nSOURCE_ID: SB-2025-TOW-05\r\nCHUNK_TYPE: Quick Answer\r\nQUESTION: Spare tire flat after install what do I do?\r\nANSWER: Do not rush and break your protected work zone if you can avoid it. If the spare is flat after install, the safer option is usually to work from behind the service truck, maintain traffic awareness, and avoid repositioning the truck into a less protected spot unless there is no safer choice.\r\nKEYWORDS: spare tire flat after install, roadside tire inflation, lost work zone"
+},
+  {
     "source_file": "tara-knowledge/tara-vis/META_ID SBA-KB-0002.txt",
     "keyword": "Lane-Keeping Systems Interfering with Move Over Law",
     "meta_id": "SBA-KB-0002",
