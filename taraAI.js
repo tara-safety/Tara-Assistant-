@@ -495,33 +495,6 @@ function isSpareTireWorkZoneQuestion(question) {
     )
   );
 }
-// 🔥 Hard short-circuit for spare tire / work zone question
-if (isSpareTireWorkZoneQuestion(normalizedQuestion)) {
-  const localMatches = searchLocalKnowledge(normalizedQuestion, 4);
-
-  if (localMatches.length > 0) {
-    const bestLocal = localMatches[0];
-    const answer = cleanDriverFacingAnswer(formatShortLocalAnswer(bestLocal));
-
-    if (useChatMemory) {
-      saveSessionMessage(sessionId, "user", normalizedQuestion);
-      saveSessionMessage(sessionId, "assistant", answer);
-    }
-
-    console.log("HARD SHORT-CIRCUIT MATCH:", {
-      meta_id: bestLocal?.meta_id || null,
-      title: bestLocal?.title || null
-    });
-
-    return {
-      answer,
-      sourcesUsed: 1,
-      modeUsed,
-      webSources: [],
-      intent
-    };
-  }
-}
 
 function isEVQuestion(question) {
   const q = cleanText(question);
