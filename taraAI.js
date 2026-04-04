@@ -324,7 +324,10 @@ function hasAny(text, terms = []) {
 }
 
 function cleanDriverFacingAnswer(text = "") {
-  return String(text)
+  let clean = String(text || "")
+    .replace(/\r/g, "")
+
+    // Remove structured metadata
     .replace(/\bDirect:\s*/gim, "")
     .replace(/\bTitle:\s.*$/gim, "")
     .replace(/\bSource:\s.*$/gim, "")
@@ -341,6 +344,8 @@ function cleanDriverFacingAnswer(text = "") {
     .replace(/\bLANGUAGE:\s.*$/gim, "")
     .replace(/\bRELIABILITY:\s.*$/gim, "")
     .replace(/\bLAST_REVIEWED:\s.*$/gim, "")
+
+    // Remove section headers
     .replace(/\bSUMMARY:\s*/gim, "")
     .replace(/\bCORE_MESSAGE:\s*/gim, "")
     .replace(/\bTHE_FORGOTTEN_STEP:\s*/gim, "")
@@ -354,6 +359,8 @@ function cleanDriverFacingAnswer(text = "") {
     .replace(/\bTARA_RESPONSE_GUIDANCE:\s*/gim, "")
     .replace(/\bCOMMON_USER_QUESTION:\s*/gim, "")
     .replace(/\bSAFETY_MESSAGE:\s*/gim, "")
+
+    // Remove knowledge wrappers
     .replace(/\bRaw Text:\s*/gim, "")
     .replace(/\bLocal Source\s+\d+:\s*/gim, "")
     .replace(/\bVector Source\s+\d+:\s*/gim, "")
@@ -364,8 +371,20 @@ function cleanDriverFacingAnswer(text = "") {
     .replace(/\bKeywords:\s*/gim, "")
     .replace(/\bKEYWORDS:\s*/gim, "")
     .replace(/\bTags:\s*/gim, "")
+
+    // 🔥 Remove leading question-style lines
+    .replace(/^why .*?\?\s*/i, "")
+    .replace(/^what .*?\?\s*/i, "")
+    .replace(/^how .*?\?\s*/i, "")
+
+    // 🔥 Remove trailing keyword/tag lines (comma-separated junk)
+    .replace(/\n?[a-z0-9\s]+,\s*[a-z0-9\s,]+$/i, "")
+
+    // Cleanup spacing
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+
+  return clean;
 }
 
 function isTowingQuestion(question) {
