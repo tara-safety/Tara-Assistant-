@@ -321,7 +321,22 @@
   "question": "Spare tire flat after install what do I do?",
   "answer": "Do not rush and break your protected work zone if you can avoid it. If the spare is flat after install, the safer option is usually to work from behind the service truck, maintain traffic awareness, and avoid repositioning the truck into a less protected spot unless there is no safer choice.",
   "raw_text": "META_ID: SBA-KB-0005E\r\nSOURCE_ID: SB-2025-TOW-05\r\nCHUNK_TYPE: Quick Answer\r\nQUESTION: Spare tire flat after install what do I do?\r\nANSWER: Do not rush and break your protected work zone if you can avoid it. If the spare is flat after install, the safer option is usually to work from behind the service truck, maintain traffic awareness, and avoid repositioning the truck into a less protected spot unless there is no safer choice.\r\nKEYWORDS: spare tire flat after install, roadside tire inflation, lost work zone"
-} 
+},
+  { 
+   function isSpareTireWorkZoneQuestion(question) {
+   const q = cleanText(question);
+
+  return (
+    (q.includes("spare tire") || q.includes("flat tire")) &&
+    (
+      q.includes("after install") ||
+      q.includes("after installation") ||
+      q.includes("what do i do") ||
+      q.includes("work zone") ||
+      q.includes("inflate")
+    )
+  );
+}
   {
     "source_file": "tara-knowledge/tara-vis/META_ID SBA-KB-0002.txt",
     "keyword": "Lane-Keeping Systems Interfering with Move Over Law",
