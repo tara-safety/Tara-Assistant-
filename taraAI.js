@@ -796,6 +796,27 @@ function formatConceptAnswer(entry) {
   return answer;
 }
 
+function formatShortLocalAnswer(entry) {
+  const answer = String(entry?.answer || "").trim();
+  if (answer) return answer;
+
+  const raw = String(entry?.raw_text || "").trim();
+  if (!raw) return "";
+
+  const answerMatch = raw.match(/ANSWER:\s*([\s\S]*?)(?:\n[A-Z_]+:|$)/i);
+  if (answerMatch) {
+    return answerMatch[1].trim();
+  }
+
+  const summaryMatch = raw.match(/SUMMARY:\s*([\s\S]*?)(?:\n[A-Z_]+:|$)/i);
+  if (summaryMatch) {
+    return summaryMatch[1].trim();
+  }
+
+  const firstParagraph = raw.split(/\n\s*\n/)[0]?.trim() || "";
+  return firstParagraph;
+}
+
 function scoreLocalKnowledgeEntry(question, entry) {
   const q = cleanText(question);
 
