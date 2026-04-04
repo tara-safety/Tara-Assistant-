@@ -890,8 +890,40 @@ function formatRuleAnswer(entry) {
 }
 
 function formatConceptAnswer(entry) {
-  const answer = String(entry?.answer || "").trim();
-  return answer;
+  const title = String(entry?.title || "").trim();
+  const raw = String(entry?.answer || entry?.raw_text || "").trim();
+
+  if (!raw) {
+    return title
+      ? `${title} is a towing safety concept.`
+      : "This is a towing safety concept.";
+  }
+
+  const clean = raw
+    .replace(/\r/g, "")
+    .replace(/^question:\s*/gim, "")
+    .replace(/^answer:\s*/gim, "")
+    .replace(/^definition:\s*/gim, "")
+    .replace(/^summary:\s*/gim, "")
+    .replace(/^guidance:\s*/gim, "")
+    .replace(/^what is .*?\?\s*/i, "")
+    .replace(/^why .*?\?\s*/i, "")
+    .replace(/\n{2,}/g, "\n")
+    .trim();
+
+  let first = clean.split(/(?<=[.!?])\s+/)[0]?.trim() || clean;
+
+  if (first.length > 180) {
+    const cut = first.slice(0, 180);
+    const lastSpace = cut.lastIndexOf(" ");
+    first = (lastSpace > 80 ? cut.slice(0, lastSpace) : cut).trim() + "...";
+  }
+
+  if (title && !first.toLowerCase().startsWith(title.toLowerCase())) {
+    return `${title}: ${first}`;
+  }
+
+  return first;
 }
 
 function formatShortLocalAnswer(entry) {
