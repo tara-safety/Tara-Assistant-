@@ -2014,6 +2014,84 @@ async function saveLearnedKnowledge(
   }
 }
 
+function enforceMobileReply(answer = "") {
+  let text = String(answer || "")
+    .replace(/\r/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\*\*/g, "")
+    .trim();
+
+  const lines = text.split("\n").filter(Boolean);
+
+  if (lines.length > 12) {
+    text = lines.slice(0, 12).join("\n").trim();
+  }
+
+  if (text.length > 650) {
+    text = text.slice(0, 650).trim();
+  }
+
+  return text;
+}
+
+function formatCompactKnowledgeContext(vectorMatches = [], localMatches = []) {
+  const combined = [];
+
+  for (const item of localMatches.slice(0, 2)) {
+    combined.push({
+      title: item?.title || "Local knowledge",
+      category: item?.category || "General",
+      answer: String(item?.answer || item?.raw_text || "").slice(0, 220)
+    });
+  }
+
+  for (const item of vectorMatches.slice(0, 2)) {
+    combined.push({
+      title: item?.metadata?.title || "Stored knowledge",
+      category: item?.metadata?.category || "General",
+      answer: String(item?.metadata?.answer || item?.content || "").slice(0, 220)
+    });
+  }
+
+  if (combined.length === 0) {
+    return "No relevant knowledge found.";
+  }
+
+  return combined
+    .map((item, index) => {
+      return `Source ${index + 1}
+Title: ${item.title}
+Category: ${item.category}
+Key point: ${item.answer}`;
+    })
+    .join("\n\n");
+}
+
+function buildResponseStyleRules(intent = "general") {
+  return `
+You are TARA Safety, a towing and roadside safety assistant.
+
+Answer like an experienced roadside operator giving field guidance.
+
+STRICT RULES:
+- Keep the total answer under 120 words.
+- Start with the direct answer immediately.
+- Then give "What to do:" with 3 to 5 short steps.
+- End with one short "Why:" line.
+- Use plain mobile-friendly wording.
+- Do not lecture.
+- Do not repeat.
+- Do not paste source text.
+- Do not quote long bulletins.
+- Do not use more than 1 short warning line.
+- If the situation is high risk, say "High risk:" clearly.
+- Stay only on towing, recovery, roadside, vehicle, and operator safety.
+
+If intent is "${intent}", tailor the answer to that intent but still keep it short.
+`;
+}
+
 /* =========================================================
    8. PUBLIC AI HELPERS
 ========================================================= */
@@ -2057,10 +2135,11 @@ export async function handleAsk({
     };
   }
 
-  // 🔥 HARD LOCAL SHORT-CIRCUIT FIRST
   const deterministicLocal = getDeterministicLocalAnswer(normalizedQuestion);
   if (deterministicLocal?.answer) {
-    const answer = cleanDriverFacingAnswer(deterministicLocal.answer);
+    const answer = enforceMobileReply(
+      cleanDriverFacingAnswer(deterministicLocal.answer)
+    );
 
     if (useChatMemory) {
       saveSessionMessage(sessionId, "user", normalizedQuestion);
@@ -2086,7 +2165,6 @@ export async function handleAsk({
   let localMatches = [];
   let knowledgeContext = "No relevant knowledge found.";
 
-  // For definition/rule questions, prefer local first before vector search
   if (intent === "definition" || intent === "rule") {
     localMatches = searchLocalKnowledge(normalizedQuestion, 4);
   } else if (useStoredKnowledge) {
@@ -2128,18 +2206,20 @@ export async function handleAsk({
     localMatches = searchLocalKnowledge(normalizedQuestion, 4);
   }
 
-  knowledgeContext = formatKnowledgeContext(vectorMatches, localMatches);
+  knowledgeContext = formatCompactKnowledgeContext(vectorMatches, localMatches);
 
   if (!knowledgeContext || !knowledgeContext.trim()) {
     knowledgeContext = "No relevant knowledge found.";
   }
 
   const historyContext = useChatMemory
-    ? buildHistoryContext(history)
+    ? buildHistoryContext(history.slice(-4))
     : "Conversation memory is currently disabled.";
 
   const builtInAnswer = getSmartBuiltInAnswer(normalizedQuestion, proMode);
-  const builtInContext = builtInAnswer || "No built-in guidance available.";
+  const builtInContext = builtInAnswer
+    ? String(builtInAnswer).slice(0, 220)
+    : "No built-in guidance available.";
 
   let answer = "";
   let webSources = [];
@@ -2148,23 +2228,27 @@ export async function handleAsk({
     const firstPass = await openai.responses.create({
       model: "gpt-5-mini",
       instructions:
-        modeUsed === "camera"
-          ? buildCameraPrompt(normalizedQuestion, knowledgeContext)
-          : proMode
-            ? buildProChatPrompt(
-                normalizedQuestion,
-                knowledgeContext,
-                historyContext,
-                builtInContext,
-                intent
-              )
-            : buildChatPrompt(
-                normalizedQuestion,
-                knowledgeContext,
-                historyContext,
-                builtInContext,
-                intent
-              ),
+        buildResponseStyleRules(intent) +
+        "\n\n" +
+        (
+          modeUsed === "camera"
+            ? buildCameraPrompt(normalizedQuestion, knowledgeContext)
+            : proMode
+              ? buildProChatPrompt(
+                  normalizedQuestion,
+                  knowledgeContext,
+                  historyContext,
+                  builtInContext,
+                  intent
+                )
+              : buildChatPrompt(
+                  normalizedQuestion,
+                  knowledgeContext,
+                  historyContext,
+                  builtInContext,
+                  intent
+                )
+        ),
       input: `
 Previous conversation:
 ${historyContext}
@@ -2181,16 +2265,15 @@ ${builtInContext}
 Knowledge context:
 ${knowledgeContext}
 `,
-      max_output_tokens: 500
+      max_output_tokens: 220
     });
 
     answer = extractResponseText(firstPass).replace(/\n\s+/g, "\n").trim();
-   if (
-  intent === "definition" ||
-  intent === "rule"
-) {
-  answer = "";
-}
+
+    if (intent === "definition" || intent === "rule") {
+      answer = "";
+    }
+
     console.log("FIRST PASS ANSWER:", answer.slice(0, 300));
 
     if (shouldUseWebFallback(answer)) {
@@ -2198,7 +2281,7 @@ ${knowledgeContext}
         model: "gpt-5-mini",
         tools: [{ type: "web_search" }],
         include: ["web_search_call.action.sources"],
-        instructions: buildWebSearchPrompt(
+        instructions: buildResponseStyleRules(intent) + "\n\n" + buildWebSearchPrompt(
           normalizedQuestion,
           modeUsed,
           knowledgeContext,
@@ -2223,7 +2306,7 @@ ${builtInContext}
 Relevant knowledge:
 ${knowledgeContext}
 `,
-        max_output_tokens: 550
+        max_output_tokens: 260
       });
 
       const webAnswer = extractResponseText(webResult).trim();
@@ -2252,30 +2335,30 @@ ${knowledgeContext}
     console.error("handleAsk AI error:", err.message);
   }
 
- if (!answer || shouldUseWebFallback(answer)) {
-  if (localMatches.length > 0) {
-    const bestLocal = localMatches[0];
+  if (!answer || shouldUseWebFallback(answer)) {
+    if (localMatches.length > 0) {
+      const bestLocal = localMatches[0];
 
-    if (intent === "rule" && String(bestLocal?.meta_id || "").includes("RULE")) {
-      answer = formatRuleAnswer(bestLocal);
-    } else if (
-      intent === "definition" &&
-      String(bestLocal?.meta_id || "").includes("CONCEPT")
-    ) {
-      answer = formatConceptAnswer(bestLocal);
+      if (intent === "rule" && String(bestLocal?.meta_id || "").includes("RULE")) {
+        answer = formatRuleAnswer(bestLocal);
+      } else if (
+        intent === "definition" &&
+        String(bestLocal?.meta_id || "").includes("CONCEPT")
+      ) {
+        answer = formatConceptAnswer(bestLocal);
+      } else {
+        answer = formatShortLocalAnswer(bestLocal);
+      }
+    } else if (vectorMatches.length > 0) {
+      answer = formatVectorKnowledgeFallback(vectorMatches[0], intent);
+    } else if (builtInAnswer) {
+      answer = builtInAnswer;
     } else {
-      answer = formatShortLocalAnswer(bestLocal);
+      answer = buildFallbackAnswer(normalizedQuestion, proMode);
     }
-  } else if (vectorMatches.length > 0) {
-    answer = formatVectorKnowledgeFallback(vectorMatches[0], intent);
-  } else if (builtInAnswer) {
-    answer = builtInAnswer;
-  } else {
-    answer = buildFallbackAnswer(normalizedQuestion, proMode);
   }
-} 
 
-  answer = cleanDriverFacingAnswer(answer);
+  answer = enforceMobileReply(cleanDriverFacingAnswer(answer));
 
   if (useChatMemory) {
     saveSessionMessage(sessionId, "user", normalizedQuestion);
