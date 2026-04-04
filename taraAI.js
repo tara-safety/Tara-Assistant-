@@ -1664,6 +1664,614 @@ If intent is "${intent}", tailor the answer to that intent but still keep it sho
 }
 
 /* =========================================================
+   3. SHARED ANSWER FORMATTERS
+========================================================= */
+
+function toBullets(items = []) {
+  return items.map((item) => `- ${item}`).join("\n");
+}
+
+function formatProAnswerFromSections(titleMap = {}) {
+  const sections = [];
+
+  for (const [title, items] of Object.entries(titleMap)) {
+    if (Array.isArray(items) && items.length > 0) {
+      sections.push(`${title}:\n${toBullets(items)}`);
+    }
+  }
+
+  return sections.join("\n\n").trim();
+}
+
+function formatNormalAnswerFromSections(titleMap = {}) {
+  const ordered = Object.entries(titleMap).filter(
+    ([, items]) => Array.isArray(items) && items.length > 0
+  );
+
+  if (ordered.length === 0) return "";
+
+  const firstSectionItems = ordered[0][1] || [];
+  const secondSectionItems = ordered[1]?.[1] || [];
+  const thirdSectionItems = ordered[2]?.[1] || [];
+
+  const direct = firstSectionItems[0] || secondSectionItems[0] || "";
+  const steps = [...firstSectionItems.slice(1), ...secondSectionItems].slice(0, 3);
+  const why = thirdSectionItems[0] || "";
+
+  const parts = [];
+
+  if (direct) {
+    parts.push(direct);
+  }
+
+  if (steps.length > 0) {
+    parts.push(`What to do:\n${toBullets(steps)}`);
+  }
+
+  if (why) {
+    parts.push(`Why:\n- ${why}`);
+  }
+
+  return parts.join("\n\n").trim();
+}
+
+/* =========================================================
+   4. SHARED BUILT-IN SMART ANSWER SECTIONS
+========================================================= */
+
+function getSmartBuiltInSections(question) {
+  const q = cleanText(question);
+
+  if (isLoadingQuestion(question)) {
+    return {
+      "Scene Setup": [
+        "Position the truck as straight as possible to the casualty vehicle",
+        "Check traffic exposure, ground stability, and loading angle",
+        "Lower the bed fully and reduce the angle before starting the pull"
+      ],
+      "Common Equipment": [
+        "Winch line",
+        "J-hooks or T-hooks when appropriate for the vehicle",
+        "Soft straps when approved for the setup",
+        "Wheel straps for final securement",
+        "Dollies or skates only if the vehicle does not roll"
+      ],
+      Hookup: [
+        "Use approved tow or loading points only",
+        "Never attach to suspension, steering, brake lines, or unknown underbody components",
+        "Take slack out slowly and confirm the hookup is tracking straight"
+      ],
+      Loading: [
+        "Keep the pull straight and controlled",
+        "Watch bumper, underbody, exhaust, air dams, and transition points",
+        "Stop immediately if the vehicle starts to scrape, shift, bind, or climb poorly"
+      ],
+      Securement: [
+        "Use a proper 4-point securement minimum for transport",
+        "Secure each wheel correctly and evenly",
+        "Recheck strap tension after the vehicle settles on the deck"
+      ],
+      "Final Check": [
+        "Confirm the casualty is stable before transport",
+        "Check for loose parts, hanging damage, and clearance issues"
+      ]
+    };
+  }
+
+  if (
+    isEVQuestion(question) &&
+    hasAny(q, ["tow", "towing", "transport", "load", "loading"])
+  ) {
+    return {
+      "Best Practice": [
+        "Use a flatbed whenever possible for EV towing and transport"
+      ],
+      "Check First": [
+        "Confirm make, model, and drive type",
+        "Check whether transport mode or tow mode is required",
+        "Confirm whether the vehicle will free-roll before moving it"
+      ],
+      Equipment: [
+        "Flatbed",
+        "Wheel straps",
+        "Dollies only if the wheels cannot rotate safely"
+      ],
+      "Do Not Do": [
+        "Do not drag drive wheels unless the OEM procedure allows it",
+        "Do not hook unknown underbody or battery protection areas"
+      ],
+      "Critical Risk": [
+        "Dragging or incorrect hookup can damage the drivetrain or create system faults"
+      ]
+    };
+  }
+
+  if (isLockoutQuestion(question)) {
+    return {
+      "Scene Check": [
+        "Make sure the vehicle is secure before starting",
+        "Protect glass, trim, seals, and paint"
+      ],
+      "Entry Plan": [
+        "Use the least-damaging method first",
+        "Control the tool and protect contact points"
+      ],
+      "Do Not Do": [
+        "Do not force entry if the method is uncertain",
+        "Do not rush and damage trim or weather stripping"
+      ],
+      "Final Check": [
+        "Verify the method before continuing if the vehicle is unfamiliar"
+      ]
+    };
+  }
+
+  if (
+    q.includes("flat tire") ||
+    q.includes("spare tire") ||
+    q.includes("flat after install") ||
+    q.includes("spare is flat") ||
+    q.includes("install a flat tire")
+  ) {
+    return {
+      "Immediate Priority": [
+        "Treat it as a traffic-exposure issue first",
+        "Stay in the protected work zone if possible",
+        "Do not reposition the truck unless absolutely necessary"
+      ],
+      "What To Do": [
+        "Check whether the tire can be inflated from the safer side",
+        "Work from behind the truck when possible",
+        "Keep visual awareness of traffic and escape space"
+      ],
+      Why: [
+        "Repositioning the truck can remove your buffer zone and increase exposure to traffic"
+      ]
+    };
+  }
+
+  if (
+    q.includes("ditch") ||
+    q.includes("nose first") ||
+    q.includes("rear first") ||
+    q.includes("stuck in ditch")
+  ) {
+    return {
+      "Scene Check": [
+        "Check traffic exposure",
+        "Check shoulder stability, ditch depth, slope, and ground condition",
+        "Check vehicle angle and risk of rollover"
+      ],
+      Stabilize: [
+        "Stabilize the vehicle if there is any chance of shifting or rolling",
+        "Confirm where the customer should safely stand or wait"
+      ],
+      "Recovery Plan": [
+        "Use the straightest and least-shocking pull possible",
+        "Avoid side-loading and sudden jerks",
+        "Plan where the vehicle will travel once it reaches the shoulder"
+      ],
+      Equipment: [
+        "Winch line",
+        "Recovery straps",
+        "Snatch block if the angle requires a cleaner pull",
+        "Wheel-lift assist, dollies, or flatbed as needed for the finish"
+      ],
+      "Stop If": [
+        "Stop and reassess if the angle, anchor point, or vehicle condition is uncertain"
+      ]
+    };
+  }
+
+  if (q.includes("winch") || q.includes("winching") || q.includes("pull out")) {
+    return {
+      Setup: [
+        "Align for the straightest pull possible",
+        "Inspect the line, hook point, and path of travel before tension"
+      ],
+      Equipment: [
+        "Winch line",
+        "Appropriate hook point or approved strap",
+        "Snatch block if needed for angle correction"
+      ],
+      Operation: [
+        "Take slack slowly",
+        "Use controlled tension instead of shock loading",
+        "Watch for bind, climb, or sudden shift"
+      ],
+      Safety: [
+        "Keep people out of the line of pull and danger zone",
+        "Stop if the casualty starts moving unpredictably"
+      ]
+    };
+  }
+
+  if (
+    q.includes("rollover") ||
+    q.includes("on side") ||
+    q.includes("upside down")
+  ) {
+    return {
+      "Scene Check": [
+        "Treat rollover work as high risk from the start",
+        "Check for occupant, fuel, battery, cargo, and stability hazards"
+      ],
+      Setup: [
+        "Build the recovery plan before applying force",
+        "Control the roll path and vehicle movement"
+      ],
+      "Do Not Do": [
+        "Do not rush the lift or rotation",
+        "Do not apply force before stabilization is understood"
+      ],
+      "Stop If": [
+        "Stop and reassess if stabilization, exposure, or attachment strategy is uncertain"
+      ]
+    };
+  }
+
+  if (
+    q.includes("snow") ||
+    q.includes("ice") ||
+    q.includes("slippery") ||
+    q.includes("stuck in snow") ||
+    q.includes("mud")
+  ) {
+    return {
+      "Scene Check": [
+        "Check depth of sink and available traction",
+        "Confirm the path the vehicle will take once it breaks free"
+      ],
+      Setup: [
+        "Keep the pull as straight as possible",
+        "Use controlled movement instead of shock loading"
+      ],
+      "Watch For": [
+        "Watch for sideways slide on ice",
+        "Be ready for quick release once traction returns"
+      ],
+      "Do Not Do": [
+        "Do not spin tires deeper into snow or mud",
+        "Do not use sudden jerks if control is poor"
+      ]
+    };
+  }
+
+  if (
+    q.includes("soft shoulder") ||
+    q.includes("off road") ||
+    q.includes("edge of road") ||
+    q.includes("soft ground")
+  ) {
+    return {
+      "Truck Position": [
+        "Make sure your truck is not at risk of sinking or sliding",
+        "Avoid loading the edge of the shoulder"
+      ],
+      Setup: [
+        "Position for the safest and most stable pull",
+        "Use a controlled straight pull"
+      ],
+      "Watch For": [
+        "Watch for ground collapse under load",
+        "Watch the casualty path onto firm ground"
+      ],
+      "Stop If": [
+        "Stop and reassess if ground stability is questionable"
+      ]
+    };
+  }
+
+  if (
+    q.includes("won't roll") ||
+    q.includes("wont roll") ||
+    q.includes("locked wheel") ||
+    q.includes("parking brake stuck") ||
+    q.includes("doesn't roll") ||
+    q.includes("doesnt roll") ||
+    q.includes("non-roller") ||
+    q.includes("stuck in park")
+  ) {
+    return {
+      "Check First": [
+        "Confirm why the vehicle is not rolling",
+        "Check parking brake, seized brakes, transmission lock, or wheel damage"
+      ],
+      "Best Practice": [
+        "Use dollies, skates, or lift methods if wheels cannot rotate safely"
+      ],
+      "Do Not Do": [
+        "Do not drag the vehicle without understanding the cause"
+      ],
+      "Stop If": [
+        "Stop and verify if the reason for lock-up is unclear"
+      ]
+    };
+  }
+
+  if (
+    q.includes("accident") ||
+    q.includes("collision") ||
+    q.includes("crash") ||
+    q.includes("damaged vehicle")
+  ) {
+    return {
+      "Scene Check": [
+        "Check for fluid leaks, broken suspension, loose panels, and shifting weight",
+        "Treat the vehicle as unstable until proven otherwise"
+      ],
+      "Best Practice": ["Use the safest loading method, often a flatbed"],
+      "Watch For": ["Do not assume wheels will roll or steer correctly"],
+      "Stop If": [
+        "Stop and reassess if anything looks compromised or unpredictable"
+      ]
+    };
+  }
+
+  if (
+    isEVQuestion(question) &&
+    (q.includes("neutral") || q.includes("won't move") || q.includes("wont move"))
+  ) {
+    return {
+      "Check First": [
+        "Confirm the vehicle state",
+        "Check whether transport mode or tow mode is required"
+      ],
+      "Best Practice": [
+        "Use dollies or a flatbed if the wheels cannot rotate freely"
+      ],
+      "Do Not Do": [
+        "Do not force movement with a locked drivetrain",
+        "Do not drag the vehicle"
+      ],
+      "Stop If": [
+        "Stop and verify if the model-specific procedure is unknown"
+      ]
+    };
+  }
+
+  if (
+    q.includes("underground") ||
+    q.includes("parking garage") ||
+    q.includes("low clearance")
+  ) {
+    return {
+      "Check First": [
+        "Check height clearance, ramp angle, and turning space"
+      ],
+      Setup: ["Use low-clearance equipment", "Plan your exit path before loading"],
+      "Watch For": [
+        "Watch ceiling height, body clearance, and ramp transitions"
+      ],
+      "Stop If": [
+        "Stop and reassess if space or angle is too tight for safe operation"
+      ]
+    };
+  }
+
+  if (
+    q.includes("tight space") ||
+    q.includes("tight area") ||
+    q.includes("narrow") ||
+    q.includes("confined")
+  ) {
+    return {
+      Plan: ["Slow the operation down and plan every movement first"],
+      "Watch For": [
+        "Watch mirrors, doors, nearby vehicles, and body clearance"
+      ],
+      "Best Practice": [
+        "Use the smallest movement possible to gain position",
+        "Keep the vehicle controlled at all times"
+      ],
+      "Stop If": [
+        "Stop and reassess if positioning becomes unsafe or too tight to control"
+      ]
+    };
+  }
+
+  if (
+    q.includes("broken suspension") ||
+    q.includes("wheel collapsed") ||
+    q.includes("wheel bent") ||
+    q.includes("control arm")
+  ) {
+    return {
+      "Check First": [
+        "Assess whether the damaged corner can support movement"
+      ],
+      "Best Practice": [
+        "Use dollies or a flatbed to support the damaged corner",
+        "Move slowly and watch for shifting or binding"
+      ],
+      "Do Not Do": [
+        "Do not force-roll or drag a collapsed suspension without support"
+      ],
+      "Stop If": [
+        "Stop and reassess if the vehicle cannot be safely supported"
+      ]
+    };
+  }
+
+  if (
+    q.includes("high centered") ||
+    q.includes("on curb") ||
+    q.includes("stuck on curb") ||
+    q.includes("bottomed out")
+  ) {
+    return {
+      "Check First": [
+        "Find the contact point and what is carrying the vehicle weight"
+      ],
+      "Best Practice": [
+        "Use controlled movement to reduce load on the hang-up point"
+      ],
+      "Do Not Do": [
+        "Do not drag the underbody across the contact point"
+      ],
+      "Stop If": [
+        "Stop and reassess if the vehicle may shift suddenly when freed"
+      ]
+    };
+  }
+
+  if (
+    q.includes("wheel lift") ||
+    q.includes("flatbed or wheel lift") ||
+    q.includes("which tow method") ||
+    q.includes("which method")
+  ) {
+    return {
+      "Choose Flatbed When": [
+        "Vehicle is damaged",
+        "Vehicle will not roll",
+        "EV or AWD procedure is uncertain"
+      ],
+      "Choose Wheel Lift When": [
+        "Vehicle is stable",
+        "Vehicle rolls freely",
+        "Drivetrain and condition allow it"
+      ],
+      "Final Check": ["Default to the safest method if unsure"]
+    };
+  }
+
+  if (
+    q.includes("steep driveway") ||
+    q.includes("steep angle") ||
+    q.includes("incline") ||
+    q.includes("hill recovery")
+  ) {
+    return {
+      "Check First": ["Check slope and how weight will shift during movement"],
+      Setup: [
+        "Use the straightest path possible",
+        "Control rollback and sudden movement"
+      ],
+      "Watch For": ["Watch side load and traction loss"],
+      "Stop If": ["Stop and reassess if traction or control is uncertain"]
+    };
+  }
+
+  if (
+    q.includes("frozen brakes") ||
+    q.includes("seized") ||
+    q.includes("wheel stuck")
+  ) {
+    return {
+      "Check First": [
+        "Confirm the cause of wheel lock before forcing movement"
+      ],
+      "Best Practice": [
+        "Use dollies or lift methods if wheels cannot rotate"
+      ],
+      "Do Not Do": ["Do not drag the vehicle with locked wheels"],
+      "Stop If": ["Stop and reassess if the condition cannot be safely managed"]
+    };
+  }
+
+  if (
+    q.includes("highway") ||
+    q.includes("live traffic") ||
+    q.includes("shoulder recovery")
+  ) {
+    return {
+      "First Priority": ["Traffic control and visibility"],
+      Setup: [
+        "Position the truck to protect the scene",
+        "Create the safest work area possible"
+      ],
+      "Best Practice": [
+        "Minimize time exposed to live lanes",
+        "Stay aware of traffic flow at all times"
+      ],
+      "Stop If": [
+        "Stop immediately if traffic conditions make the scene unsafe"
+      ]
+    };
+  }
+
+  if (
+    q.includes("equipment") ||
+    q.includes("what is the equipment called") ||
+    q.includes("equipment names") ||
+    q.includes("underlift") ||
+    q.includes("underreach") ||
+    q.includes("stinger") ||
+    q.includes("blocker vehicle") ||
+    q.includes("shadow vehicle")
+  ) {
+    return {
+      "Common Equipment": [
+        "Winch line: pulls the casualty onto the deck",
+        "J-hook or T-hook: attachment hardware for approved connection points",
+        "Soft strap: non-metal attachment option when approved",
+        "Wheel straps: transport securement around the tires",
+        "Dollies or skates: move vehicles that do not roll freely",
+        "Underlift or underreach: rear lift system used to raise and tow a casualty vehicle",
+        "Blocker vehicle: a protective vehicle positioned to create a buffer from traffic"
+      ],
+      "Support Equipment": [
+        "Snatch block: changes winch angle or doubles line advantage",
+        "Chain: heavy-duty securement or recovery use when appropriate",
+        "Control strap: helps manage movement during recovery"
+      ],
+      "Important Reminder": [
+        "The right tool depends on vehicle condition, approved hookup points, and the recovery plan"
+      ]
+    };
+  }
+
+  return null;
+}
+
+/* =========================================================
+   5. BUILT-IN SMART ANSWERS
+========================================================= */
+
+function getSmartBuiltInAnswer(question, proMode = false) {
+  const sections = getSmartBuiltInSections(question);
+
+  if (!sections) return "";
+
+  return proMode
+    ? formatProAnswerFromSections(sections)
+    : formatNormalAnswerFromSections(sections);
+}
+
+function buildFallbackAnswer(question, proMode = false) {
+  const builtIn = getSmartBuiltInAnswer(question, proMode);
+
+  if (builtIn) {
+    return builtIn;
+  }
+
+  if (proMode) {
+    return formatProAnswerFromSections({
+      "Check First": [
+        "Slow the scene down",
+        "Verify vehicle details",
+        "Confirm the safest procedure before continuing"
+      ],
+      "Stop If": [
+        "Stop and reassess if the vehicle, setup, or scene is uncertain"
+      ]
+    });
+  }
+
+  return formatNormalAnswerFromSections({
+    "Check First": [
+      "Slow the scene down",
+      "Verify vehicle details",
+      "Confirm the safest procedure before continuing"
+    ],
+    "Stop If": [
+      "Stop and reassess if the vehicle, setup, or scene is uncertain"
+    ]
+  });
+}
+
+/* =========================================================
    8. PUBLIC AI HELPERS
 ========================================================= */
 
