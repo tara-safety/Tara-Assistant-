@@ -895,24 +895,59 @@ function formatConceptAnswer(entry) {
 }
 
 function formatShortLocalAnswer(entry) {
-  const answer = String(entry?.answer || "").trim();
+  const cleanBlock = (text = "") =>
+    String(text || "")
+      .replace(/\r/g, "")
+      .replace(/^question:\s*/gim, "")
+      .replace(/^answer:\s*/gim, "")
+      .replace(/^summary:\s*/gim, "")
+      .replace(/^guidance:\s*/gim, "")
+      .replace(/^title:\s*/gim, "")
+      .replace(/^tags:\s*/gim, "")
+      .replace(/^keywords?:\s*/gim, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+
+  const shorten = (text = "", max = 220) => {
+    const clean = cleanBlock(text).replace(/\s+/g, " ").trim();
+    if (!clean) return "";
+    if (clean.length <= max) return clean;
+
+    const clipped = clean.slice(0, max);
+    const lastSentence = clipped.lastIndexOf(". ");
+    if (lastSentence > 80) {
+      return clipped.slice(0, lastSentence + 1).trim();
+    }
+
+    const lastSpace = clipped.lastIndexOf(" ");
+    return (lastSpace > 80 ? clipped.slice(0, lastSpace) : clipped).trim() + "...";
+  };
+
+  const answer = shorten(entry?.answer || "", 220);
   if (answer) return answer;
 
   const raw = String(entry?.raw_text || "").trim();
-  if (!raw) return "";
+  if (!raw) {
+    return "Use normal roadside safety steps: protect the scene, watch traffic, and avoid unsafe positioning.";
+  }
 
   const answerMatch = raw.match(/ANSWER:\s*([\s\S]*?)(?:\n[A-Z_]+:|$)/i);
-  if (answerMatch) {
-    return answerMatch[1].trim();
+  if (answerMatch?.[1]) {
+    return shorten(answerMatch[1], 220);
   }
 
   const summaryMatch = raw.match(/SUMMARY:\s*([\s\S]*?)(?:\n[A-Z_]+:|$)/i);
-  if (summaryMatch) {
-    return summaryMatch[1].trim();
+  if (summaryMatch?.[1]) {
+    return shorten(summaryMatch[1], 220);
+  }
+
+  const definitionMatch = raw.match(/DEFINITION:\s*([\s\S]*?)(?:\n[A-Z_]+:|$)/i);
+  if (definitionMatch?.[1]) {
+    return shorten(definitionMatch[1], 200);
   }
 
   const firstParagraph = raw.split(/\n\s*\n/)[0]?.trim() || "";
-  return firstParagraph;
+  return shorten(firstParagraph, 200);
 }
 
 function scoreLocalKnowledgeEntry(question, entry) {
