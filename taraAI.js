@@ -1193,22 +1193,6 @@ function extractWebSources(data) {
    3. PRO MODE HELPERS
 ========================================================= */
 
-function toBullets(items = []) {
-  return items.map((item) => `- ${item}`).join("\n");
-}
-
-function formatProAnswerFromSections(titleMap) {
-  const sections = [];
-
-  for (const [title, items] of Object.entries(titleMap)) {
-    if (Array.isArray(items) && items.length > 0) {
-      sections.push(`${title}:\n${toBullets(items)}`);
-    }
-  }
-
-  return sections.join("\n\n").trim();
-}
-
 function shouldUseWebFallback(answer) {
   if (!answer) return true;
 
