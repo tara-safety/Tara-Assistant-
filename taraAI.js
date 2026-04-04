@@ -37,6 +37,28 @@ function clearSessionHistory(sessionId = "default") {
    0.1 LOCAL KNOWLEDGE LOADER
 ========================================================= */
 
+function shortenKnowledgeText(text = "", max = 280) {
+  const clean = String(text || "")
+    .replace(/\r/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!clean) return "";
+  if (clean.length <= max) return clean;
+
+  return clean.slice(0, max).trim() + "...";
+}
+
+function safeDisplayAnswer(entry = {}, fallbackMax = 280) {
+  const answer = String(entry?.answer || "").trim();
+  const rawText = String(entry?.raw_text || "").trim();
+
+  if (answer) return shortenKnowledgeText(answer, fallbackMax);
+  if (rawText) return shortenKnowledgeText(rawText, fallbackMax);
+
+  return "";
+}
+
 function normalizeAdvancedKnowledge(records = []) {
   if (!Array.isArray(records)) return [];
 
@@ -64,13 +86,13 @@ function normalizeAdvancedKnowledge(records = []) {
       switch (record.record_type) {
         case "qa":
           question = String(record.question || "").trim();
-          answer = String(record.answer || "").trim();
-          rawText = `Question: ${question}\nAnswer: ${answer}`;
+          answer = shortenKnowledgeText(record.answer || "", 280);
+          rawText = String(record.answer || "").trim();
           break;
 
         case "concept":
           question = title ? `What is ${title}?` : "";
-          answer = String(record.definition || "").trim();
+          answer = shortenKnowledgeText(record.definition || "", 220);
           rawText = [
             `Definition: ${record.definition || ""}`,
             Array.isArray(record.aliases) && record.aliases.length
@@ -86,7 +108,7 @@ function normalizeAdvancedKnowledge(records = []) {
 
         case "decision_rule":
           question = title || "What should TARA do in this situation?";
-          answer = String(record.then_action || "").trim();
+          answer = shortenKnowledgeText(record.then_action || "", 240);
           rawText = [
             Array.isArray(record.if_signals) && record.if_signals.length
               ? `If signals: ${record.if_signals.join("; ")}`
@@ -101,18 +123,21 @@ function normalizeAdvancedKnowledge(records = []) {
           break;
 
         case "source":
-          answer = String(record.summary || "").trim();
+          answer = shortenKnowledgeText(record.summary || "", 260);
           rawText = String(record.raw_text || "").trim();
           break;
 
         case "chunk":
-          answer = String(record.chunk_summary || record.chunk_text || "").trim();
+          answer = shortenKnowledgeText(
+            record.chunk_summary || record.chunk_text || "",
+            260
+          );
           rawText = String(record.chunk_text || "").trim();
           break;
 
         case "public_fact":
           question = title || "";
-          answer = String(record.fact_text || "").trim();
+          answer = shortenKnowledgeText(record.fact_text || "", 220);
           rawText = [
             `Fact: ${record.fact_text || ""}`,
             record.source_name ? `Source name: ${record.source_name}` : "",
@@ -165,7 +190,14 @@ function loadLocalKnowledge() {
     const parsed = JSON.parse(raw);
 
     if (Array.isArray(parsed)) {
-      return parsed;
+      return parsed.map((entry) => ({
+        ...entry,
+        title: String(entry?.title || "").trim(),
+        question: String(entry?.question || "").trim(),
+        answer: shortenKnowledgeText(entry?.answer || "", 280),
+        raw_text: String(entry?.raw_text || "").trim(),
+        tags: Array.isArray(entry?.tags) ? entry.tags.filter(Boolean) : []
+      }));
     }
 
     if (parsed && Array.isArray(parsed.records)) {
@@ -186,17 +218,16 @@ function formatLocalKnowledgeContext(entries) {
   }
 
   return entries
+    .slice(0, 2)
     .map((entry, index) => {
-      const tags = Array.isArray(entry?.tags) ? entry.tags.join(", ") : "";
       return `Local Source ${index + 1}:
 Title: ${entry?.title || "Untitled"}
 Category: ${entry?.category || "Unknown"}
-Tags: ${tags}
-Question: ${entry?.question || ""}
-Guidance: ${entry?.answer || ""}`;
+Guidance: ${safeDisplayAnswer(entry, 220)}`;
     })
     .join("\n\n");
 }
+
 function getDeterministicLocalAnswer(question) {
   const localKnowledge = loadLocalKnowledge();
   if (!Array.isArray(localKnowledge) || localKnowledge.length === 0) {
@@ -206,7 +237,6 @@ function getDeterministicLocalAnswer(question) {
   const qClean = cleanText(question);
   const intent = detectQuestionIntent(question);
 
-  // 1. Exact question match wins immediately
   const exactQuestionMatch = localKnowledge.find((entry) => {
     const entryQuestion = cleanText(entry?.question || "");
     return entryQuestion && entryQuestion === qClean;
@@ -222,13 +252,12 @@ function getDeterministicLocalAnswer(question) {
     }
 
     return {
-      answer: exactQuestionMatch.answer || exactQuestionMatch.raw_text || "",
+      answer: safeDisplayAnswer(exactQuestionMatch, 240),
       matchedEntry: exactQuestionMatch,
       matchType: "exact_question"
     };
   }
 
-  // 2. Exact definition intent: prefer concept entries
   if (intent === "definition") {
     const exactConcept = localKnowledge.find((entry) => {
       const entryQuestion = cleanText(entry?.question || "");
@@ -246,14 +275,15 @@ function getDeterministicLocalAnswer(question) {
 
     if (exactConcept) {
       return {
-        answer: exactConcept.answer || exactConcept.raw_text || "",
+        answer: formatConceptAnswer
+          ? formatConceptAnswer(exactConcept)
+          : safeDisplayAnswer(exactConcept, 220),
         matchedEntry: exactConcept,
         matchType: "exact_concept"
       };
     }
   }
 
-  // 3. Exact rule intent: prefer rule entries
   if (intent === "rule") {
     const exactRule = localKnowledge.find((entry) => {
       const entryQuestion = cleanText(entry?.question || "");
