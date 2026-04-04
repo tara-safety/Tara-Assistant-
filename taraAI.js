@@ -481,6 +481,20 @@ function isLockoutQuestion(question) {
 
 }
 
+function isSpareTireWorkZoneQuestion(question) {
+  const q = cleanText(question);
+
+  return (
+    (q.includes("spare tire") || q.includes("flat tire")) &&
+    (
+      q.includes("after install") ||
+      q.includes("after installation") ||
+      q.includes("what do i do") ||
+      q.includes("work zone") ||
+      q.includes("inflate")
+    )
+  );
+}
 // 🔥 Hard short-circuit for spare tire / work zone question
 if (isSpareTireWorkZoneQuestion(normalizedQuestion)) {
   const localMatches = searchLocalKnowledge(normalizedQuestion, 4);
