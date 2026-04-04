@@ -728,7 +728,11 @@ function classifyTowingQuestion(question) {
       "lane closure",
       "lane block",
       "upstream",
-      "downstream"
+      "downstream",
+      "shoulder",
+      "roadside",
+      "scene safety",
+      "live lane"
     ],
     equipmentAndTerms: [
       "underlift",
@@ -741,6 +745,37 @@ function classifyTowingQuestion(question) {
       "tim",
       "non-consent tow",
       "ppi"
+    ],
+    plainLanguageRoadside: [
+      "tow truck",
+      "tow",
+      "towing",
+      "recovery",
+      "recover",
+      "disabled car",
+      "disable car",
+      "disabled vehicle",
+      "broken down car",
+      "broken down vehicle",
+      "broke down",
+      "stranded car",
+      "stranded vehicle",
+      "service truck",
+      "service call",
+      "road call",
+      "pick up a car",
+      "picking up a car",
+      "picking up a vehicle",
+      "pick up a vehicle",
+      "pick up disabled car",
+      "pickup disabled car",
+      "flat tire",
+      "spare tire",
+      "tire change",
+      "dead car",
+      "car on the highway",
+      "vehicle on the highway",
+      "motorist"
     ]
   };
 
@@ -755,11 +790,57 @@ function classifyTowingQuestion(question) {
     }
   }
 
+  const isTowing =
+    matchedCategories.length > 0 ||
+    (
+      (q.includes("highway") || q.includes("roadside") || q.includes("shoulder")) &&
+      (
+        q.includes("car") ||
+        q.includes("vehicle") ||
+        q.includes("truck") ||
+        q.includes("motorist")
+      )
+    ) ||
+    (
+      (q.includes("flat") || q.includes("spare") || q.includes("tire")) &&
+      (
+        q.includes("install") ||
+        q.includes("change") ||
+        q.includes("roadside")
+      )
+    );
+
+  let intent = "general";
+
+  if (
+    q.startsWith("what is ") ||
+    q.startsWith("what does ") ||
+    q.includes("definition") ||
+    q.includes("what does this mean") ||
+    q.includes("meaning of")
+  ) {
+    intent = "definition";
+  } else if (
+    q.includes("what should i do") ||
+    q.includes("what do i do") ||
+    q.includes("should i") ||
+    q.includes("can i") ||
+    q.includes("is it safe") ||
+    q.includes("is this safe") ||
+    q.includes("watch for") ||
+    q.includes("when should i") ||
+    q.includes("how should i") ||
+    q.includes("best way") ||
+    q.includes("safe way")
+  ) {
+    intent = "rule";
+  }
+
   return {
-    isTowing: isTowingQuestion(question),
-    intent: detectQuestionIntent(question),
+    isTowing,
     matchedCategories,
-    matchedTerms: [...new Set(matchedTerms)]
+    matchedTerms: [...new Set(matchedTerms)],
+    intent
   };
 }
 
