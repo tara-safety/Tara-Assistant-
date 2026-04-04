@@ -1667,10 +1667,6 @@ If intent is "${intent}", tailor the answer to that intent but still keep it sho
    3. SHARED ANSWER FORMATTERS
 ========================================================= */
 
-function toBullets(items = []) {
-  return items.map((item) => `- ${item}`).join("\n");
-}
-
 function formatProAnswerFromSections(titleMap = {}) {
   const sections = [];
 
