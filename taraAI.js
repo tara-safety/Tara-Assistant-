@@ -384,7 +384,11 @@ function isTowingQuestion(question) {
     /\btransport mode\b/,
     /\btow points?\b/,
     /\btire service\b/,
-    /\bwork zone\b/
+    /\bwork zone\b/,
+    /\bspare tire\b/,
+    /\bflat tire\b/,
+    /\btire change\b/,
+    /\broadside tire\b/
   ];
 
   const mediumPatterns = [
@@ -424,10 +428,6 @@ function isTowingQuestion(question) {
     /\bev\b/,
     /\belectric vehicle\b/,
     /\bhybrid\b/,
-    /\bspare tire\b/,
-    /\broadside tire\b/,
-    /\bflat tire\b/,
-    /\btire change\b/,
     /\bservice truck\b/
   ];
 
