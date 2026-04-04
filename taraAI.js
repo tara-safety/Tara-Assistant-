@@ -494,21 +494,6 @@ function isSpareTireWorkZoneQuestion(question) {
   );
 }
 
-function isSpareTireWorkZoneQuestion(question) {
-  const q = cleanText(question);
-
-  return (
-    (q.includes("spare tire") || q.includes("flat tire")) &&
-    (
-      q.includes("after install") ||
-      q.includes("after installation") ||
-      q.includes("what do i do") ||
-      q.includes("work zone") ||
-      q.includes("inflate")
-    )
-  );
-}
-
 function isEVQuestion(question) {
   const q = cleanText(question);
   return (
