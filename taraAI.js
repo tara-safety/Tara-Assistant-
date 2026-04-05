@@ -2508,9 +2508,9 @@ ${knowledgeContext}
 
     answer = extractResponseText(firstPass).replace(/\n\s+/g, "\n").trim();
 
-    if (intent === "definition" || intent === "rule") {
-      answer = "";
-    }
+  if ((intent === "definition" || intent === "rule") && !builtInAnswer) {
+  answer = "";
+}  
 
     console.log("FIRST PASS ANSWER:", answer.slice(0, 300));
 
