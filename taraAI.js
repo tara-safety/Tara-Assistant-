@@ -2376,6 +2376,7 @@ export async function handleAsk({
     : "Conversation memory is currently disabled.";
 
   const builtInAnswer = getSmartBuiltInAnswer(normalizedQuestion, proMode);
+  console.log("DEBUG builtInAnswer:", builtInAnswer); 
   const builtInContext = builtInAnswer
     ? String(builtInAnswer).slice(0, 220)
     : "No built-in guidance available.";
