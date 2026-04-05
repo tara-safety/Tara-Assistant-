@@ -2210,13 +2210,19 @@ function getSmartBuiltInSections(question) {
 ========================================================= */
 
 function getSmartBuiltInAnswer(question, proMode = false) {
-  const sections = getSmartBuiltInSections(question);
+  try {
+    const sections = getSmartBuiltInSections(question);
+    console.log("DEBUG sections:", sections);
 
-  if (!sections) return "";
+    if (!sections) return "";
 
-  return proMode
-    ? formatProAnswerFromSections(sections)
-    : formatNormalAnswerFromSections(sections);
+    return proMode
+      ? formatProAnswerFromSections(sections)
+      : formatNormalAnswerFromSections(sections);
+  } catch (err) {
+    console.error("getSmartBuiltInAnswer error:", err.message);
+    return "";
+  }
 }
 
 function buildFallbackAnswer(question, proMode = false) {
