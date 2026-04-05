@@ -2227,7 +2227,79 @@ function getSmartBuiltInAnswer(question, proMode = false) {
 
 function buildFallbackAnswer(question, proMode = false) {
   const builtIn = getSmartBuiltInAnswer(question, proMode);
+function buildFallbackAnswer(question, proMode = false) {
+  const q = cleanText(question);
 
+  if (
+    q.includes("flat tire") ||
+    q.includes("spare tire") ||
+    q.includes("flat after install") ||
+    q.includes("spare is flat") ||
+    q.includes("install a flat tire")
+  ) {
+    return proMode
+      ? formatProAnswerFromSections({
+          "Immediate Priority": [
+            "Treat it as a traffic-exposure issue first",
+            "Stay in the protected work zone if possible",
+            "Do not reposition the truck unless absolutely necessary"
+          ],
+          "What To Do": [
+            "Check whether the tire can be inflated from the safer side",
+            "Work from behind the truck when possible",
+            "Keep visual awareness of traffic and escape space"
+          ],
+          Why: [
+            "Repositioning the truck can remove your buffer zone and increase exposure to traffic"
+          ]
+        })
+      : formatNormalAnswerFromSections({
+          "Immediate Priority": [
+            "Treat it as a traffic-exposure issue first",
+            "Stay in the protected work zone if possible",
+            "Do not reposition the truck unless absolutely necessary"
+          ],
+          "What To Do": [
+            "Check whether the tire can be inflated from the safer side",
+            "Work from behind the truck when possible",
+            "Keep visual awareness of traffic and escape space"
+          ],
+          Why: [
+            "Repositioning the truck can remove your buffer zone and increase exposure to traffic"
+          ]
+        });
+  }
+
+  const builtIn = getSmartBuiltInAnswer(question, proMode);
+
+  if (builtIn) {
+    return builtIn;
+  }
+
+  if (proMode) {
+    return formatProAnswerFromSections({
+      "Check First": [
+        "Slow the scene down",
+        "Verify vehicle details",
+        "Confirm the safest procedure before continuing"
+      ],
+      "Stop If": [
+        "Stop and reassess if the vehicle, setup, or scene is uncertain"
+      ]
+    });
+  }
+
+  return formatNormalAnswerFromSections({
+    "Check First": [
+      "Slow the scene down",
+      "Verify vehicle details",
+      "Confirm the safest procedure before continuing"
+    ],
+    "Stop If": [
+      "Stop and reassess if the vehicle, setup, or scene is uncertain"
+    ]
+  });
+}
   if (builtIn) {
     return builtIn;
   }
